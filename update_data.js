@@ -37,13 +37,9 @@ async function fetchAndSave() {
       throw new Error('Proxy ล่มทั้งหมด ไม่สามารถดึงข้อมูลได้ในรอบนี้');
     }
 
-    // ═════════════════════════════════════════════════════
-    // DATA FILTERING: คัดกรองเอาเฉพาะ กทม. และ PM2.5
-    // ═════════════════════════════════════════════════════
+    // คัดกรองเอาเฉพาะ กทม. และ PM2.5
     const bkkStationsOnly = newData.stations
-      // 1. กรองเอาเฉพาะสถานีที่มีคำว่า "กรุงเทพ" ในพื้นที่
       .filter(station => station.areaTH && station.areaTH.includes('กรุงเทพ'))
-      // 2. แปลงโครงสร้างข้อมูลใหม่ เก็บเฉพาะสิ่งที่จำเป็น
       .map(station => {
         return {
           stationID: station.stationID,
@@ -55,15 +51,12 @@ async function fetchAndSave() {
           AQILast: {
             date: station.AQILast.date,
             time: station.AQILast.time,
-            // ดึงมาแค่ PM2.5 (ถ้าสถานีไหนไม่มีข้อมูล PM2.5 ให้เซ็ตเป็น null)
             PM25: station.AQILast.PM25 ? { value: station.AQILast.PM25.value } : { value: null }
           }
         };
       });
 
-    // นำข้อมูลที่ถูกคัดกรองแล้วจนมีขนาดเล็ก นำไปใส่ทับข้อมูลเดิม
     newData.stations = bkkStationsOnly;
-    // ═════════════════════════════════════════════════════
 
     let history = [];
     if (fs.existsSync('history.json')) {
@@ -72,6 +65,26 @@ async function fetchAndSave() {
         history = JSON.parse(rawData);
       }
     }
+
+    // ═════════════════════════════════════════════════════
+    // ป้องกันการอัปเดตซ้ำในชั่วโมงเดียวกัน (Duplicate Prevention)
+    // ═════════════════════════════════════════════════════
+    if (history.length > 0) {
+      const lastUpdate = new Date(history[history.length - 1].timestamp);
+      const now = new Date();
+      
+      // เช็คว่า ปี, เดือน, วัน, และ "ชั่วโมง" ตรงกันหรือไม่ (ใช้ UTC เพื่อความแม่นยำของระบบเซิร์ฟเวอร์)
+      if (
+        lastUpdate.getUTCFullYear() === now.getUTCFullYear() &&
+        lastUpdate.getUTCMonth() === now.getUTCMonth() &&
+        lastUpdate.getUTCDate() === now.getUTCDate() &&
+        lastUpdate.getUTCHours() === now.getUTCHours()
+      ) {
+        console.log('✅ ข้อมูลของชั่วโมงนี้ถูกอัปเดตไปแล้ว (อาจเกิดจากการกด Manual ไปก่อนหน้านี้) ระบบจะข้ามการทำงานเพื่อป้องกันข้อมูลซ้ำซ้อน');
+        process.exit(0); // สั่งหยุดสคริปต์และแจ้ง GitHub Actions ว่าทำงานเสร็จสมบูรณ์แบบไม่มี Error
+      }
+    }
+    // ═════════════════════════════════════════════════════
 
     history.push({
       timestamp: new Date().toISOString(),
