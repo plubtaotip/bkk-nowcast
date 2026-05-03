@@ -1,26 +1,25 @@
-
+# ไฟล์: .github/workflows/sync.yml
 name: Auto-Sync PM2.5 Data
-
 
 on:
   schedule:
-    - cron: '1 * * * *'
+    - cron: '0 * * * *'
   workflow_dispatch: 
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write 
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # อัปเดตเป็น v4 เพื่อแก้ Warning สีเหลือง
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4 # อัปเดตเป็น v4 เพื่อแก้ Warning สีเหลือง
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Run fetch script
         run: node update_data.js
@@ -29,6 +28,10 @@ jobs:
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # สร้างไฟล์เปล่าดักไว้ก่อน (ถ้ามีอยู่แล้วก็ไม่เป็นไร) เพื่อป้องกัน Error 128
+          touch history.json 
+          
           git add history.json
           git commit -m "อัปเดตข้อมูล PM2.5 อัตโนมัติ" || echo "ไม่มีข้อมูลใหม่ให้บันทึก"
           git push
