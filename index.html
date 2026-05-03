@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PM2.5 กรุงเทพฯ — NowCast Monitor</title>
+<title>Bangkok Air Quality — NowCast Monitor</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -17,12 +17,6 @@
   --accent: #00d4aa; --accent-dim: rgba(0,212,170,0.1);
   --font: 'Sarabun', sans-serif; --mono: 'IBM Plex Mono', monospace;
   --r: 10px; --rl: 14px;
-  /* PCD 2566 สีตามมาตรฐาน */
-  --pcd-1: #00bcd4; /* ฟ้า (0–15) */
-  --pcd-2: #4caf50; /* เขียว (15.1–25) */
-  --pcd-3: #ffeb3b; /* เหลือง (25.1–37.5) */
-  --pcd-4: #ff9800; /* ส้ม (37.6–75) */
-  --pcd-5: #f44336; /* แดง (75.1+) */
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -137,7 +131,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
   <div class="logo">
     <div class="logo-icon">🌫</div>
     <div>
-      <div class="logo-text">PM2.5 Bangkok Monitor</div>
+      <div class="logo-text">Bangkok Air Quality Monitor</div>
       <div class="logo-sub">EPA NowCast · wmin=0.4 · history=72h</div>
     </div>
   </div>
@@ -170,10 +164,9 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       </div>
 
       <div class="nowcast-note">
-        <b style="color:var(--accent)">EPA NowCast</b><br>
-        ค่าที่แสดงบนแผนที่ = NowCast PM2.5<br>
-        wmin = 0.4 · lookback = 8 ชม.<br>
-        รวมค่าฝุ่นรายชั่วโมง (Raw) เพื่อเปรียบเทียบ
+        <b style="color:var(--accent)">ข้อมูลแบบ Real-time</b><br>
+        การแสดงผลปรับตามประเภทมลพิษที่เลือก<br>
+        ใช้เกณฑ์สีมาตรฐาน PCD 2566
       </div>
 
       <div class="station-cards" id="stn-cards">
@@ -196,29 +189,40 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
   <div id="dash-content" style="display:none">
     <div class="dash">
-      <div class="dash-title">Dashboard การวิเคราะห์ PM2.5 (72 ชั่วโมงล่าสุด)</div>
-      <div class="dash-sub">เปรียบเทียบความผันผวนของค่าฝุ่นรายชั่วโมง กับการถ่วงน้ำหนักด้วย EPA NowCast</div>
+      <div class="dash-title">Dashboard การวิเคราะห์คุณภาพอากาศ (72 ชั่วโมงล่าสุด)</div>
+      <div class="dash-sub">วิเคราะห์ข้อมูลความผันผวนของมลพิษทางอากาศ แยกตามประเภทและสถานี</div>
 
       <div class="dash-controls">
         <div class="dctrl">
+          <label>ประเภทฝุ่น/มลพิษ</label>
+          <select class="dselect" id="dash-pollutant" onchange="updateUI()">
+            <option value="PM25">PM2.5 (ฝุ่นละอองขนาดเล็กไม่เกิน 2.5 ไมครอน)</option>
+            <option value="PM10">PM10 (ฝุ่นละอองขนาดเล็กไม่เกิน 10 ไมครอน)</option>
+            <option value="O3">O3 (ก๊าซโอโซน)</option>
+            <option value="CO">CO (ก๊าซคาร์บอนมอนอกไซด์)</option>
+            <option value="NO2">NO2 (ก๊าซไนโตรเจนไดออกไซด์)</option>
+            <option value="SO2">SO2 (ก๊าซซัลเฟอร์ไดออกไซด์)</option>
+          </select>
+        </div>
+        <div class="dctrl">
           <label>พื้นที่สถานี</label>
-          <select class="dselect" id="dash-station" onchange="updateDashboard()">
+          <select class="dselect" id="dash-station" onchange="updateUI()">
             <option value="all">ทุกสถานี (เฉลี่ยภาพรวม)</option>
           </select>
         </div>
       </div>
 
       <div class="kpi-row" id="kpi-row">
-        <div class="kpi-card"><div class="kpi-label">PM2.5 รายชั่วโมง (เฉลี่ย)</div><div class="kpi-val" id="kpi-avg">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-avg-d">จากข้อมูล 72 ชม. ล่าสุด</div></div>
-        <div class="kpi-card"><div class="kpi-label">NowCast (เฉลี่ย)</div><div class="kpi-val" id="kpi-nc">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-nc-d"></div></div>
-        <div class="kpi-card"><div class="kpi-label">ชั่วโมงที่เกิน 37.5 µg/m³</div><div class="kpi-val" id="kpi-bad">—<span class="kpi-unit">ชม.</span></div><div class="kpi-delta" id="kpi-bad-d">จากทั้งหมด — ชั่วโมง</div></div>
-        <div class="kpi-card"><div class="kpi-label">ค่าฝุ่นสูงสุดที่วัดได้</div><div class="kpi-val" id="kpi-max">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-max-d">สูงสุดในช่วง 72 ชม.</div></div>
+        <div class="kpi-card"><div class="kpi-label">ค่ามลพิษรายชั่วโมง (เฉลี่ย)</div><div class="kpi-val" id="kpi-avg">—<span class="kpi-unit">หน่วย</span></div><div class="kpi-delta" id="kpi-avg-d">จากข้อมูล 72 ชม. ล่าสุด</div></div>
+        <div class="kpi-card"><div class="kpi-label">NowCast (เฉลี่ย)</div><div class="kpi-val" id="kpi-nc">—<span class="kpi-unit">หน่วย</span></div><div class="kpi-delta" id="kpi-nc-d"></div></div>
+        <div class="kpi-card"><div class="kpi-label" id="kpi-bad-label">ชั่วโมงที่เกินเกณฑ์มาตรฐาน</div><div class="kpi-val" id="kpi-bad">—<span class="kpi-unit">ชม.</span></div><div class="kpi-delta" id="kpi-bad-d">จากทั้งหมด — ชั่วโมง</div></div>
+        <div class="kpi-card"><div class="kpi-label">ค่ามลพิษสูงสุดที่วัดได้</div><div class="kpi-val" id="kpi-max">—<span class="kpi-unit">หน่วย</span></div><div class="kpi-delta" id="kpi-max-d">สูงสุดในช่วง 72 ชม.</div></div>
       </div>
 
       <div class="dash-grid" style="margin-bottom:16px">
         <div class="chart-card">
-          <div class="chart-card-title">แนวโน้ม PM2.5 ย้อนหลัง 72 ชั่วโมง</div>
-          <div class="chart-card-sub">เปรียบเทียบค่าฝุ่นรายชั่วโมง (Raw Data) กับค่า NowCast</div>
+          <div class="chart-card-title">แนวโน้มมลพิษ ย้อนหลัง 72 ชั่วโมง</div>
+          <div class="chart-card-sub">เปรียบเทียบค่ารายชั่วโมง (Raw Data) กับการเกลี่ยความผันผวนด้วย NowCast</div>
           <div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div>
         </div>
       </div>
@@ -226,7 +230,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       <div class="dash-grid dash-row-3" style="margin-bottom:16px">
         <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Raw)</div>
-          <div class="chart-card-sub">คิดตามจำนวนชั่วโมง จากเกณฑ์ PCD</div>
+          <div class="chart-card-sub">คิดตามจำนวนชั่วโมง จากเกณฑ์สี PCD</div>
           <div style="height:200px;display:flex;align-items:center;gap:16px">
             <div style="flex:1;height:180px"><canvas id="chart-donut-raw"></canvas></div>
             <div class="donut-legend" id="legend-raw"></div>
@@ -234,7 +238,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         </div>
         <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (NowCast)</div>
-          <div class="chart-card-sub">คิดตาม NowCast จากเกณฑ์ PCD</div>
+          <div class="chart-card-sub">คิดตาม NowCast จากเกณฑ์สี PCD</div>
           <div style="height:200px;display:flex;align-items:center;gap:16px">
             <div style="flex:1;height:180px"><canvas id="chart-donut-nc"></canvas></div>
             <div class="donut-legend" id="legend-nc"></div>
@@ -242,14 +246,14 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         </div>
         <div class="chart-card">
           <div class="chart-card-title">รูปแบบรายชั่วโมง (Diurnal)</div>
-          <div class="chart-card-sub">ค่าเฉลี่ยฝุ่นแยกตามชั่วโมงของวัน (00-23 น.)</div>
+          <div class="chart-card-sub">ค่าเฉลี่ยมลพิษแยกตามชั่วโมงของวัน (00-23 น.)</div>
           <div class="chart-wrap"><canvas id="chart-diurnal"></canvas></div>
         </div>
       </div>
 
       <div class="chart-card" style="margin-bottom:16px">
         <div class="chart-card-title">Heatmap รายชั่วโมง (72 ชม. ล่าสุด)</div>
-        <div class="chart-card-sub">แกน X = เวลา (00:00 - 23:00) | สีตามมาตรฐาน PCD 2566</div>
+        <div class="chart-card-sub">แกน X = เวลา (00:00 - 23:00) | สีประเมินตามมาตรฐานที่เลือก</div>
         <div class="heatmap-wrap"><div id="heatmap-container"></div></div>
       </div>
 
@@ -267,26 +271,50 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 // ═══════════════════════════════════════════
 let STATION_META = {};
 let STATION_KEYS = [];
-let STATION_COLORS = {};
 let STATIONS = null;
 
-function getRandomColor(index) {
-  const hues = [160, 210, 30, 270, 0, 140, 300, 45, 100, 200];
-  return `hsl(${hues[index % hues.length]}, 80%, 60%)`;
+// เกณฑ์สีมาตรฐานอ้างอิงจากระบบ AQI (ปรับจูนสำหรับแต่ละมลพิษ)
+const AQI_BREAKS = {
+  PM25: [
+    {lo:0, hi:15.0, label:'ดี', color:'#00bcd4', textColor:'#fff'},
+    {lo:15.1, hi:25.0, label:'ปานกลาง', color:'#4caf50', textColor:'#fff'},
+    {lo:25.1, hi:37.5, label:'เริ่มมีผลต่อสุขภาพ', color:'#ffeb3b', textColor:'#333'},
+    {lo:37.6, hi:75.0, label:'มีผลต่อสุขภาพ', color:'#ff9800', textColor:'#fff'},
+    {lo:75.1, hi:999999, label:'อันตราย', color:'#f44336', textColor:'#fff'}
+  ],
+  PM10: [
+    {lo:0, hi:50.0, label:'ดี', color:'#00bcd4', textColor:'#fff'},
+    {lo:50.1, hi:80.0, label:'ปานกลาง', color:'#4caf50', textColor:'#fff'},
+    {lo:80.1, hi:120.0, label:'เริ่มมีผลต่อสุขภาพ', color:'#ffeb3b', textColor:'#333'},
+    {lo:120.1, hi:180.0, label:'มีผลต่อสุขภาพ', color:'#ff9800', textColor:'#fff'},
+    {lo:180.1, hi:999999, label:'อันตราย', color:'#f44336', textColor:'#fff'}
+  ],
+  DEFAULT: [
+    {lo:0, hi:15.0, label:'ระดับ 1 (ดี)', color:'#00bcd4', textColor:'#fff'},
+    {lo:15.1, hi:30.0, label:'ระดับ 2', color:'#4caf50', textColor:'#fff'},
+    {lo:30.1, hi:50.0, label:'ระดับ 3', color:'#ffeb3b', textColor:'#333'},
+    {lo:50.1, hi:80.0, label:'ระดับ 4', color:'#ff9800', textColor:'#fff'},
+    {lo:80.1, hi:999999, label:'ระดับ 5 (อันตราย)', color:'#f44336', textColor:'#fff'}
+  ]
+};
+
+function getAQIBand(val, pollutantType) {
+  if(val == null || isNaN(val)) return null;
+  const breaks = AQI_BREAKS[pollutantType] || AQI_BREAKS.DEFAULT;
+  for(const b of breaks) if(val >= b.lo && val <= b.hi) return b;
+  return breaks[breaks.length-1];
 }
 
-const PCD_BREAKS = [
-  {lo:0,    hi:15.0,  label:'ดี',                  color:'#00bcd4', textColor:'#fff'},
-  {lo:15.1, hi:25.0,  label:'ปานกลาง',              color:'#4caf50', textColor:'#fff'},
-  {lo:25.1, hi:37.5,  label:'เริ่มมีผลต่อสุขภาพ', color:'#ffeb3b', textColor:'#333'},
-  {lo:37.6, hi:75.0,  label:'มีผลต่อสุขภาพ',       color:'#ff9800', textColor:'#fff'},
-  {lo:75.1, hi:999999,label:'อันตราย',              color:'#f44336', textColor:'#fff'},
-];
+function getBadThreshold(pollutantType) {
+  if (pollutantType === 'PM25') return 37.5;
+  if (pollutantType === 'PM10') return 80.0;
+  return 50.0; // ค่าเริ่มต้นสำหรับก๊าซอื่นๆ
+}
 
-function getAQIBand(pm) {
-  if(pm == null || isNaN(pm)) return null;
-  for(const b of PCD_BREAKS) if(pm >= b.lo && pm <= b.hi) return b;
-  return PCD_BREAKS[PCD_BREAKS.length-1];
+function getUnit(pollutantType) {
+  if (pollutantType === 'CO') return 'ppm';
+  if (pollutantType === 'O3' || pollutantType === 'NO2' || pollutantType === 'SO2') return 'ppb';
+  return 'µg/m³';
 }
 
 function nowcast(vals) {
@@ -316,33 +344,33 @@ function parseTS(ts) {
 function padZ(n) { return String(n).padStart(2,'0'); }
 function makeTSKey(y, m, d, h) { return `${y}-${padZ(m)}-${padZ(d)} ${padZ(h)}:00:00`; }
 
-function getLookback(dataMap, y, m, d, h, n=8) {
+function getLookback(dataMap, y, m, d, h, pollutantType, n=8) {
   const vals = [];
   let dt = new Date(y, m-1, d, h);
   for(let i = 0; i < n; i++) {
     const key = makeTSKey(dt.getFullYear(), dt.getMonth()+1, dt.getDate(), dt.getHours());
-    vals.push(dataMap[key] !== undefined ? dataMap[key] : null);
+    vals.push((dataMap[key] && dataMap[key][pollutantType] !== undefined) ? dataMap[key][pollutantType] : null);
     dt = new Date(dt.getTime() - 3600000);
   }
   return vals;
 }
 
-function computeNowcastAt(dateStr, hour) {
+function computeNowcastAt(dateStr, hour, pollutantType) {
   const [y, m, d] = dateStr.split('-').map(Number);
   const results = {};
   for(const key of STATION_KEYS) {
     if(!STATIONS[key]) { results[key] = {nc:null, raw:null}; continue; }
     const dm = STATIONS[key].data;
-    const lookback = getLookback(dm, y, m, d, hour);
+    const lookback = getLookback(dm, y, m, d, hour, pollutantType);
     const nc = nowcast(lookback);
-    const raw = dm[makeTSKey(y, m, d, hour)];
+    const raw = (dm[makeTSKey(y, m, d, hour)] && dm[makeTSKey(y, m, d, hour)][pollutantType]) !== undefined ? dm[makeTSKey(y, m, d, hour)][pollutantType] : null;
     results[key] = { nc, raw: raw ?? null };
   }
   return results;
 }
 
 // ═══════════════════════════════════════════
-// SMART FETCH: HISTORY + LIVE DATA (Silent)
+// SMART FETCH: MULTI-POLLUTANT PARSING
 // ═══════════════════════════════════════════
 async function fetchAir4ThaiDynamic() {
   const statusEl = document.getElementById('global-status');
@@ -394,51 +422,55 @@ async function fetchAir4ThaiDynamic() {
     return;
   }
 
-  // 3. ผสานข้อมูล
+  // 3. ผสานข้อมูล (Parse all pollutants)
   STATION_META = {};
   STATION_KEYS = [];
-  STATION_COLORS = {};
   const newStations = {};
-  let colorIndex = 0;
+  const allPollutants = ['PM25', 'PM10', 'O3', 'CO', 'NO2', 'SO2'];
 
   allSnapshots.forEach(snapshot => {
     const bkkStations = snapshot.stations.filter(s => s.areaTH && s.areaTH.includes("กรุงเทพ"));
     bkkStations.forEach(s => {
-      if(s.AQILast && s.AQILast.PM25 && !isNaN(s.AQILast.PM25.value)) {
+      if(s.AQILast) {
         const key = s.stationID;
-        const pm25Value = parseFloat(s.AQILast.PM25.value);
         if (!newStations[key]) {
           STATION_KEYS.push(key);
           STATION_META[key] = { nameTH: s.nameTH, nameEN: s.nameEN, lat: parseFloat(s.lat), lng: parseFloat(s.long) };
-          STATION_COLORS[key] = getRandomColor(colorIndex++);
           newStations[key] = { data: {} };
         }
+        
         const tsKey = `${s.AQILast.date} ${s.AQILast.time}:00`;
-        newStations[key].data[tsKey] = pm25Value;
+        let pData = {};
+        allPollutants.forEach(pol => {
+            if(s.AQILast[pol] && !isNaN(s.AQILast[pol].value)) {
+                pData[pol] = parseFloat(s.AQILast[pol].value);
+            }
+        });
+        
+        newStations[key].data[tsKey] = pData;
       }
     });
   });
 
-  // สร้างข้อมูลจำลองถ้ามีแค่ 1 จุด 
+  // สร้างข้อมูลจำลองถ้ามีแค่ 1 จุด (เพื่อไม่ให้ UI พังตอนเพิ่งรันบอทครั้งแรก)
   for (const key of STATION_KEYS) {
      const st = newStations[key];
      const timeKeys = Object.keys(st.data).sort();
      if (timeKeys.length === 1) {
         const singleTs = timeKeys[0];
-        const singleVal = st.data[singleTs];
+        const singleObj = st.data[singleTs];
         const p = parseTS(singleTs);
         let dt = new Date(p.y, p.m-1, p.d, p.h);
         for(let i=1; i<=7; i++) {
             dt = new Date(dt.getTime() - 3600000);
             const pastTs = makeTSKey(dt.getFullYear(), dt.getMonth()+1, dt.getDate(), dt.getHours());
-            st.data[pastTs] = singleVal;
+            st.data[pastTs] = { ...singleObj };
         }
      }
   }
 
   STATIONS = newStations;
   
-  // ซ่อนแถบ Status และเปิด Dashboard
   statusEl.innerHTML = `✓ อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
   setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
   
@@ -446,7 +478,7 @@ async function fetchAir4ThaiDynamic() {
   document.getElementById('dash-content').style.display = 'block';
   
   buildDynamicUI();
-  updateDashboard();
+  updateUI();
   goToLatest();
 }
 
@@ -463,8 +495,20 @@ function startAutoSync() {
 }
 
 // ═══════════════════════════════════════════
-// UI & MAP BUILDERS
+// UI CONTROLLERS
 // ═══════════════════════════════════════════
+function updateUI() {
+    updateDashboard();
+    updateMapSidebar();
+    
+    // อัปเดตหน่วยวัดตามประเภทฝุ่น
+    const pol = document.getElementById('dash-pollutant').value;
+    const unit = getUnit(pol);
+    document.querySelectorAll('.kpi-unit').forEach(el => {
+        if(el.parentElement.id !== 'kpi-bad') el.textContent = unit;
+    });
+}
+
 function buildDynamicUI() {
   const select = document.getElementById('dash-station');
   select.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยภาพรวม)</option>';
@@ -496,6 +540,9 @@ function switchTab(tab, e) {
   if(tab === 'map' && STATIONS) { setTimeout(() => { mapInstance.invalidateSize(); }, 100); updateMapSidebar(); }
 }
 
+// ═══════════════════════════════════════════
+// MAP ENGINE
+// ═══════════════════════════════════════════
 let mapInstance = null; let mapMarkers = {};
 function initMap() {
   mapInstance = L.map('map', { center: [13.75, 100.52], zoom: 11 });
@@ -508,8 +555,10 @@ function updateMap(dateStr, hour) {
   if(!STATIONS) return;
   dateStr = dateStr || document.getElementById('tp-date').value;
   hour = hour !== undefined ? hour : +document.getElementById('tp-hour').value;
-  const results = computeNowcastAt(dateStr, hour);
-
+  const pol = document.getElementById('dash-pollutant').value;
+  const unit = getUnit(pol);
+  
+  const results = computeNowcastAt(dateStr, hour, pol);
   const cardsEl = document.getElementById('stn-cards');
   const loadedKeys = STATION_KEYS.filter(k => STATIONS[k]);
   const sorted = loadedKeys.slice().sort((a,b) => (results[b].nc ?? -1) - (results[a].nc ?? -1));
@@ -517,20 +566,24 @@ function updateMap(dateStr, hour) {
   cardsEl.innerHTML = sorted.map(key => {
     const m = STATION_META[key];
     const {nc, raw} = results[key];
-    const band = getAQIBand(nc);
+    const band = getAQIBand(nc, pol);
     const color = band?.color ?? '#666';
     const tc = band?.textColor ?? '#fff';
-    const rawBand = getAQIBand(raw);
-    const ncPct = nc != null ? Math.min(nc / 75 * 100, 100) : 0;
-    const rawPct = raw != null ? Math.min(raw / 75 * 100, 100) : 0;
+    const rawBand = getAQIBand(raw, pol);
+    
+    // Scale bar based on generic 0-100 percentage for visual representation
+    const maxScale = (pol === 'PM10') ? 150 : (pol === 'CO' ? 10 : 75);
+    const ncPct = nc != null ? Math.min(nc / maxScale * 100, 100) : 0;
+    const rawPct = raw != null ? Math.min(raw / maxScale * 100, 100) : 0;
+    
     return `<div class="scard" id="sc-${key}" onclick="selectStation('${key}')">
       <div class="scard-top">
         <div><div class="scard-name">${m.nameTH}</div><div class="scard-sub">${m.nameEN || '-'}</div></div>
         <span class="aqi-badge" style="background:${color};color:${tc};border:none">${band?.label ?? 'ไม่มีข้อมูล'}</span>
       </div>
       <div class="scard-vals">
-        <div class="sval-box"><div class="sval-label">NowCast</div><div class="sval-num" style="color:${color}">${nc!=null?nc.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${ncPct}%;background:${color}"></div></div></div>
-        <div class="sval-box"><div class="sval-label">รายชั่วโมง (Raw)</div><div class="sval-num" style="color:${rawBand?.color??'#fff'}">${raw!=null?raw.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${rawPct}%;background:${rawBand?.color??'#666'}"></div></div></div>
+        <div class="sval-box"><div class="sval-label">NowCast</div><div class="sval-num" style="color:${color}">${nc!=null?nc.toFixed(1):'—'}<span class="sval-unit">${unit}</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${ncPct}%;background:${color}"></div></div></div>
+        <div class="sval-box"><div class="sval-label">รายชั่วโมง (Raw)</div><div class="sval-num" style="color:${rawBand?.color??'#fff'}">${raw!=null?raw.toFixed(1):'—'}<span class="sval-unit">${unit}</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${rawPct}%;background:${rawBand?.color??'#666'}"></div></div></div>
       </div>
     </div>`;
   }).join('');
@@ -538,37 +591,37 @@ function updateMap(dateStr, hour) {
   for(const key of STATION_KEYS) {
     if(!mapMarkers[key]) continue;
     const {nc, raw} = results[key];
-    const band = getAQIBand(nc);
+    const band = getAQIBand(nc, pol);
     const color = band?.color ?? '#555';
     const {div, marker} = mapMarkers[key];
-    div.style.background = STATIONS[key] ? color : '#333';
-    div.style.borderColor = STATIONS[key] ? color+'88' : 'rgba(255,255,255,.2)';
-    div.style.color = STATIONS[key] ? (band?.textColor ?? '#fff') : '#fff';
-    div.textContent = STATIONS[key] && nc != null ? nc.toFixed(0) : '?';
-    if(STATIONS[key]) marker.setPopupContent(buildPopup(key, nc, raw, dateStr, hour));
+    div.style.background = (STATIONS[key] && nc != null) ? color : '#333';
+    div.style.borderColor = (STATIONS[key] && nc != null) ? color+'88' : 'rgba(255,255,255,.2)';
+    div.style.color = (STATIONS[key] && nc != null) ? (band?.textColor ?? '#fff') : '#fff';
+    div.textContent = (STATIONS[key] && nc != null) ? nc.toFixed(0) : '?';
+    if(STATIONS[key]) marker.setPopupContent(buildPopup(key, nc, raw, dateStr, hour, pol, unit));
   }
 }
 
-function buildPopup(key, nc, raw, dateStr, hour) {
+function buildPopup(key, nc, raw, dateStr, hour, pol, unit) {
   const m = STATION_META[key];
-  const ncBand = getAQIBand(nc); const rawBand = getAQIBand(raw);
+  const ncBand = getAQIBand(nc, pol); const rawBand = getAQIBand(raw, pol);
   const diff = (nc!=null && raw!=null) ? (nc-raw).toFixed(1) : '—';
   const diffSign = parseFloat(diff) > 0 ? '+' : '';
   return `<div style="font-family:'Sarabun',sans-serif">
     <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px">${m.nameTH}</div>
-    <div style="font-size:11px;color:#7a8090;margin-bottom:12px">${dateStr} ${padZ(hour)}:00</div>
+    <div style="font-size:11px;color:#7a8090;margin-bottom:12px">${dateStr} ${padZ(hour)}:00 | ประเภท: ${pol}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <div style="background:#1f2229;border-radius:8px;padding:10px">
         <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">EPA NowCast</div>
-        <div style="font-size:22px;font-weight:700;color:${ncBand?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
+        <div style="font-size:22px;font-weight:700;color:${ncBand?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">${unit}</span></div>
       </div>
       <div style="background:#1f2229;border-radius:8px;padding:10px">
         <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">รายชั่วโมง (Raw)</div>
-        <div style="font-size:22px;font-weight:700;color:${rawBand?.color??'#444'};margin-bottom:4px">${raw!=null?raw.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
+        <div style="font-size:22px;font-weight:700;color:${rawBand?.color??'#444'};margin-bottom:4px">${raw!=null?raw.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">${unit}</span></div>
       </div>
     </div>
     <div style="margin-top:8px;background:#1f2229;border-radius:8px;padding:8px 10px;font-family:monospace;font-size:12px">
-      NowCast − Raw: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${diffSign}${diff} µg/m³</b>
+      NowCast − Raw: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${diffSign}${diff} ${unit}</b>
     </div>
   </div>`;
 }
@@ -602,7 +655,7 @@ function goToLatest() {
 let charts = {};
 function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
-function get72hData(stationKey) {
+function get72hData(stationKey, pollutantType) {
   const keys = stationKey === 'all' ? STATION_KEYS.filter(k => STATIONS[k]) : (STATIONS[stationKey] ? [stationKey] : []);
   
   let allTsSet = new Set();
@@ -613,10 +666,12 @@ function get72hData(stationKey) {
   let hourlyAgg = {}; // for diurnal
   let hmByDate = {};  // for heatmap
 
+  const activeBreaks = AQI_BREAKS[pollutantType] || AQI_BREAKS.DEFAULT;
   const rawCats = {}; const ncCats = {};
-  for(const b of PCD_BREAKS) { rawCats[b.label] = 0; ncCats[b.label] = 0; }
+  for(const b of activeBreaks) { rawCats[b.label] = 0; ncCats[b.label] = 0; }
 
   let allRawVals = []; let allNCVals = [];
+  const badThreshold = getBadThreshold(pollutantType);
 
   sortedTs.forEach(ts => {
      let sRaw = 0, cRaw = 0, sNC = 0, cNC = 0;
@@ -625,8 +680,10 @@ function get72hData(stationKey) {
 
      keys.forEach(k => {
         const dm = STATIONS[k].data;
-        if(dm[ts] !== undefined) { sRaw += dm[ts]; cRaw++; }
-        const look = getLookback(dm, p.y, p.m, p.d, p.h);
+        if(dm[ts] && dm[ts][pollutantType] !== undefined) { 
+            sRaw += dm[ts][pollutantType]; cRaw++; 
+        }
+        const look = getLookback(dm, p.y, p.m, p.d, p.h, pollutantType);
         const nc = nowcast(look);
         if(nc !== null) { sNC += nc; cNC++; }
      });
@@ -637,7 +694,7 @@ function get72hData(stationKey) {
 
      if(avgRaw !== null) {
        allRawVals.push(avgRaw);
-       const bandR = getAQIBand(avgRaw); if(bandR) rawCats[bandR.label]++;
+       const bandR = getAQIBand(avgRaw, pollutantType); if(bandR) rawCats[bandR.label]++;
        if(!hourlyAgg[p.h]) hourlyAgg[p.h] = {sum:0, cnt:0};
        hourlyAgg[p.h].sum += avgRaw; hourlyAgg[p.h].cnt++;
        
@@ -646,7 +703,7 @@ function get72hData(stationKey) {
      }
      if(avgNC !== null) {
        allNCVals.push(avgNC);
-       const bandN = getAQIBand(avgNC); if(bandN) ncCats[bandN.label]++;
+       const bandN = getAQIBand(avgNC, pollutantType); if(bandN) ncCats[bandN.label]++;
      }
   });
 
@@ -655,7 +712,8 @@ function get72hData(stationKey) {
     avgRaw: allRawVals.length ? allRawVals.reduce((a,b)=>a+b,0)/allRawVals.length : null,
     avgNC: allNCVals.length ? allNCVals.reduce((a,b)=>a+b,0)/allNCVals.length : null,
     maxRaw: allRawVals.length ? Math.max(...allRawVals) : null,
-    badHours: allRawVals.filter(v => v > 37.5).length,
+    badHours: allRawVals.filter(v => v > badThreshold).length,
+    badThreshold: badThreshold,
     totalHours: allRawVals.length
   };
 }
@@ -663,12 +721,16 @@ function get72hData(stationKey) {
 function updateDashboard() {
   if(!STATIONS) return;
   const stationKey = document.getElementById('dash-station').value;
-  const fd = get72hData(stationKey);
+  const pol = document.getElementById('dash-pollutant').value;
+  const unit = getUnit(pol);
+  const fd = get72hData(stationKey, pol);
+  const activeBreaks = AQI_BREAKS[pol] || AQI_BREAKS.DEFAULT;
 
-  document.getElementById('kpi-avg').innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+'<span class="kpi-unit">µg/m³</span>' : '—';
-  document.getElementById('kpi-nc').innerHTML = fd.avgNC != null ? fd.avgNC.toFixed(1)+'<span class="kpi-unit">µg/m³</span>' : '—';
+  document.getElementById('kpi-avg').innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">${unit}</span>` : '—';
+  document.getElementById('kpi-nc').innerHTML = fd.avgNC != null ? fd.avgNC.toFixed(1)+`<span class="kpi-unit">${unit}</span>` : '—';
+  document.getElementById('kpi-bad-label').textContent = `ชั่วโมงที่เกิน ${fd.badThreshold} ${unit}`;
   document.getElementById('kpi-bad').innerHTML = fd.badHours+'<span class="kpi-unit">ชม.</span>';
-  document.getElementById('kpi-max').innerHTML = fd.maxRaw != null ? fd.maxRaw.toFixed(1)+'<span class="kpi-unit">µg/m³</span>' : '—';
+  document.getElementById('kpi-max').innerHTML = fd.maxRaw != null ? fd.maxRaw.toFixed(1)+`<span class="kpi-unit">${unit}</span>` : '—';
   
   const diffVal = (fd.avgRaw != null && fd.avgNC != null) ? fd.avgNC - fd.avgRaw : null;
   document.getElementById('kpi-nc-d').innerHTML = diffVal != null ? `<span class="${diffVal>0?'up':'down'}">${diffVal>0?'▲':'▼'} ${Math.abs(diffVal).toFixed(1)} จากค่า Raw</span>` : '';
@@ -684,7 +746,7 @@ function updateDashboard() {
     options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7a8090',font:{family:'Sarabun',size:12}}},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{color:'#7a8090',font:{family:'IBM Plex Mono',size:10},maxRotation:45},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#7a8090',font:{family:'IBM Plex Mono',size:11}},grid:{color:'rgba(255,255,255,.05)'}}}}
   });
 
-  const catLabels = PCD_BREAKS.map(b=>b.label); const catColors = PCD_BREAKS.map(b=>b.color);
+  const catLabels = activeBreaks.map(b=>b.label); const catColors = activeBreaks.map(b=>b.color);
   const rawCounts = catLabels.map(l => fd.rawCats[l]||0); const ncCounts = catLabels.map(l => fd.ncCats[l]||0);
 
   destroyChart('donut-raw');
@@ -698,45 +760,44 @@ function updateDashboard() {
   const hours = Array.from({length:24},(_,i)=>i);
   const diurnalVals = hours.map(h => fd.hourlyAgg[h] ? parseFloat((fd.hourlyAgg[h].sum/fd.hourlyAgg[h].cnt).toFixed(1)) : null);
   destroyChart('diurnal');
-  charts['diurnal'] = new Chart(document.getElementById('chart-diurnal'), {type:'line',data:{labels:hours.map(h=>String(h).padStart(2,'0')+':00'),datasets:[{label:'PM2.5 เฉลี่ยตามเวลา',data:diurnalVals,borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,.1)',tension:.4,pointRadius:2,fill:true,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7a8090',font:{family:'IBM Plex Mono',size:9}},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#7a8090'},grid:{color:'rgba(255,255,255,.05)'}}}}});
+  charts['diurnal'] = new Chart(document.getElementById('chart-diurnal'), {type:'line',data:{labels:hours.map(h=>String(h).padStart(2,'0')+':00'),datasets:[{label:`ค่าเฉลี่ย ${pol}`,data:diurnalVals,borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,.1)',tension:.4,pointRadius:2,fill:true,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7a8090',font:{family:'IBM Plex Mono',size:9}},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#7a8090'},grid:{color:'rgba(255,255,255,.05)'}}}}});
 
-  buildHourlyHeatmap(fd.hmByDate);
-  buildTable();
+  buildHourlyHeatmap(fd.hmByDate, pol);
+  buildTable(pol);
 }
 
-function buildHourlyHeatmap(hmByDate) {
+function buildHourlyHeatmap(hmByDate, pol) {
   const container = document.getElementById('heatmap-container');
   const allDates = Object.keys(hmByDate).sort();
   if(!allDates.length) return container.innerHTML = '<div style="color:var(--muted)">ไม่มีข้อมูล</div>';
   
   let html = '<div style="display:flex;flex-direction:column;gap:6px">';
   for(const date of allDates) {
-    html += `<div class="hm-row"><span class="hm-label">${date.slice(5)}</span>`; // Show only MM-DD
+    html += `<div class="hm-row"><span class="hm-label">${date.slice(5)}</span>`; 
     for(let h=0; h<24; h++) {
       const val = hmByDate[date][h];
-      const band = getAQIBand(val);
+      const band = getAQIBand(val, pol);
       html += `<div class="hm-cell" style="background:${band?.color??'#2e3240'};flex:1" title="${date} ${padZ(h)}:00 | ${val!=null?val.toFixed(1):'ไม่มีข้อมูล'}"></div>`;
     }
     html += '</div>';
   }
-  // X-axis labels
   html += `<div class="hm-row"><span class="hm-label"></span>`;
   for(let h=0; h<24; h+=3) html += `<div style="flex:3;font-size:9px;color:var(--muted);font-family:var(--mono)">${padZ(h)}</div>`;
   html += '</div></div>';
   container.innerHTML = html;
 }
 
-function buildTable() {
+function buildTable(pol) {
   const rows = STATION_KEYS.map(k => {
-    const fd = get72hData(k);
+    const fd = get72hData(k, pol);
     if(fd.totalHours === 0) return null;
     return {key:k, avg:fd.avgRaw, ncAvg:fd.avgNC, max:fd.maxRaw, bad:fd.badHours};
   }).filter(Boolean);
 
   document.getElementById('comp-table').innerHTML = `<thead><tr>
-    <th>สถานี</th><th>เฉลี่ย Raw (µg/m³)</th><th>เฉลี่ย NowCast</th><th>ผลต่าง NC−Raw</th><th>ค่าสูงสุด</th><th>ชั่วโมง >37.5</th>
+    <th>สถานี</th><th>เฉลี่ย Raw</th><th>เฉลี่ย NowCast</th><th>ผลต่าง NC−Raw</th><th>ค่าสูงสุด</th><th>ชั่วโมงเกินเกณฑ์</th>
   </tr></thead><tbody>${rows.map(r => {
-    const band = getAQIBand(r.avg);
+    const band = getAQIBand(r.avg, pol);
     const diff = (r.ncAvg!=null && r.avg!=null) ? r.ncAvg - r.avg : null;
     const diffStr = diff!=null?(diff>0?'+':'')+diff.toFixed(1):'—';
     const diffColor = diff!=null?(diff>0?'#e74c3c':'#2ecc71'):'#7a8090';
