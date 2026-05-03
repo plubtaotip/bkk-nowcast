@@ -222,7 +222,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       <div class="dash-grid" style="margin-bottom:16px">
         <div class="chart-card">
           <div class="chart-card-title">แนวโน้มมลพิษ ย้อนหลัง 72 ชั่วโมง</div>
-          <div class="chart-card-sub">เปรียบเทียบค่ารายชั่วโมง (Raw Data) กับการเกลี่ยความผันผวนด้วย NowCast</div>
+          <div class="chart-card-sub">เปรียบเทียบความเข้มข้นดิบ (Raw Value) กับการเกลี่ยความผันผวนด้วย NowCast</div>
           <div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div>
         </div>
       </div>
@@ -441,13 +441,21 @@ async function fetchAir4ThaiDynamic() {
         
         const tsKey = `${s.AQILast.date} ${s.AQILast.time}:00`;
         let pData = {};
+        
+        // เราดึงเฉพาะ .value เท่านั้น ไม่ใช้ AQI ที่ถูกคำนวณมาแล้ว เพื่อให้ NowCast สมบูรณ์
         allPollutants.forEach(pol => {
-            if(s.AQILast[pol] && !isNaN(s.AQILast[pol].value)) {
-                pData[pol] = parseFloat(s.AQILast[pol].value);
+            if(s.AQILast[pol] && s.AQILast[pol].value !== undefined) {
+                const rawValue = parseFloat(s.AQILast[pol].value);
+                if(!isNaN(rawValue)) {
+                    pData[pol] = rawValue;
+                }
             }
         });
         
-        newStations[key].data[tsKey] = pData;
+        // บันทึกก็ต่อเมื่อมีข้อมูลอย่างน้อย 1 ประเภท
+        if (Object.keys(pData).length > 0) {
+            newStations[key].data[tsKey] = pData;
+        }
       }
     });
   });
@@ -616,7 +624,7 @@ function buildPopup(key, nc, raw, dateStr, hour, pol, unit) {
         <div style="font-size:22px;font-weight:700;color:${ncBand?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">${unit}</span></div>
       </div>
       <div style="background:#1f2229;border-radius:8px;padding:10px">
-        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">รายชั่วโมง (Raw)</div>
+        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">ความเข้มข้นดิบ (Raw Value)</div>
         <div style="font-size:22px;font-weight:700;color:${rawBand?.color??'#444'};margin-bottom:4px">${raw!=null?raw.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">${unit}</span></div>
       </div>
     </div>
