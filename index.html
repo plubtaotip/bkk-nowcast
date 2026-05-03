@@ -37,7 +37,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .tab { font-family:var(--font);font-size:13px;font-weight:500; padding:7px 18px;border-radius:7px;border:none; background:transparent;color:var(--muted);cursor:pointer;transition:all .2s; }
 .tab:hover{color:var(--text)}
 .tab.active{background:var(--bg);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
-
 .panel{display:none} .panel.active{display:block}
 
 /* ═══════════════ MAP TAB ═══════════════ */
@@ -67,6 +66,11 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .bar-wrap{height:3px;background:var(--dim);border-radius:2px;margin-top:6px;overflow:hidden}
 .bar-fill{height:100%;border-radius:2px;transition:width .5s}
 #map{height:100%;min-height:400px}
+
+/* Custom Map Dropdown Control */
+.leaflet-control-pollutant { background: var(--bg3) !important; border: 1px solid var(--border2) !important; border-radius: 8px !important; padding: 6px 8px !important; box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important; cursor: pointer; }
+.map-pol-select { background: transparent; color: var(--text); border: none; font-family: var(--font); font-size: 14px; font-weight: 600; cursor: pointer; outline: none; }
+.map-pol-select option { background: var(--bg2); color: var(--text); }
 
 /* ═══════════════ DASHBOARD TAB ═══════════════ */
 .dash{padding:28px;max-width:1400px;margin:0 auto}
@@ -110,7 +114,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .hm-row{display:flex;gap:4px;align-items:center;margin-bottom:4px}
 .hm-label{font-size:11px;color:var(--muted);font-family:var(--mono);width:45px;flex-shrink:0;text-align:right;margin-right:6px}
 
-/* Leaflet */
+/* Leaflet Overrides */
 .pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;font-size:12px;border-radius:50%;border:2px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.5);transition:transform .2s;}
 .pm-marker:hover{transform:scale(1.15)}
 .nowcast-note{font-size:11px;color:var(--muted);background:var(--bg4);border-radius:6px;padding:8px 12px;font-family:var(--mono);line-height:1.6;}
@@ -118,35 +122,10 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .leaflet-popup-tip{background:var(--bg3) !important}
 .leaflet-popup-content{margin:14px 16px !important;font-family:var(--font)}
 
-/* No Data Placeholder */
 .no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; gap: 16px; text-align: center; color: var(--muted); }
 .no-data-placeholder .nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
 .no-data-placeholder .nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-/* Custom Map Dropdown Control */
-.leaflet-control-pollutant {
-  background: var(--bg3) !important;
-  border: 1px solid var(--border2) !important;
-  border-radius: 8px !important;
-  padding: 6px 8px !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
-  cursor: pointer;
-}
-.map-pol-select {
-  background: transparent;
-  color: var(--text);
-  border: none;
-  font-family: var(--font);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  outline: none;
-}
-.map-pol-select option {
-  background: var(--bg2);
-  color: var(--text);
-}
 </style>
 </head>
 <body>
@@ -165,7 +144,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
   </div>
 </header>
 
-<!-- Global Status Bar -->
 <div id="global-status">⏳ กำลังโหลดข้อมูลประวัติย้อนหลัง 72 ชม. และข้อมูลล่าสุด...</div>
 
 <!-- ═══ TAB: MAP ═══ -->
@@ -189,7 +167,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
       <div class="nowcast-note">
         <b style="color:var(--accent)">ข้อมูลแบบ Real-time</b><br>
-        การแสดงผลปรับตามประเภทมลพิษที่เลือก<br>
+        เลือกประเภทมลพิษได้ที่มุมขวาบนของแผนที่<br>
         ใช้เกณฑ์สีมาตรฐาน PCD 2566
       </div>
 
@@ -297,7 +275,7 @@ let STATION_META = {};
 let STATION_KEYS = [];
 let STATIONS = null;
 
-// เกณฑ์สีมาตรฐานอ้างอิงจากระบบ AQI (ปรับจูนสำหรับแต่ละมลพิษ)
+// เกณฑ์สีมาตรฐานอ้างอิงจากระบบ AQI 
 const AQI_BREAKS = {
   PM25: [
     {lo:0, hi:15.0, label:'ดี', color:'#00bcd4', textColor:'#fff'},
@@ -332,7 +310,7 @@ function getAQIBand(val, pollutantType) {
 function getBadThreshold(pollutantType) {
   if (pollutantType === 'PM25') return 37.5;
   if (pollutantType === 'PM10') return 80.0;
-  return 50.0; // ค่าเริ่มต้นสำหรับก๊าซอื่นๆ
+  return 50.0; 
 }
 
 function getUnit(pollutantType) {
@@ -394,13 +372,50 @@ function computeNowcastAt(dateStr, hour, pollutantType) {
 }
 
 // ═══════════════════════════════════════════
+// DATA HEALING (Linear Interpolation)
+// ═══════════════════════════════════════════
+function fillMissingData(stationData) {
+  const keys = Object.keys(stationData).sort();
+  if (keys.length < 2) return stationData;
+
+  const filledData = { ...stationData };
+  const pollutants = ['PM25', 'PM10', 'O3', 'CO', 'NO2', 'SO2'];
+
+  for (let i = 0; i < keys.length - 1; i++) {
+    // ใช้ replace() ป้องกันปัญหาแปลงวันที่ในเบราว์เซอร์บางรุ่น
+    const t1 = new Date(keys[i].replace(/-/g, '/')); 
+    const t2 = new Date(keys[i+1].replace(/-/g, '/'));
+    const diffHours = Math.round((t2 - t1) / 3600000);
+
+    // ถ้าข้อมูลหายไประหว่าง 2 ถึง 6 ชั่วโมง ให้สร้างจุดเชื่อมต่อเส้นตรง
+    if (diffHours > 1 && diffHours <= 6) { 
+      for (let j = 1; j < diffHours; j++) {
+        const gapTime = new Date(t1.getTime() + j * 3600000);
+        const gapKey = makeTSKey(gapTime.getFullYear(), gapTime.getMonth()+1, gapTime.getDate(), gapTime.getHours());
+
+        filledData[gapKey] = {};
+        pollutants.forEach(pol => {
+          const val1 = stationData[keys[i]][pol];
+          const val2 = stationData[keys[i+1]][pol];
+          
+          if (val1 !== undefined && val2 !== undefined) {
+            filledData[gapKey][pol] = parseFloat((val1 + j * ((val2 - val1) / diffHours)).toFixed(1));
+          }
+        });
+      }
+    }
+  }
+  return filledData;
+}
+
+// ═══════════════════════════════════════════
 // SMART FETCH: MULTI-POLLUTANT PARSING
 // ═══════════════════════════════════════════
 async function fetchAir4ThaiDynamic() {
   const statusEl = document.getElementById('global-status');
   statusEl.style.display = 'block';
   statusEl.className = '';
-  statusEl.innerHTML = '⏳ กำลังประมวลผลข้อมูล 72 ชม. ล่าสุด...';
+  statusEl.innerHTML = '⏳ กำลังประมวลผลข้อมูล 72 ชม. ล่าสุด และตรวจสอบความสมบูรณ์ของข้อมูล...';
 
   let allSnapshots = [];
 
@@ -446,7 +461,7 @@ async function fetchAir4ThaiDynamic() {
     return;
   }
 
-  // 3. ผสานข้อมูล (Parse all pollutants)
+  // 3. ผสานข้อมูล
   STATION_META = {};
   STATION_KEYS = [];
   const newStations = {};
@@ -466,25 +481,19 @@ async function fetchAir4ThaiDynamic() {
         const tsKey = `${s.AQILast.date} ${s.AQILast.time}:00`;
         let pData = {};
         
-        // เราดึงเฉพาะ .value เท่านั้น ไม่ใช้ AQI ที่ถูกคำนวณมาแล้ว เพื่อให้ NowCast สมบูรณ์
         allPollutants.forEach(pol => {
             if(s.AQILast[pol] && s.AQILast[pol].value !== undefined) {
                 const rawValue = parseFloat(s.AQILast[pol].value);
-                if(!isNaN(rawValue)) {
-                    pData[pol] = rawValue;
-                }
+                if(!isNaN(rawValue)) pData[pol] = rawValue;
             }
         });
         
-        // บันทึกก็ต่อเมื่อมีข้อมูลอย่างน้อย 1 ประเภท
-        if (Object.keys(pData).length > 0) {
-            newStations[key].data[tsKey] = pData;
-        }
+        if (Object.keys(pData).length > 0) newStations[key].data[tsKey] = pData;
       }
     });
   });
 
-  // สร้างข้อมูลจำลองถ้ามีแค่ 1 จุด (เพื่อไม่ให้ UI พังตอนเพิ่งรันบอทครั้งแรก)
+  // สร้างข้อมูลจำลองช่วงแรกและสั่งซ่อมแซมข้อมูลที่ขาดหาย (Data Healing)
   for (const key of STATION_KEYS) {
      const st = newStations[key];
      const timeKeys = Object.keys(st.data).sort();
@@ -499,12 +508,15 @@ async function fetchAir4ThaiDynamic() {
             st.data[pastTs] = { ...singleObj };
         }
      }
+     
+     // นำข้อมูลของแต่ละสถานีเข้าสู่กระบวนการ Linear Interpolation
+     newStations[key].data = fillMissingData(newStations[key].data);
   }
 
   STATIONS = newStations;
   
-  statusEl.innerHTML = `✓ อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')}`;
-  setTimeout(() => { statusEl.style.display = 'none'; }, 4000);
+  statusEl.innerHTML = `✓ อัปเดตและประมวลผลข้อมูลเรียบร้อยแล้ว`;
+  setTimeout(() => { statusEl.style.display = 'none'; }, 3000);
   
   document.getElementById('dash-no-data').style.display = 'none';
   document.getElementById('dash-content').style.display = 'block';
@@ -514,25 +526,13 @@ async function fetchAir4ThaiDynamic() {
   goToLatest();
 }
 
-function startAutoSync() {
-  const now = new Date();
-  const nextSync = new Date(now);
-  if (now.getMinutes() >= 2) nextSync.setHours(now.getHours() + 1);
-  nextSync.setMinutes(2); nextSync.setSeconds(0); nextSync.setMilliseconds(0);
-  const waitTime = nextSync.getTime() - now.getTime();
-
-  setTimeout(() => {
-    fetchAir4ThaiDynamic().then(() => startAutoSync()).catch(() => startAutoSync());
-  }, waitTime);
-}
-
 // ═══════════════════════════════════════════
-// UI CONTROLLERS
+// UI CONTROLLERS & SYNC
 // ═══════════════════════════════════════════
 function updateUI() {
     const pol = document.getElementById('dash-pollutant').value;
     
-    // อัปเดตเมนูบนแผนที่ให้ตรงกับ Dashboard ด้วย
+    // อัปเดตเมนูบนแผนที่ให้ตรงกับ Dashboard
     const mapSelect = document.getElementById('map-pollutant');
     if(mapSelect) mapSelect.value = pol;
 
@@ -545,12 +545,9 @@ function updateUI() {
     });
 }
 
-// ฟังก์ชันใหม่: เมื่อผู้ใช้กดเปลี่ยนมลพิษจากบนแผนที่
 function syncFromMap() {
     const mapPol = document.getElementById('map-pollutant').value;
-    // สั่งเปลี่ยนค่าในหน้า Dashboard ให้ตรงกัน
     document.getElementById('dash-pollutant').value = mapPol;
-    // เรียกให้ระบบอัปเดตกราฟและแผนที่ทั้งหมด
     updateUI(); 
 }
 
@@ -593,9 +590,8 @@ function initMap() {
   mapInstance = L.map('map', { center: [13.75, 100.52], zoom: 11 });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB', subdomains: 'abcd', maxZoom: 19 }).addTo(mapInstance);
 
-  // --- โค้ดที่เพิ่มใหม่: สร้างเมนูเลือกมลพิษบนแผนที่ ---
   const PollutantControl = L.Control.extend({
-    options: { position: 'topright' }, // วางไว้มุมขวาบน
+    options: { position: 'topright' },
     onAdd: function (map) {
       const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-pollutant');
       container.innerHTML = `
@@ -608,13 +604,11 @@ function initMap() {
           <option value="SO2">SO2</option>
         </select>
       `;
-      // ป้องกันไม่ให้การคลิกเมนู ทะลุไปโดนแผนที่ด้านหลัง
       L.DomEvent.disableClickPropagation(container);
       return container;
     }
   });
   mapInstance.addControl(new PollutantControl());
-  // ---------------------------------------------
 }
 
 function updateMapSidebar() { if(STATIONS) updateMap(); }
@@ -639,7 +633,6 @@ function updateMap(dateStr, hour) {
     const tc = band?.textColor ?? '#fff';
     const rawBand = getAQIBand(raw, pol);
     
-    // Scale bar based on generic 0-100 percentage for visual representation
     const maxScale = (pol === 'PM10') ? 150 : (pol === 'CO' ? 10 : 75);
     const ncPct = nc != null ? Math.min(nc / maxScale * 100, 100) : 0;
     const rawPct = raw != null ? Math.min(raw / maxScale * 100, 100) : 0;
@@ -684,7 +677,7 @@ function buildPopup(key, nc, raw, dateStr, hour, pol, unit) {
         <div style="font-size:22px;font-weight:700;color:${ncBand?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">${unit}</span></div>
       </div>
       <div style="background:#1f2229;border-radius:8px;padding:10px">
-        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">ความเข้มข้นดิบ (Raw Value)</div>
+        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">ความเข้มข้นดิบ (Raw)</div>
         <div style="font-size:22px;font-weight:700;color:${rawBand?.color??'#444'};margin-bottom:4px">${raw!=null?raw.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">${unit}</span></div>
       </div>
     </div>
@@ -731,8 +724,8 @@ function get72hData(stationKey, pollutantType) {
   const sortedTs = Array.from(allTsSet).sort();
 
   const tlLabels = []; const tlRaw = []; const tlNC = [];
-  let hourlyAgg = {}; // for diurnal
-  let hmByDate = {};  // for heatmap
+  let hourlyAgg = {}; 
+  let hmByDate = {};  
 
   const activeBreaks = AQI_BREAKS[pollutantType] || AQI_BREAKS.DEFAULT;
   const rawCats = {}; const ncCats = {};
@@ -887,7 +880,16 @@ document.getElementById('tp-date').addEventListener('change', () => { if(STATION
 document.getElementById('tp-hour').addEventListener('change', () => { if(STATIONS) updateMap(); });
 
 initMap();
-fetchAir4ThaiDynamic().then(() => startAutoSync());
+fetchAir4ThaiDynamic().then(() => {
+  // เริ่มระบบนับเวลาอัปเดตอัตโนมัติ
+  setInterval(() => {
+    const now = new Date();
+    // ถ้าถึงนาทีที่ 20 ให้แอบดึงข้อมูลใหม่แบบเงียบๆ
+    if (now.getMinutes() === 20 && now.getSeconds() === 0) {
+       fetchAir4ThaiDynamic();
+    }
+  }, 1000); 
+});
 </script>
 </body>
 </html>
