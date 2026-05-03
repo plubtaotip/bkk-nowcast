@@ -123,6 +123,30 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .no-data-placeholder .nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
 .no-data-placeholder .nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* Custom Map Dropdown Control */
+.leaflet-control-pollutant {
+  background: var(--bg3) !important;
+  border: 1px solid var(--border2) !important;
+  border-radius: 8px !important;
+  padding: 6px 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5) !important;
+  cursor: pointer;
+}
+.map-pol-select {
+  background: transparent;
+  color: var(--text);
+  border: none;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+}
+.map-pol-select option {
+  background: var(--bg2);
+  color: var(--text);
+}
 </style>
 </head>
 <body>
@@ -506,15 +530,28 @@ function startAutoSync() {
 // UI CONTROLLERS
 // ═══════════════════════════════════════════
 function updateUI() {
+    const pol = document.getElementById('dash-pollutant').value;
+    
+    // อัปเดตเมนูบนแผนที่ให้ตรงกับ Dashboard ด้วย
+    const mapSelect = document.getElementById('map-pollutant');
+    if(mapSelect) mapSelect.value = pol;
+
     updateDashboard();
     updateMapSidebar();
     
-    // อัปเดตหน่วยวัดตามประเภทฝุ่น
-    const pol = document.getElementById('dash-pollutant').value;
     const unit = getUnit(pol);
     document.querySelectorAll('.kpi-unit').forEach(el => {
         if(el.parentElement.id !== 'kpi-bad') el.textContent = unit;
     });
+}
+
+// ฟังก์ชันใหม่: เมื่อผู้ใช้กดเปลี่ยนมลพิษจากบนแผนที่
+function syncFromMap() {
+    const mapPol = document.getElementById('map-pollutant').value;
+    // สั่งเปลี่ยนค่าในหน้า Dashboard ให้ตรงกัน
+    document.getElementById('dash-pollutant').value = mapPol;
+    // เรียกให้ระบบอัปเดตกราฟและแผนที่ทั้งหมด
+    updateUI(); 
 }
 
 function buildDynamicUI() {
@@ -555,6 +592,29 @@ let mapInstance = null; let mapMarkers = {};
 function initMap() {
   mapInstance = L.map('map', { center: [13.75, 100.52], zoom: 11 });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB', subdomains: 'abcd', maxZoom: 19 }).addTo(mapInstance);
+
+  // --- โค้ดที่เพิ่มใหม่: สร้างเมนูเลือกมลพิษบนแผนที่ ---
+  const PollutantControl = L.Control.extend({
+    options: { position: 'topright' }, // วางไว้มุมขวาบน
+    onAdd: function (map) {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-pollutant');
+      container.innerHTML = `
+        <select class="map-pol-select" id="map-pollutant" onchange="syncFromMap()">
+          <option value="PM25">PM2.5</option>
+          <option value="PM10">PM10</option>
+          <option value="O3">O3</option>
+          <option value="CO">CO</option>
+          <option value="NO2">NO2</option>
+          <option value="SO2">SO2</option>
+        </select>
+      `;
+      // ป้องกันไม่ให้การคลิกเมนู ทะลุไปโดนแผนที่ด้านหลัง
+      L.DomEvent.disableClickPropagation(container);
+      return container;
+    }
+  });
+  mapInstance.addControl(new PollutantControl());
+  // ---------------------------------------------
 }
 
 function updateMapSidebar() { if(STATIONS) updateMap(); }
