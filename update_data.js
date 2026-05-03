@@ -6,7 +6,6 @@ async function fetchAndSave() {
     const targetUrl = 'http://air4thai.pcd.go.th/services/getNewAQI_JSON.php';
     const encodedUrl = encodeURIComponent(targetUrl);
     
-    // ใช้ Proxy 3 ช่องทางเหมือนหน้าเว็บ เพื่อป้องกันการเชื่อมต่อล้มเหลว
     const proxyList = [
       { url: `https://api.allorigins.win/get?url=${encodedUrl}`, type: 'allorigins' },
       { url: `https://api.codetabs.com/v1/proxy?quest=${targetUrl}`, type: 'raw' },
@@ -38,34 +37,56 @@ async function fetchAndSave() {
       throw new Error('Proxy ล่มทั้งหมด ไม่สามารถดึงข้อมูลได้ในรอบนี้');
     }
 
-    // 2. อ่านไฟล์ประวัติเดิม (ถ้ามีและไม่ว่างเปล่า)
+    // ═════════════════════════════════════════════════════
+    // DATA FILTERING: คัดกรองเอาเฉพาะ กทม. และ PM2.5
+    // ═════════════════════════════════════════════════════
+    const bkkStationsOnly = newData.stations
+      // 1. กรองเอาเฉพาะสถานีที่มีคำว่า "กรุงเทพ" ในพื้นที่
+      .filter(station => station.areaTH && station.areaTH.includes('กรุงเทพ'))
+      // 2. แปลงโครงสร้างข้อมูลใหม่ เก็บเฉพาะสิ่งที่จำเป็น
+      .map(station => {
+        return {
+          stationID: station.stationID,
+          nameTH: station.nameTH,
+          nameEN: station.nameEN,
+          areaTH: station.areaTH,
+          lat: station.lat,
+          long: station.long,
+          AQILast: {
+            date: station.AQILast.date,
+            time: station.AQILast.time,
+            // ดึงมาแค่ PM2.5 (ถ้าสถานีไหนไม่มีข้อมูล PM2.5 ให้เซ็ตเป็น null)
+            PM25: station.AQILast.PM25 ? { value: station.AQILast.PM25.value } : { value: null }
+          }
+        };
+      });
+
+    // นำข้อมูลที่ถูกคัดกรองแล้วจนมีขนาดเล็ก นำไปใส่ทับข้อมูลเดิม
+    newData.stations = bkkStationsOnly;
+    // ═════════════════════════════════════════════════════
+
     let history = [];
     if (fs.existsSync('history.json')) {
       const rawData = fs.readFileSync('history.json', 'utf8');
-      // ป้องกัน Error หาก history.json ในระบบว่างเปล่า
       if (rawData.trim() !== '') {
         history = JSON.parse(rawData);
       }
     }
 
-    // 3. แนบข้อมูลใหม่
     history.push({
       timestamp: new Date().toISOString(),
       data: newData
     });
 
-    // 4. ตัดข้อมูลเก่าทิ้ง เก็บไว้ 72 ชั่วโมง
     if (history.length > 72) {
       history.shift(); 
     }
 
-    // 5. บันทึกไฟล์
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log('บันทึกข้อมูลคุณภาพอากาศสำเร็จ!');
+    console.log('บันทึกข้อมูลคุณภาพอากาศสำเร็จ! (จำกัดเฉพาะโซน กทม. และ PM2.5)');
 
   } catch (error) {
     console.error('เกิดข้อผิดพลาดรุนแรง:', error.message);
-    // บังคับให้ระบบแจ้ง Error เพื่อหยุดหุ่นยนต์ไม่ให้เซฟไฟล์เปล่า
     process.exit(1); 
   }
 }
