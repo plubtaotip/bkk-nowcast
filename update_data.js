@@ -1,16 +1,12 @@
-// ไฟล์: update_data.js (แก้ไขเฉพาะท่อนบน)
+// ไฟล์: update_data.js
 const fs = require('fs');
 
 async function fetchAndSave() {
   try {
-    // 1. สร้างรหัสเวลาปัจจุบัน (สุ่มไม่ซ้ำกันในแต่ละมิลลิวินาที)
-    const timestamp = Date.now(); 
-    
-    // 2. แปะ ?_t=เวลา เข้าไปท้าย URL เพื่อทำ Cache Busting
+    const timestamp = Date.now();
     const targetUrl = `http://air4thai.pcd.go.th/services/getNewAQI_JSON.php?_t=${timestamp}`;
     const encodedUrl = encodeURIComponent(targetUrl);
     
-    // 3. เพิ่มพารามิเตอร์ disableCache=true ใน allorigins เพื่อบังคับดึงข้อมูลใหม่
     const proxyList = [
       { url: `https://api.allorigins.win/get?disableCache=true&url=${encodedUrl}`, type: 'allorigins' },
       { url: `https://api.codetabs.com/v1/proxy?quest=${targetUrl}`, type: 'raw' },
@@ -19,7 +15,6 @@ async function fetchAndSave() {
 
     let newData = null;
 
-// ... (โค้ดส่วนที่เหลือตั้งแต่ for (const proxy of proxyList) ให้คงไว้เหมือนเดิมครับ) ...
     for (const proxy of proxyList) {
       try {
         console.log(`กำลังดึงข้อมูลผ่าน: ${proxy.url}`);
@@ -43,66 +38,94 @@ async function fetchAndSave() {
       throw new Error('Proxy ล่มทั้งหมด ไม่สามารถดึงข้อมูลได้ในรอบนี้');
     }
 
-    // คัดกรองเอาเฉพาะ กทม. และ PM2.5
-    const bkkStationsOnly = newData.stations
-      .filter(station => station.areaTH && station.areaTH.includes('กรุงเทพ'))
-      .map(station => {
-        return {
-          stationID: station.stationID,
-          nameTH: station.nameTH,
-          nameEN: station.nameEN,
-          areaTH: station.areaTH,
-          lat: station.lat,
-          long: station.long,
-          AQILast: {
-            date: station.AQILast.date,
-            time: station.AQILast.time,
-            PM25: station.AQILast.PM25 ? { value: station.AQILast.PM25.value } : { value: null }
-          }
-        };
-      });
+    // 1. คัดกรองเฉพาะสถานีใน กทม.
+    const bkkStations = newData.stations.filter(s => s.areaTH && s.areaTH.includes('กรุงเทพ'));
+    
+    if (bkkStations.length === 0) {
+      throw new Error('ไม่พบข้อมูลสถานีใน กทม.');
+    }
 
-    newData.stations = bkkStationsOnly;
+    // 2. ค้นหาวันที่และเวลาที่ "อัปเดตใหม่ที่สุด" ในกลุ่ม กทม. เพื่อใช้เป็นเวลาอ้างอิง
+    let latestDateTime = "";
+    let repDate = "";
+    let repTime = "";
+    
+    bkkStations.forEach(s => {
+      if (s.AQILast && s.AQILast.date && s.AQILast.time) {
+        const currentDT = s.AQILast.date + " " + s.AQILast.time;
+        if (currentDT > latestDateTime) {
+          latestDateTime = currentDT;
+          repDate = s.AQILast.date;
+          repTime = s.AQILast.time;
+        }
+      }
+    });
 
+    // แปลงเวลาให้เป็นรูปแบบช่วงเวลา (เช่น "09:00 - 10:00")
+    const hour = parseInt(repTime.split(':')[0], 10);
+    const prevHour = hour === 0 ? 23 : hour - 1;
+    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:00`;
+
+    // 3. สร้างข้อมูล 1 แถว (Flat Object) สำหรับรอบชั่วโมงนี้
+    const newRecord = {
+      date: repDate,
+      timeRange: timeRange
+    };
+
+    // 4. นำรหัสสถานีมาทำเป็นคอลัมน์ ตรวจสอบเวลาการอัปเดต และใส่ค่า PM2.5
+    bkkStations.forEach(s => {
+      // ตรวจสอบว่ามีข้อมูลครบ และ "เวลาของสถานี ตรงกับเวลาล่าสุดหรือไม่"
+      if (
+        s.AQILast && 
+        s.AQILast.date === repDate &&
+        s.AQILast.time === repTime && 
+        s.AQILast.PM25 && 
+        s.AQILast.PM25.value !== undefined && 
+        !isNaN(parseFloat(s.AQILast.PM25.value))
+      ) {
+        // อัปเดตแล้ว: ใส่ตัวเลขตามปกติ
+        newRecord[s.stationID] = parseFloat(s.AQILast.PM25.value);
+      } else {
+        // ไม่อัปเดต (เวลาเก่าค้างอยู่) หรือข้อมูลเสีย: ให้ใส่ "-" แทน
+        newRecord[s.stationID] = "-"; 
+      }
+    });
+
+    // 5. โหลดข้อมูลประวัติเดิม
     let history = [];
     if (fs.existsSync('history.json')) {
       const rawData = fs.readFileSync('history.json', 'utf8');
       if (rawData.trim() !== '') {
-        history = JSON.parse(rawData);
+        try {
+          history = JSON.parse(rawData);
+          if(history.length > 0 && history[0].timestamp) {
+              console.log("พบโครงสร้างไฟล์แบบเก่า ทำการรีเซ็ตประวัติใหม่ทั้งหมด...");
+              history = [];
+          }
+        } catch (e) { history = []; }
       }
     }
 
-    // ═════════════════════════════════════════════════════
-    // ป้องกันการอัปเดตซ้ำในชั่วโมงเดียวกัน (Duplicate Prevention)
-    // ═════════════════════════════════════════════════════
+    // 6. ป้องกันการอัปเดตซ้ำในชั่วโมงเดียวกัน (Idempotency)
     if (history.length > 0) {
-      const lastUpdate = new Date(history[history.length - 1].timestamp);
-      const now = new Date();
-      
-      // เช็คว่า ปี, เดือน, วัน, และ "ชั่วโมง" ตรงกันหรือไม่ (ใช้ UTC เพื่อความแม่นยำของระบบเซิร์ฟเวอร์)
-      if (
-        lastUpdate.getUTCFullYear() === now.getUTCFullYear() &&
-        lastUpdate.getUTCMonth() === now.getUTCMonth() &&
-        lastUpdate.getUTCDate() === now.getUTCDate() &&
-        lastUpdate.getUTCHours() === now.getUTCHours()
-      ) {
-        console.log('✅ ข้อมูลของชั่วโมงนี้ถูกอัปเดตไปแล้ว (อาจเกิดจากการกด Manual ไปก่อนหน้านี้) ระบบจะข้ามการทำงานเพื่อป้องกันข้อมูลซ้ำซ้อน');
-        process.exit(0); // สั่งหยุดสคริปต์และแจ้ง GitHub Actions ว่าทำงานเสร็จสมบูรณ์แบบไม่มี Error
+      const lastRecord = history[history.length - 1];
+      if (lastRecord.date === newRecord.date && lastRecord.timeRange === newRecord.timeRange) {
+        console.log('✅ ข้อมูลของช่วงเวลานี้ถูกอัปเดตไปแล้ว ระบบจะข้ามการทำงานเพื่อป้องกันข้อมูลซ้ำซ้อน');
+        process.exit(0);
       }
     }
-    // ═════════════════════════════════════════════════════
 
-    history.push({
-      timestamp: new Date().toISOString(),
-      data: newData
-    });
+    // 7. เพิ่มข้อมูลใหม่เข้าสู่ Array
+    history.push(newRecord);
 
+    // เก็บประวัติไว้แค่ 72 ชั่วโมง ลบอันเก่าสุดทิ้ง
     if (history.length > 72) {
       history.shift(); 
     }
 
+    // 8. บันทึกลงไฟล์
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log('บันทึกข้อมูลคุณภาพอากาศสำเร็จ! (จำกัดเฉพาะโซน กทม. และ PM2.5)');
+    console.log(`บันทึกข้อมูลสำเร็จ! รูปแบบตาราง (วันที่ ${newRecord.date} | ช่วงเวลา ${newRecord.timeRange})`);
 
   } catch (error) {
     console.error('เกิดข้อผิดพลาดรุนแรง:', error.message);
