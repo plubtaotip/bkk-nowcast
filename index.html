@@ -360,17 +360,34 @@ function getLookback(dataMap, y, m, d, h, pollutantType, n=8) {
 function computeNowcastAt(dateStr, hour, pollutantType) {
   const [y, m, d] = dateStr.split('-').map(Number);
   const results = {};
+  
   for(const key of STATION_KEYS) {
     if(!STATIONS[key]) { results[key] = {nc:null, raw:null}; continue; }
+    
     const dm = STATIONS[key].data;
+    // ดึงข้อมูลย้อนหลัง 8 ชั่วโมง
     const lookback = getLookback(dm, y, m, d, hour, pollutantType);
-    const nc = nowcast(lookback);
-    const raw = (dm[makeTSKey(y, m, d, hour)] && dm[makeTSKey(y, m, d, hour)][pollutantType]) !== undefined ? dm[makeTSKey(y, m, d, hour)][pollutantType] : null;
+    
+    let nc = nowcast(lookback);
+    let raw = lookback[0]; // ค่า raw ของชั่วโมงที่ผู้ใช้เลือก (อาจจะว่างเปล่าถ้าเซ็นเซอร์ส่งช้า)
+    
+    // --- 🛠️ ระบบ Fallback: ถอดรหัสแก้ปัญหาเซ็นเซอร์ส่งข้อมูลช้า ---
+    // ถ้าไม่มีข้อมูลในชั่วโมงนั้น ให้ถอยไปหาค่าล่าสุดภายใน 3 ชั่วโมงที่ผ่านมา
+    if (raw === null) {
+      for (let i = 1; i <= 3; i++) {
+        if (lookback[i] !== null) { 
+          raw = lookback[i]; 
+          // ถ้า NowCast คำนวณไม่ได้ด้วย ให้ยืมค่า raw ล่าสุดมาแสดงบนหมุดแผนที่แก้ขัดไปก่อน
+          if (nc === null) nc = raw; 
+          break; 
+        }
+      }
+    }
+    
     results[key] = { nc, raw: raw ?? null };
   }
   return results;
 }
-
 // ═══════════════════════════════════════════
 // DATA HEALING (Linear Interpolation)
 // ═══════════════════════════════════════════
