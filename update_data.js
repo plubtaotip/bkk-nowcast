@@ -1,19 +1,25 @@
-// ไฟล์: update_data.js
+// ไฟล์: update_data.js (แก้ไขเฉพาะท่อนบน)
 const fs = require('fs');
 
 async function fetchAndSave() {
   try {
-    const targetUrl = 'http://air4thai.pcd.go.th/services/getNewAQI_JSON.php';
+    // 1. สร้างรหัสเวลาปัจจุบัน (สุ่มไม่ซ้ำกันในแต่ละมิลลิวินาที)
+    const timestamp = Date.now(); 
+    
+    // 2. แปะ ?_t=เวลา เข้าไปท้าย URL เพื่อทำ Cache Busting
+    const targetUrl = `http://air4thai.pcd.go.th/services/getNewAQI_JSON.php?_t=${timestamp}`;
     const encodedUrl = encodeURIComponent(targetUrl);
     
+    // 3. เพิ่มพารามิเตอร์ disableCache=true ใน allorigins เพื่อบังคับดึงข้อมูลใหม่
     const proxyList = [
-      { url: `https://api.allorigins.win/get?url=${encodedUrl}`, type: 'allorigins' },
+      { url: `https://api.allorigins.win/get?disableCache=true&url=${encodedUrl}`, type: 'allorigins' },
       { url: `https://api.codetabs.com/v1/proxy?quest=${targetUrl}`, type: 'raw' },
       { url: `https://corsproxy.io/?${encodedUrl}`, type: 'raw' }
     ];
 
     let newData = null;
 
+// ... (โค้ดส่วนที่เหลือตั้งแต่ for (const proxy of proxyList) ให้คงไว้เหมือนเดิมครับ) ...
     for (const proxy of proxyList) {
       try {
         console.log(`กำลังดึงข้อมูลผ่าน: ${proxy.url}`);
