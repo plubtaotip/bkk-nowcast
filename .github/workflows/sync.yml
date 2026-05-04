@@ -2,8 +2,7 @@
 name: Auto-Sync PM2.5 Data
 
 on:
-  schedule:
-    - cron: '5 * * * *'
+ 
   workflow_dispatch: 
 
 jobs:
