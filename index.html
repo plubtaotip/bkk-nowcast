@@ -91,6 +91,13 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .kpi-unit{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
 .kpi-delta{font-size:12px;margin-top:6px;color:var(--muted)}
 .kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}
+
+/* ตารางแบบใหม่สำหรับดูประวัติทีละสถานี */
+.comp-table{width:100%;border-collapse:collapse;font-size:13px}
+.comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(255,255,255,0.02);}
+.comp-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
+.comp-table tr:hover td{background:rgba(255,255,255,.03)}
+
 .donut-legend{display:flex;flex-direction:column;gap:6px;margin-top:12px}
 .dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
 .dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
@@ -210,6 +217,24 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         </div>
       </div>
 
+      <div class="chart-card" id="station-table-card" style="display:none; margin-bottom: 16px;">
+        <div class="chart-card-title">ประวัติข้อมูลรายชั่วโมงของสถานี (Time-Series)</div>
+        <div class="chart-card-sub" id="station-table-sub">แสดงข้อมูลย้อนหลัง</div>
+        <div style="overflow-x: auto;">
+          <table class="comp-table" id="station-ts-table">
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>ช่วงเวลา</th>
+                <th>PM2.5 รายชั่วโมง (Raw)</th>
+                <th>NowCast</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -218,9 +243,9 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 // ═══════════════════════════════════════════
 // GLOBAL STATE & CONFIGURATIONS
 // ═══════════════════════════════════════════
-let STATION_META = {};   // เก็บชื่อและพิกัดสถานี
-let STATION_KEYS = [];   // เก็บเฉพาะรหัสสถานีใน กทม.
-let HISTORY_RECORDS = []; // เก็บ Array ของ Flat JSON
+let STATION_META = {};   
+let STATION_KEYS = [];   
+let HISTORY_RECORDS = []; 
 
 const AQI_BREAKS = [
   {lo:0, hi:15.0, label:'ดี', color:'#00bcd4', textColor:'#fff'},
@@ -263,7 +288,6 @@ async function initializeData() {
   statusEl.className = '';
   
   try {
-    // 1. ดึงข้อมูลสดเพื่อขอรายชื่อสถานีและพิกัด (Metadata)
     statusEl.innerHTML = '⏳ กำลังดึงพิกัดสถานี...';
     const targetUrl = 'http://air4thai.pcd.go.th/services/getNewAQI_JSON.php';
     const encodedUrl = encodeURIComponent(targetUrl);
@@ -297,7 +321,6 @@ async function initializeData() {
       });
     }
 
-    // 2. ดึงไฟล์ history.json แบบ Flat Format
     statusEl.innerHTML = '⏳ กำลังอ่านประวัติ Flat JSON...';
     const histRes = await fetch('history.json?t=' + new Date().getTime());
     if (histRes.ok) {
@@ -308,7 +331,6 @@ async function initializeData() {
       throw new Error("ไม่มีข้อมูลให้แสดงผล");
     }
 
-    // 3. เตรียมข้อมูลล่วงหน้า: คำนวณ NowCast และ เฉลี่ย 24 ชม.
     HISTORY_RECORDS.forEach((row, i) => {
       row._parsed = {};
       
@@ -317,7 +339,6 @@ async function initializeData() {
         if (rawVal === '-' || rawVal === undefined) rawVal = null;
         else rawVal = parseFloat(rawVal);
 
-        // ดึงข้อมูลย้อนหลัง 12 แถวเพื่อเข้าสมการ NowCast
         let lookback12 = [];
         for(let j = i; j >= Math.max(0, i - 11); j--) {
           let pastVal = HISTORY_RECORDS[j][key];
@@ -326,7 +347,6 @@ async function initializeData() {
           }
         }
         
-        // ดึงข้อมูลย้อนหลัง 24 แถวเพื่อหาค่าเฉลี่ย 24 ชั่วโมง
         let lookback24 = [];
         for(let j = i; j >= Math.max(0, i - 23); j--) {
           let pastVal = HISTORY_RECORDS[j][key];
@@ -335,7 +355,6 @@ async function initializeData() {
           }
         }
         
-        // คำนวณค่าเฉลี่ย 24 ชั่วโมง
         let avg24Val = lookback24.length > 0 ? (lookback24.reduce((sum, val) => sum + val, 0) / lookback24.length) : null;
 
         row._parsed[key] = {
@@ -370,8 +389,6 @@ let mapMarkers = {};
 
 function initMap() {
   mapInstance = L.map('map', { center: [13.75, 100.52], zoom: 11 });
-  
-  // ใช้แผนที่สว่างสไตล์ Google Maps (OpenStreetMap)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
     attribution: '© OpenStreetMap contributors', 
     maxZoom: 19 
@@ -398,7 +415,6 @@ function buildDynamicUI() {
     const m = STATION_META[key];
     const div = document.createElement('div');
     div.className = 'pm-marker';
-    // ปรับสไตล์หมุดเล็กน้อยให้เข้ากับแผนที่สว่าง
     div.style.cssText = 'width:52px;height:52px;background:#333;border-color:rgba(255,255,255,.5)';
     div.textContent = '…';
     const icon = L.divIcon({ html: div, className: '', iconSize: [52,52], iconAnchor: [26,26] });
@@ -607,6 +623,45 @@ function updateDashboard() {
   destroyChart('donut-nc');
   charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderColor:'rgba(0,0,0,0)',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
   document.getElementById('legend-nc').innerHTML = catLabels.map((l,i)=>`<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${ncCounts[i]} ชม.)</span></div>`).join('');
+
+  // --- ส่วนควบคุมตารางแสดงผลรายสถานี ---
+  const stationTableCard = document.getElementById('station-table-card');
+  const tableBody = document.querySelector('#station-ts-table tbody');
+  
+  if (stationKey === 'all') {
+    // ถ้าเลือกทุกสถานี ให้ซ่อนตาราง
+    stationTableCard.style.display = 'none';
+  } else {
+    // ถ้าเลือกรายสถานี ให้แสดงตาราง
+    stationTableCard.style.display = 'block';
+    const stnName = STATION_META[stationKey]?.nameTH || stationKey;
+    document.getElementById('station-table-sub').textContent = `แสดงข้อมูลย้อนหลังของสถานี: ${stnName}`;
+    
+    let tableHTML = '';
+    // วนลูปจากข้อมูลใหม่สุดไปเก่าสุด
+    for (let i = HISTORY_RECORDS.length - 1; i >= 0; i--) {
+      const row = HISTORY_RECORDS[i];
+      const parsed = row._parsed[stationKey];
+      if (!parsed) continue;
+
+      const rawVal = parsed.raw;
+      const ncVal = parsed.nc;
+      
+      const rawBand = getAQIBand(rawVal);
+      const ncBand = getAQIBand(ncVal);
+      
+      const rawStr = rawVal !== null ? `<span style="color:${rawBand.color}">${rawVal.toFixed(1)}</span>` : '—';
+      const ncStr = ncVal !== null ? `<span style="color:${ncBand.color}">${ncVal.toFixed(1)}</span>` : '—';
+      
+      tableHTML += `<tr>
+        <td>${row.date}</td>
+        <td style="font-family: var(--mono);">${row.timeRange}</td>
+        <td style="font-family: var(--mono); font-weight: bold;">${rawStr}</td>
+        <td style="font-family: var(--mono); font-weight: bold;">${ncStr}</td>
+      </tr>`;
+    }
+    tableBody.innerHTML = tableHTML;
+  }
 }
 
 // ═══════════════════════════════════════════
