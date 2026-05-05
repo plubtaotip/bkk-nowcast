@@ -78,7 +78,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .dselect:focus{outline:none;border-color:var(--accent)}
 .dash-grid{display:grid;gap:16px}
 .dash-row-2{grid-template-columns:1fr 1fr}
-.dash-row-3{grid-template-columns:1fr 1fr 1fr}
 .chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;}
 .chart-card-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
 .chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;font-family:var(--mono)}
@@ -92,16 +91,12 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .kpi-unit{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
 .kpi-delta{font-size:12px;margin-top:6px;color:var(--muted)}
 .kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}
-.comp-table{width:100%;border-collapse:collapse;font-size:13px}
-.comp-table th{text-align:left;padding:8px 14px;font-size:11px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:500;letter-spacing:.04em;text-transform:uppercase;}
-.comp-table td{padding:10px 14px;border-bottom:1px solid var(--border)}
-.comp-table tr:hover td{background:rgba(255,255,255,.03)}
 .donut-legend{display:flex;flex-direction:column;gap:6px;margin-top:12px}
 .dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
 .dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
 /* Leaflet Overrides */
-.pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;font-size:12px;border-radius:50%;border:2px solid rgba(255,255,255,.3);color:#fff;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.5);transition:transform .2s;}
+.pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;font-size:12px;border-radius:50%;border:2px solid rgba(255,255,255,.5);color:#fff;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.5);transition:transform .2s;text-shadow: 1px 1px 2px rgba(0,0,0,0.8);}
 .pm-marker:hover{transform:scale(1.15)}
 .nowcast-note{font-size:11px;color:var(--muted);background:var(--bg4);border-radius:6px;padding:8px 12px;font-family:var(--mono);line-height:1.6;}
 .leaflet-popup-content-wrapper{background:var(--bg3) !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.6) !important;color:var(--text) !important;}
@@ -132,7 +127,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <div id="global-status">⏳ กำลังประมวลผลข้อมูล Flat JSON และดึงพิกัดสถานี...</div>
 
-<!-- ═══ TAB: MAP ═══ -->
 <div id="panel-map" class="panel">
   <div class="map-layout">
     <div class="map-sidebar">
@@ -140,7 +134,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         <div class="tp-label">⏱ เลือกข้อมูลประวัติ (Time-Series)</div>
         <div class="tp-row">
           <label>ช่วงเวลาที่บันทึกไว้ในระบบ:</label>
-          <!-- เปลี่ยนจากกล่องกรอกวันที่ เป็น Dropdown เลือกจากประวัติที่ทีอยู่จริง -->
           <select id="tp-history" class="tp-input" onchange="updateMap()"></select>
         </div>
         <button class="btn-now" onclick="goToLatest()">⟳ ข้อมูลล่าสุด</button>
@@ -148,7 +141,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
       <div class="nowcast-note">
         <b style="color:var(--accent)">PM2.5 Real-time Analytics</b><br>
-        อ่านข้อมูลจากโครงสร้าง Flat JSON<br>
+        แสดงข้อมูลจากโครงสร้าง Flat JSON<br>
         ใช้เกณฑ์สีมาตรฐาน PCD 2566
       </div>
 
@@ -163,7 +156,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
   </div>
 </div>
 
-<!-- ═══ TAB: DASHBOARD ═══ -->
 <div id="panel-dash" class="panel active">
   <div id="dash-no-data" class="no-data-placeholder">
     <div class="nd-icon">⏳</div>
@@ -194,7 +186,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       <div class="dash-grid" style="margin-bottom:16px">
         <div class="chart-card">
           <div class="chart-card-title">แนวโน้ม PM2.5 Time-Series</div>
-          <div class="chart-card-sub">ระบบลากเส้นเชื่อมต่อให้อัตโนมัติในกรณีที่มีเครื่องหมาย "-" (เซ็นเซอร์ค้าง)</div>
+          <div class="chart-card-sub">เปรียบเทียบค่ารายชั่วโมง, ค่าเฉลี่ย 24 ชม., และการเกลี่ย NowCast</div>
           <div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div>
         </div>
       </div>
@@ -218,10 +210,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         </div>
       </div>
 
-      <div class="chart-card">
-        <div class="chart-card-title">ตารางสถิติเปรียบเทียบสถานี</div>
-        <table class="comp-table" id="comp-table"></table>
-      </div>
     </div>
   </div>
 </div>
@@ -320,28 +308,40 @@ async function initializeData() {
       throw new Error("ไม่มีข้อมูลให้แสดงผล");
     }
 
-    // 3. เตรียมข้อมูลล่วงหน้า: เปลี่ยน "-" เป็น null และคำนวณ NowCast ไว้รอเลย
+    // 3. เตรียมข้อมูลล่วงหน้า: คำนวณ NowCast และ เฉลี่ย 24 ชม.
     HISTORY_RECORDS.forEach((row, i) => {
-      row._parsed = {}; // ซ่อนตัวแปรไว้ใช้ตอนวาดกราฟ
+      row._parsed = {};
       
       STATION_KEYS.forEach(key => {
         let rawVal = row[key];
-        // จัดการกรณีที่เป็นเครื่องหมาย "-" หรือไม่มีค่า
         if (rawVal === '-' || rawVal === undefined) rawVal = null;
         else rawVal = parseFloat(rawVal);
 
         // ดึงข้อมูลย้อนหลัง 12 แถวเพื่อเข้าสมการ NowCast
-        let lookback = [];
+        let lookback12 = [];
         for(let j = i; j >= Math.max(0, i - 11); j--) {
           let pastVal = HISTORY_RECORDS[j][key];
           if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) {
-            lookback.push(parseFloat(pastVal));
+            lookback12.push(parseFloat(pastVal));
           }
         }
+        
+        // ดึงข้อมูลย้อนหลัง 24 แถวเพื่อหาค่าเฉลี่ย 24 ชั่วโมง
+        let lookback24 = [];
+        for(let j = i; j >= Math.max(0, i - 23); j--) {
+          let pastVal = HISTORY_RECORDS[j][key];
+          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) {
+            lookback24.push(parseFloat(pastVal));
+          }
+        }
+        
+        // คำนวณค่าเฉลี่ย 24 ชั่วโมง
+        let avg24Val = lookback24.length > 0 ? (lookback24.reduce((sum, val) => sum + val, 0) / lookback24.length) : null;
 
         row._parsed[key] = {
           raw: rawVal,
-          nc: nowcast(lookback)
+          nc: nowcast(lookback12),
+          avg24: avg24Val
         };
       });
     });
@@ -370,26 +370,27 @@ let mapMarkers = {};
 
 function initMap() {
   mapInstance = L.map('map', { center: [13.75, 100.52], zoom: 11 });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB', maxZoom: 19 }).addTo(mapInstance);
+  
+  // ใช้แผนที่สว่างสไตล์ Google Maps (OpenStreetMap)
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+    attribution: '© OpenStreetMap contributors', 
+    maxZoom: 19 
+  }).addTo(mapInstance);
 }
 
 function buildDynamicUI() {
-  // สร้าง Dropdown สำหรับ Dashboard
   const dashSelect = document.getElementById('dash-station');
   dashSelect.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยภาพรวม)</option>';
   STATION_KEYS.forEach(k => { 
     if(STATION_META[k]) dashSelect.innerHTML += `<option value="${k}">${STATION_META[k].nameTH}</option>`; 
   });
 
-  // สร้าง Dropdown สำหรับแกนเวลาใน Map (ดึงมาจากประวัติแบบเป๊ะๆ)
   const timeSelect = document.getElementById('tp-history');
   timeSelect.innerHTML = '';
   HISTORY_RECORDS.forEach((row, idx) => {
-    // เช่น "2026-05-04 | 09:00 - 10:00"
     timeSelect.innerHTML += `<option value="${idx}">วันที่ ${row.date} | ${row.timeRange}</option>`;
   });
 
-  // สร้างหมุดแผนที่
   for(const k in mapMarkers) { mapInstance.removeLayer(mapMarkers[k].marker); }
   mapMarkers = {};
   for(const key of STATION_KEYS) {
@@ -397,7 +398,8 @@ function buildDynamicUI() {
     const m = STATION_META[key];
     const div = document.createElement('div');
     div.className = 'pm-marker';
-    div.style.cssText = 'width:52px;height:52px;background:#333;border-color:rgba(255,255,255,.3)';
+    // ปรับสไตล์หมุดเล็กน้อยให้เข้ากับแผนที่สว่าง
+    div.style.cssText = 'width:52px;height:52px;background:#333;border-color:rgba(255,255,255,.5)';
     div.textContent = '…';
     const icon = L.divIcon({ html: div, className: '', iconSize: [52,52], iconAnchor: [26,26] });
     const marker = L.marker([m.lat, m.lng], { icon }).addTo(mapInstance);
@@ -419,13 +421,11 @@ function switchTab(tab, e) {
 function updateMap() {
   if (HISTORY_RECORDS.length === 0) return;
   
-  // อ่านเลข Index ของประวัติที่ผู้ใช้เลือกจาก Dropdown
   const selectedIdx = parseInt(document.getElementById('tp-history').value, 10);
   const rowData = HISTORY_RECORDS[selectedIdx];
   
   const cardsEl = document.getElementById('stn-cards');
   
-  // ดึงข้อมูลและเรียงลำดับสถานีตามค่าความรุนแรง
   const sortedKeys = STATION_KEYS.filter(k => STATION_META[k]).sort((a,b) => {
     const valA = rowData._parsed[a].nc ?? -1;
     const valB = rowData._parsed[b].nc ?? -1;
@@ -434,15 +434,16 @@ function updateMap() {
 
   cardsEl.innerHTML = sortedKeys.map(key => {
     const m = STATION_META[key];
-    const {nc, raw} = rowData._parsed[key];
+    const {nc, avg24} = rowData._parsed[key];
     
     const band = getAQIBand(nc);
     const color = band?.color ?? '#666';
     const tc = band?.textColor ?? '#fff';
-    const rawBand = getAQIBand(raw);
+    
+    const avg24Band = getAQIBand(avg24);
     
     const ncPct = nc != null ? Math.min(nc / 75 * 100, 100) : 0;
-    const rawPct = raw != null ? Math.min(raw / 75 * 100, 100) : 0;
+    const avg24Pct = avg24 != null ? Math.min(avg24 / 75 * 100, 100) : 0;
     
     return `<div class="scard" id="sc-${key}" onclick="selectStation('${key}')">
       <div class="scard-top">
@@ -451,14 +452,14 @@ function updateMap() {
       </div>
       <div class="scard-vals">
         <div class="sval-box"><div class="sval-label">NowCast</div><div class="sval-num" style="color:${color}">${nc!=null?nc.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${ncPct}%;background:${color}"></div></div></div>
-        <div class="sval-box"><div class="sval-label">รายชั่วโมง (Raw)</div><div class="sval-num" style="color:${rawBand?.color??'#fff'}">${raw!=null?raw.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${rawPct}%;background:${rawBand?.color??'#666'}"></div></div></div>
+        <div class="sval-box"><div class="sval-label">เฉลี่ย 24 ชม.</div><div class="sval-num" style="color:${avg24Band?.color??'#fff'}">${avg24!=null?avg24.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${avg24Pct}%;background:${avg24Band?.color??'#666'}"></div></div></div>
       </div>
     </div>`;
   }).join('');
 
   for(const key of STATION_KEYS) {
     if(!mapMarkers[key]) continue;
-    const {nc, raw} = rowData._parsed[key];
+    const {nc, avg24} = rowData._parsed[key];
     const band = getAQIBand(nc);
     const color = band?.color ?? '#555';
     const {div, marker} = mapMarkers[key];
@@ -468,14 +469,14 @@ function updateMap() {
     div.style.color = nc != null ? (band?.textColor ?? '#fff') : '#fff';
     div.textContent = nc != null ? nc.toFixed(0) : '?';
     
-    marker.setPopupContent(buildPopup(key, nc, raw, rowData.date, rowData.timeRange));
+    marker.setPopupContent(buildPopup(key, nc, avg24, rowData.date, rowData.timeRange));
   }
 }
 
-function buildPopup(key, nc, raw, dateStr, timeRange) {
+function buildPopup(key, nc, avg24, dateStr, timeRange) {
   const m = STATION_META[key];
-  const ncBand = getAQIBand(nc); const rawBand = getAQIBand(raw);
-  const diff = (nc!=null && raw!=null) ? (nc-raw).toFixed(1) : '—';
+  const ncBand = getAQIBand(nc); const avg24Band = getAQIBand(avg24);
+  const diff = (nc!=null && avg24!=null) ? (nc-avg24).toFixed(1) : '—';
   const diffSign = parseFloat(diff) > 0 ? '+' : '';
   
   return `<div style="font-family:'Sarabun',sans-serif">
@@ -487,12 +488,12 @@ function buildPopup(key, nc, raw, dateStr, timeRange) {
         <div style="font-size:22px;font-weight:700;color:${ncBand?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
       </div>
       <div style="background:#1f2229;border-radius:8px;padding:10px">
-        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">ความเข้มข้นดิบ (Raw)</div>
-        <div style="font-size:22px;font-weight:700;color:${rawBand?.color??'#444'};margin-bottom:4px">${raw!=null?raw.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
+        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">เฉลี่ย 24 ชม.</div>
+        <div style="font-size:22px;font-weight:700;color:${avg24Band?.color??'#444'};margin-bottom:4px">${avg24!=null?avg24.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
       </div>
     </div>
     <div style="margin-top:8px;background:#1f2229;border-radius:8px;padding:8px 10px;font-family:monospace;font-size:12px">
-      NowCast − Raw: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${diffSign}${diff} µg/m³</b>
+      NowCast − เฉลี่ย 24 ชม: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${diffSign}${diff} µg/m³</b>
     </div>
   </div>`;
 }
@@ -507,7 +508,7 @@ function selectStation(key) {
 function goToLatest() {
   if (HISTORY_RECORDS.length === 0) return;
   const select = document.getElementById('tp-history');
-  select.value = HISTORY_RECORDS.length - 1; // เลือกก้อนข้อมูลอันสุดท้ายใน Array เสมอ
+  select.value = HISTORY_RECORDS.length - 1; 
   updateMap();
 }
 
@@ -520,33 +521,35 @@ function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts
 function extractFlatData(stationKey) {
   const keys = stationKey === 'all' ? STATION_KEYS.filter(k => STATION_META[k]) : [stationKey];
   
-  const tlLabels = []; const tlRaw = []; const tlNC = [];
+  const tlLabels = []; const tlRaw = []; const tlNC = []; const tlAvg24 = [];
   const rawCats = {}; const ncCats = {};
   for(const b of AQI_BREAKS) { rawCats[b.label] = 0; ncCats[b.label] = 0; }
 
   let allRawVals = []; let allNCVals = [];
-  const badThreshold = 37.5; // มาตรฐาน PM2.5
+  const badThreshold = 37.5; 
 
   HISTORY_RECORDS.forEach(row => {
-     // ดึงเวลาสิ้นสุดมาชี้บอกแกน x เช่น "09:00 - 10:00" -> "10:00"
      const timeLabel = row.timeRange.split(' - ')[1] || row.timeRange;
      tlLabels.push(`${row.date.slice(5)} ${timeLabel}`);
 
-     let sRaw = 0, cRaw = 0, sNC = 0, cNC = 0;
+     let sRaw = 0, cRaw = 0, sNC = 0, cNC = 0, sAvg24 = 0, cAvg24 = 0;
 
      keys.forEach(k => {
         const parsed = row._parsed[k];
         if (parsed) {
           if(parsed.raw !== null) { sRaw += parsed.raw; cRaw++; }
           if(parsed.nc !== null) { sNC += parsed.nc; cNC++; }
+          if(parsed.avg24 !== null) { sAvg24 += parsed.avg24; cAvg24++; }
         }
      });
 
      const avgRaw = cRaw > 0 ? sRaw/cRaw : null;
      const avgNC = cNC > 0 ? sNC/cNC : null;
+     const avgAvg24 = cAvg24 > 0 ? sAvg24/cAvg24 : null;
      
      tlRaw.push(avgRaw); 
      tlNC.push(avgNC);
+     tlAvg24.push(avgAvg24);
 
      if(avgRaw !== null) {
        allRawVals.push(avgRaw);
@@ -559,7 +562,7 @@ function extractFlatData(stationKey) {
   });
 
   return {
-    tlLabels, tlRaw, tlNC, rawCats, ncCats,
+    tlLabels, tlRaw, tlNC, tlAvg24, rawCats, ncCats,
     avgRaw: allRawVals.length ? allRawVals.reduce((a,b)=>a+b,0)/allRawVals.length : null,
     avgNC: allNCVals.length ? allNCVals.reduce((a,b)=>a+b,0)/allNCVals.length : null,
     maxRaw: allRawVals.length ? Math.max(...allRawVals) : null,
@@ -583,13 +586,13 @@ function updateDashboard() {
   document.getElementById('kpi-nc-d').innerHTML = diffVal != null ? `<span class="${diffVal>0?'up':'down'}">${diffVal>0?'▲':'▼'} ${Math.abs(diffVal).toFixed(1)} จากค่า Raw</span>` : '';
   document.getElementById('kpi-bad-d').textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง (${(fd.badHours/Math.max(fd.totalHours,1)*100).toFixed(1)}%)`;
 
-  // สร้างกราฟ Time-Series (ตั้ง spanGaps: true เพื่อให้มันลากเส้นเชื่อมข้ามค่า null)
   destroyChart('timeline');
   charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
     type: 'line',
     data: { labels: fd.tlLabels, datasets: [
-      {label:'รายชั่วโมง (Raw)',data:fd.tlRaw,borderColor:'#4a9eff',backgroundColor:'rgba(74,158,255,.05)',tension:.3,pointRadius:2,fill:true,borderWidth:2, borderDash: [5, 5], spanGaps: true},
-      {label:'NowCast (w=0.4)',data:fd.tlNC,borderColor:'#00d4aa',backgroundColor:'rgba(0,212,170,.1)',tension:.3,pointRadius:3,fill:true,borderWidth:3, spanGaps: true}
+      {label:'รายชั่วโมง (Raw)',data:fd.tlRaw,borderColor:'#4a9eff',backgroundColor:'rgba(74,158,255,.05)',tension:.3,pointRadius:2,fill:false,borderWidth:2, borderDash: [5, 5], spanGaps: true},
+      {label:'NowCast (w=0.4)',data:fd.tlNC,borderColor:'#00d4aa',backgroundColor:'rgba(0,212,170,.1)',tension:.3,pointRadius:3,fill:true,borderWidth:3, spanGaps: true},
+      {label:'เฉลี่ย 24 ชม.',data:fd.tlAvg24,borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,.1)',tension:.3,pointRadius:2,fill:false,borderWidth:2, borderDash: [2, 2], spanGaps: true}
     ]},
     options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7a8090',font:{family:'Sarabun',size:12}}},tooltip:{mode:'index',intersect:false}},scales:{x:{ticks:{color:'#7a8090',font:{family:'IBM Plex Mono',size:10},maxRotation:45},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#7a8090',font:{family:'IBM Plex Mono',size:11}},grid:{color:'rgba(255,255,255,.05)'}}}}
   });
@@ -604,34 +607,6 @@ function updateDashboard() {
   destroyChart('donut-nc');
   charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderColor:'rgba(0,0,0,0)',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
   document.getElementById('legend-nc').innerHTML = catLabels.map((l,i)=>`<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${ncCounts[i]} ชม.)</span></div>`).join('');
-
-  buildTable();
-}
-
-function buildTable() {
-  const rows = STATION_KEYS.map(k => {
-    if(!STATION_META[k]) return null;
-    const fd = extractFlatData(k);
-    if(fd.totalHours === 0) return null;
-    return {key:k, avg:fd.avgRaw, ncAvg:fd.avgNC, max:fd.maxRaw, bad:fd.badHours};
-  }).filter(Boolean);
-
-  document.getElementById('comp-table').innerHTML = `<thead><tr>
-    <th>สถานี</th><th>เฉลี่ย Raw</th><th>เฉลี่ย NowCast</th><th>ผลต่าง NC−Raw</th><th>ค่าสูงสุด</th><th>ชั่วโมงเกินเกณฑ์</th>
-  </tr></thead><tbody>${rows.map(r => {
-    const band = getAQIBand(r.avg);
-    const diff = (r.ncAvg!=null && r.avg!=null) ? r.ncAvg - r.avg : null;
-    const diffStr = diff!=null?(diff>0?'+':'')+diff.toFixed(1):'—';
-    const diffColor = diff!=null?(diff>0?'#e74c3c':'#2ecc71'):'#7a8090';
-    return `<tr>
-      <td><b style="color:#fff">${STATION_META[r.key].nameTH}</b><br><span style="font-size:11px;color:var(--muted)">${STATION_META[r.key].nameEN || '-'}</span></td>
-      <td><span style="color:${band?.color??'#fff'}">${r.avg!=null?r.avg.toFixed(1):'—'}</span></td>
-      <td>${r.ncAvg!=null?r.ncAvg.toFixed(1):'—'}</td>
-      <td style="color:${diffColor};font-family:var(--mono)">${diffStr}</td>
-      <td style="font-family:var(--mono)">${r.max!=null?r.max.toFixed(1):'—'}</td>
-      <td>${r.bad} ชม.</td>
-    </tr>`;
-  }).join('')}</tbody>`;
 }
 
 // ═══════════════════════════════════════════
