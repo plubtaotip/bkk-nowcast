@@ -57,7 +57,7 @@ async function fetchAndSave() {
       }
     }
 
-    // 2. คำนวณเวลา: วันนี้ (endDate) และ ย้อนหลัง 30 วัน (startDate)
+    // 2. คำนวณเวลา: วันนี้ (endDate) และ ย้อนหลัง 5 วัน (startDate)
     const bkkTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Bangkok"}));
     
     // วันนี้
@@ -66,15 +66,15 @@ async function fetchAndSave() {
     const dd = String(bkkTime.getDate()).padStart(2,'0');
     const endDateStr = `${yyyy}-${mm}-${dd}`; 
 
-    // ย้อนหลัง 30 วัน
+    // ย้อนหลัง 5 วัน
     const pastDate = new Date(bkkTime);
-    pastDate.setDate(pastDate.getDate() - 30);
+    pastDate.setDate(pastDate.getDate() - 5);
     const s_yyyy = pastDate.getFullYear();
     const s_mm = String(pastDate.getMonth()+1).padStart(2,'0');
     const s_dd = String(pastDate.getDate()).padStart(2,'0');
     const startDateStr = `${s_yyyy}-${s_mm}-${s_dd}`; 
 
-    console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลัง 30 วัน (${startDateStr} ถึง ${endDateStr})...`);
+    console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลัง 5 วัน (${startDateStr} ถึง ${endDateStr})...`);
     
     // 3. ทยอยดึงข้อมูลทีละ 5 สถานี
     const chunkSize = 5;
@@ -95,7 +95,7 @@ async function fetchAndSave() {
                      const pTimeRange = `${String(pPrevHour).padStart(2, '0')}:00 - ${String(pHour).padStart(2, '0')}:00`;
                      const pDateStr = pTimeStr.split(' ')[0];
                      
-                     // ค้นหาแถวเวลา ถ้าไม่มีให้สร้างใหม่ (Dynamic Row Creation)
+                     // ค้นหาแถวเวลา ถ้าไม่มีให้สร้างใหม่
                      let targetRow = history.find(r => r.date === pDateStr && r.timeRange === pTimeRange);
                      if (!targetRow) {
                          targetRow = { date: pDateStr, timeRange: pTimeRange };
@@ -111,22 +111,21 @@ async function fetchAndSave() {
       });
       
       await Promise.all(promises);
-      await delay(1500); // พักหายใจ 1.5 วิ เพราะข้อมูลชุดใหญ่ขึ้น
+      await delay(1500); // พักหายใจ 1.5 วิ 
     }
 
     // 4. เรียงลำดับข้อมูลตามวัน-เวลา (Sort Chronologically)
     history.sort((a, b) => {
-        // แปลงวันที่และช่วงเวลาให้เป็นตัวเลข Timestamp เพื่อเทียบกัน
-        const hourA = a.timeRange.split(' - ')[0]; // หยิบชั่วโมงเริ่มมา เช่น "13:00"
+        const hourA = a.timeRange.split(' - ')[0]; // หยิบชั่วโมงเริ่มมา
         const hourB = b.timeRange.split(' - ')[0];
         const timeA = new Date(`${a.date}T${hourA}:00+07:00`).getTime();
         const timeB = new Date(`${b.date}T${hourB}:00+07:00`).getTime();
         return timeA - timeB;
     });
 
-    // 5. ตัดข้อมูลเก่าทิ้ง เก็บไว้สูงสุด 800 แถว (ครอบคลุม ~33 วัน)
-    if (history.length > 800) {
-      history = history.slice(history.length - 800); 
+    // 5. ตัดข้อมูลเก่าทิ้ง เก็บไว้สูงสุด 150 แถว (ครอบคลุมประมาณ 6 วัน)
+    if (history.length > 150) {
+      history = history.slice(history.length - 150); 
     }
 
     // เขียนทับไฟล์ history.json
