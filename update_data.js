@@ -27,29 +27,33 @@ async function fetchAndSave() {
         } else {
           newData = await response.json();
         }
-
         if (newData && newData.stations) break; 
       } catch (err) {
-        console.log(`Proxy ${proxy.url} มีปัญหา ข้ามไปใช้อันถัดไป...`);
+        console.log(`Proxy ${proxy.url} มีปัญหา...`);
       }
     }
 
     if (!newData || !newData.stations) {
-      throw new Error('Proxy ล่มทั้งหมด ไม่สามารถดึงข้อมูลได้ในรอบนี้');
+      throw new Error('ไม่สามารถดึงข้อมูลได้ในรอบนี้');
     }
 
     // 1. คัดกรองเฉพาะสถานีใน กทม.
     const bkkStations = newData.stations.filter(s => s.areaTH && s.areaTH.includes('กรุงเทพ'));
-    
-    if (bkkStations.length === 0) {
-      throw new Error('ไม่พบข้อมูลสถานีใน กทม.');
+    if (bkkStations.length === 0) throw new Error('ไม่พบข้อมูล กทม.');
+
+    // 2. โหลดประวัติเดิม
+    let history = [];
+    if (fs.existsSync('history.json')) {
+      const rawData = fs.readFileSync('history.json', 'utf8');
+      if (rawData.trim() !== '') {
+        try { history = JSON.parse(rawData); } catch (e) { history = []; }
+      }
     }
 
-    // 2. ค้นหาวันที่และเวลาที่ "อัปเดตใหม่ที่สุด" ในกลุ่ม กทม. 
+    // 3. หาเวลาที่ใหม่ที่สุดเพื่อสร้างแถวปัจจุบัน (Latest Row)
     let latestDateTime = "";
     let repDate = "";
     let repTime = "";
-    
     bkkStations.forEach(s => {
       if (s.AQILast && s.AQILast.date && s.AQILast.time) {
         const currentDT = s.AQILast.date + " " + s.AQILast.time;
@@ -65,99 +69,83 @@ async function fetchAndSave() {
     const prevHour = hour === 0 ? 23 : hour - 1;
     const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:00`;
 
-    // 3. สร้างข้อมูล 1 แถว สำหรับรอบชั่วโมงนี้
-    const newRecord = {
-      date: repDate,
-      timeRange: timeRange
-    };
+    // 4. สร้างแถวของชั่วโมงปัจจุบัน (ถ้ายังไม่มี)
+    let latestRow = history.find(r => r.date === repDate && r.timeRange === timeRange);
+    if (!latestRow) {
+      latestRow = { date: repDate, timeRange: timeRange };
+      bkkStations.forEach(s => latestRow[s.stationID] = "-"); // ใส่ "-" รอไว้ก่อน
+      history.push(latestRow);
+      console.log(`สร้างแถวใหม่: วันที่ ${repDate} | ${timeRange}`);
+    } else {
+      console.log(`✅ แถวของเวลานี้ถูกสร้างไว้แล้ว จะอัปเดตข้อมูลที่ตกหล่นให้...`);
+    }
 
-    // 4. นำรหัสสถานีมาทำเป็นคอลัมน์
+    // ═════════════════════════════════════════════════════
+    // 🚚 TRUE BACKFILLING: นำข้อมูลไปส่งให้ตรงกับช่องเวลาจริงๆ
+    // ═════════════════════════════════════════════════════
     bkkStations.forEach(s => {
-      if (
-        s.AQILast && 
-        s.AQILast.date === repDate &&
-        s.AQILast.time === repTime && 
-        s.AQILast.PM25 && 
-        s.AQILast.PM25.value !== undefined && 
-        !isNaN(parseFloat(s.AQILast.PM25.value))
-      ) {
-        newRecord[s.stationID] = parseFloat(s.AQILast.PM25.value);
-      } else {
-        newRecord[s.stationID] = "-"; 
+      if (s.AQILast && s.AQILast.date && s.AQILast.time && s.AQILast.PM25 && s.AQILast.PM25.value !== undefined) {
+        // แปลงเวลาของข้อมูลก้อนนี้ ว่าควรไปอยู่แถวไหน
+        const sHour = parseInt(s.AQILast.time.split(':')[0], 10);
+        const sPrevHour = sHour === 0 ? 23 : sHour - 1;
+        const sTimeRange = `${String(sPrevHour).padStart(2, '0')}:00 - ${String(sHour).padStart(2, '0')}:00`;
+        const sDate = s.AQILast.date;
+        const sVal = parseFloat(s.AQILast.PM25.value);
+
+        if (!isNaN(sVal)) {
+          // วิ่งไปหาแถวในอดีต (หรือปัจจุบัน) ที่ตรงกับข้อมูลนี้ แล้วยัดตัวเลขใส่ลงไป!
+          let targetRow = history.find(r => r.date === sDate && r.timeRange === sTimeRange);
+          if (targetRow) {
+            targetRow[s.stationID] = sVal;
+          }
+        }
       }
     });
 
-    // 5. โหลดข้อมูลประวัติเดิม
-    let history = [];
-    if (fs.existsSync('history.json')) {
-      const rawData = fs.readFileSync('history.json', 'utf8');
-      if (rawData.trim() !== '') {
-        try { history = JSON.parse(rawData); } 
-        catch (e) { history = []; }
-      }
-    }
-
-    // 6. ป้องกันอัปเดตซ้ำในชั่วโมงเดียวกัน
-    if (history.length > 0) {
-      const lastRecord = history[history.length - 1];
-      if (lastRecord.date === newRecord.date && lastRecord.timeRange === newRecord.timeRange) {
-        console.log('✅ ข้อมูลช่วงเวลานี้ถูกอัปเดตไปแล้ว ข้ามการทำงาน');
-        process.exit(0);
-      }
-    }
-
-    // 7. เพิ่มข้อมูลใหม่เข้าสู่ Array
-    history.push(newRecord);
-
     // ═════════════════════════════════════════════════════
-    // 🛠️ DATA HEALING: ระบบซ่อมแซมข้อมูลย้อนหลังอัตโนมัติ 🛠️
+    // 🛠️ SWEEPING DATA HEALING: สแกนซ่อมรอยโหว่ทั้งไฟล์อัตโนมัติ
     // ═════════════════════════════════════════════════════
+    let healedCount = 0;
     bkkStations.forEach(s => {
       const key = s.stationID;
-      const lastIdx = history.length - 1;
+      let lastValidIdx = -1; // จำตำแหน่งล่าสุดที่มีตัวเลข
 
-      // ตรวจสอบว่า "ชั่วโมงปัจจุบัน" สถานีนี้มีข้อมูลตัวเลขหรือไม่ (ไม่ใช่ "-")
-      if (history[lastIdx][key] !== "-" && history[lastIdx][key] !== null && history[lastIdx][key] !== undefined) {
-        let gapCount = 0;
-        let prevValidIdx = -1;
+      for (let i = 0; i < history.length; i++) {
+        const val = history[i][key];
+        // ถ้าเจอตัวเลข
+        if (val !== "-" && val !== null && val !== undefined) {
+          // และก่อนหน้านี้เคยเจอตัวเลขมาแล้ว (แปลว่ามีช่องว่างอยู่ตรงกลาง)
+          if (lastValidIdx !== -1) {
+            const gapCount = i - lastValidIdx - 1; // นับว่าแหว่งไปกี่ช่อง
+            
+            // ถ้าแหว่ง 1-6 ชั่วโมง ให้คำนวณและเติมเต็มรอยโหว่
+            if (gapCount > 0 && gapCount <= 6) {
+              const startVal = history[lastValidIdx][key];
+              const endVal = history[i][key];
+              const step = (endVal - startVal) / (gapCount + 1);
 
-        // ย้อนกลับไปหาอดีต ว่ามีรอยโหว่ "-" ติดต่อกันกี่ชั่วโมง
-        for (let i = lastIdx - 1; i >= 0; i--) {
-          if (history[i][key] === "-" || history[i][key] === null) {
-            gapCount++;
-          } else {
-            prevValidIdx = i; // เจอตัวเลขของชั่วโมงก่อนที่เน็ตจะหลุดแล้ว!
-            break;
+              for (let j = 1; j <= gapCount; j++) {
+                history[lastValidIdx + j][key] = parseFloat((startVal + (step * j)).toFixed(1));
+              }
+              healedCount++;
+            }
           }
-        }
-
-        // ถ้าระบบพบว่ามีข้อมูลแหว่งไป 1-6 ชั่วโมง ให้ทำการซ่อมแซม
-        // (ถ้าแหว่งเกิน 6 ชม. ถือว่าเครื่องน่าจะปิดซ่อมจริง จะปล่อยให้แหว่งไว้เหมือนเดิม)
-        if (gapCount > 0 && gapCount <= 6 && prevValidIdx !== -1) {
-          const startVal = history[prevValidIdx][key]; // ค่าฝุ่นก่อนเน็ตหลุด
-          const endVal = history[lastIdx][key];        // ค่าฝุ่นตอนเน็ตกลับมา
-          const step = (endVal - startVal) / (gapCount + 1); // คำนวณหาค่าเฉลี่ยที่จะใช้เติมแต่ละชั่วโมง
-
-          // ทำการเขียนข้อมูลเติมลงไปในช่องโหว่ (Backfill)
-          for (let i = 1; i <= gapCount; i++) {
-            history[prevValidIdx + i][key] = parseFloat((startVal + (step * i)).toFixed(1));
-          }
-          console.log(`✨ [Data Healing] ซ่อมแซมรอยโหว่ให้สถานี ${key} จำนวน ${gapCount} ชั่วโมง สำเร็จ!`);
+          lastValidIdx = i; // อัปเดตตำแหน่งที่มีตัวเลขล่าสุด
         }
       }
     });
-    // ═════════════════════════════════════════════════════
+    if(healedCount > 0) console.log(`✨ [Data Healing] ซ่อมแซมรอยโหว่ให้สถานีที่เน็ตหลุดสำเร็จ ${healedCount} จุด!`);
 
-    // 8. เก็บประวัติไว้แค่ 72 ชั่วโมง ลบอันเก่าสุดทิ้ง
+    // 5. เก็บประวัติไว้ 72 ชั่วโมง
     if (history.length > 72) {
       history.shift(); 
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log(`บันทึกข้อมูลสำเร็จ! (วันที่ ${newRecord.date} | ช่วงเวลา ${newRecord.timeRange})`);
+    console.log('บันทึกข้อมูลและเคลียร์ประวัติตกหล่นเรียบร้อย!');
 
   } catch (error) {
-    console.error('เกิดข้อผิดพลาด:', error.message);
+    console.error('เกิดข้อผิดพลาดรุนแรง:', error.message);
     process.exit(1); 
   }
 }
