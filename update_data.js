@@ -48,7 +48,7 @@ async function fetchRawHistory(stationID, startDateStr, endDateStr) {
 
 async function fetchAndSave() {
   try {
-    // 1. โหลดประวัติเดิม
+    // 1. โหลดประวัติเดิมที่เก็บไว้ (ที่มีข้อมูล 5 วันแล้ว)
     let history = [];
     if (fs.existsSync('history.json')) {
       const rawData = fs.readFileSync('history.json', 'utf8');
@@ -57,7 +57,7 @@ async function fetchAndSave() {
       }
     }
 
-    // 2. คำนวณเวลา: วันนี้ (endDate) และ ย้อนหลัง 5 วัน (startDate)
+    // 2. คำนวณเวลา: วันนี้ (endDate) และ ย้อนหลัง 8 ชั่วโมง (startDate)
     const bkkTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Bangkok"}));
     
     // วันนี้
@@ -66,15 +66,14 @@ async function fetchAndSave() {
     const dd = String(bkkTime.getDate()).padStart(2,'0');
     const endDateStr = `${yyyy}-${mm}-${dd}`; 
 
-    // ย้อนหลัง 5 วัน
-    const pastDate = new Date(bkkTime);
-    pastDate.setDate(pastDate.getDate() - 5);
-    const s_yyyy = pastDate.getFullYear();
-    const s_mm = String(pastDate.getMonth()+1).padStart(2,'0');
-    const s_dd = String(pastDate.getDate()).padStart(2,'0');
+    // ย้อนหลัง 8 ชั่วโมง
+    const pastTime = new Date(bkkTime.getTime() - (8 * 60 * 60 * 1000));
+    const s_yyyy = pastTime.getFullYear();
+    const s_mm = String(pastTime.getMonth()+1).padStart(2,'0');
+    const s_dd = String(pastTime.getDate()).padStart(2,'0');
     const startDateStr = `${s_yyyy}-${s_mm}-${s_dd}`; 
 
-    console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลัง 5 วัน (${startDateStr} ถึง ${endDateStr})...`);
+    console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลัง 8 ชั่วโมง (ครอบคลุม ${startDateStr} ถึง ${endDateStr})...`);
     
     // 3. ทยอยดึงข้อมูลทีละ 5 สถานี
     const chunkSize = 5;
@@ -103,7 +102,7 @@ async function fetchAndSave() {
                          history.push(targetRow);
                      }
                      
-                     // ใส่ข้อมูลจริงลงไป
+                     // เติม/อัปเดตข้อมูล
                      targetRow[stn] = parseFloat(pastHr.PM25);
                  }
              });
@@ -111,7 +110,7 @@ async function fetchAndSave() {
       });
       
       await Promise.all(promises);
-      await delay(1500); // พักหายใจ 1.5 วิ 
+      await delay(1000); // พัก 1 วิ ก็พอเพราะปริมาณข้อมูลลดลงแล้ว
     }
 
     // 4. เรียงลำดับข้อมูลตามวัน-เวลา (Sort Chronologically)
@@ -123,14 +122,14 @@ async function fetchAndSave() {
         return timeA - timeB;
     });
 
-    // 5. ตัดข้อมูลเก่าทิ้ง เก็บไว้สูงสุด 150 แถว (ครอบคลุมประมาณ 6 วัน)
+    // 5. ตัดข้อมูลเก่าทิ้ง เก็บไว้สูงสุด 150 แถว (ครอบคลุมประมาณ 6 วัน) ไม่ให้ประวัติ 5 วันแรกหายไป
     if (history.length > 150) {
       history = history.slice(history.length - 150); 
     }
 
     // เขียนทับไฟล์ history.json
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log(`✅ สำเร็จ! บันทึกประวัติทั้งหมด ${history.length} ชั่วโมงเรียบร้อยแล้ว`);
+    console.log(`✅ สำเร็จ! อัปเดตข้อมูล 8 ชั่วโมงล่าสุดเรียบร้อย (มีข้อมูลรวม ${history.length} ชั่วโมง)`);
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาดรุนแรง:', error.message);
