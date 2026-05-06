@@ -62,7 +62,7 @@ async function fetchAndSave() {
     const endDateStr = `${yyyy}-${mm}-${dd}`; 
 
     // ---- ตั้งค่าย้อนหลัง 8 ชั่วโมง ----
-    const pastTime = new Date(bkkTime.getTime() - (5 * 24 * 60 * 60 * 1000));
+    const pastTime = new Date(bkkTime.getTime() - (5 * 60 * 60 * 1000));
     
     const s_yyyy = pastTime.getFullYear();
     const s_mm = String(pastTime.getMonth()+1).padStart(2,'0');
