@@ -1,7 +1,7 @@
 // ไฟล์: update_data.js
 const fs = require('fs');
 
-// ลิสต์รายชื่อสถานี กทม. ทั้งหมด (เป้าหมายในการดึงข้อมูลดิบ)
+// ลิสต์รายชื่อสถานี กทม. ทั้งหมด
 const BKK_STATIONS = [
   "02t","03t","05t","12t","50t","52t","53t","54t","59t","61t",
   "bkp101t","bkp102t","bkp103t","bkp104t","bkp105t","bkp56t","bkp57t","bkp58t","bkp59t","bkp60t",
@@ -11,15 +11,15 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-// ฟังก์ชันหน่วงเวลา ป้องกันการโดนบล็อคจากเซิร์ฟเวอร์
+// ฟังก์ชันหน่วงเวลา
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// 🕵️‍♂️ ฟังก์ชันมุดหลังบ้าน (อัปเกรดดึงข้ามวัน)
+// 🕵️‍♂️ ฟังก์ชันมุดหลังบ้าน (ดึงข้อมูลช่วงวันที่กำหนด)
 async function fetchRawHistory(stationID, startDateStr, endDateStr) {
     const targetUrl = `http://air4thai.com/forweb/getHistoryData.php?stationID=${stationID}&param=PM25&type=hr&sdate=${startDateStr}&edate=${endDateStr}`;
     const encodedUrl = encodeURIComponent(targetUrl);
     
-    // ใช้ Proxy เพื่อพรางตัวและหลบ CORS
+    // ใช้ Proxy พรางตัว
     const proxyList = [
       { url: `https://api.allorigins.win/get?disableCache=true&url=${encodedUrl}`, type: 'allorigins' },
       { url: `https://api.codetabs.com/v1/proxy?quest=${targetUrl}`, type: 'raw' }
@@ -38,7 +38,6 @@ async function fetchRawHistory(stationID, startDateStr, endDateStr) {
           data = await response.json();
         }
         
-        // เจาะโครงสร้าง JSON หา Array ที่เก็บตารางข้อมูลดิบ
         return data?.res?.stations?.[0]?.data || data?.stations?.[0]?.data || null;
       } catch (err) {
         continue;
@@ -49,7 +48,7 @@ async function fetchRawHistory(stationID, startDateStr, endDateStr) {
 
 async function fetchAndSave() {
   try {
-    // 1. โหลดประวัติเดิมจากไฟล์
+    // 1. โหลดประวัติเดิม
     let history = [];
     if (fs.existsSync('history.json')) {
       const rawData = fs.readFileSync('history.json', 'utf8');
@@ -58,77 +57,81 @@ async function fetchAndSave() {
       }
     }
 
-    // 2. คำนวณเวลา วันนี้ และ เมื่อวาน (Asia/Bangkok)
+    // 2. คำนวณเวลา: วันนี้ (endDate) และ ย้อนหลัง 30 วัน (startDate)
     const bkkTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Bangkok"}));
+    
+    // วันนี้
     const yyyy = bkkTime.getFullYear();
     const mm = String(bkkTime.getMonth()+1).padStart(2,'0');
     const dd = String(bkkTime.getDate()).padStart(2,'0');
-    const endDateStr = `${yyyy}-${mm}-${dd}`; // วันนี้
+    const endDateStr = `${yyyy}-${mm}-${dd}`; 
 
-    const yesterday = new Date(bkkTime);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const y_yyyy = yesterday.getFullYear();
-    const y_mm = String(yesterday.getMonth()+1).padStart(2,'0');
-    const y_dd = String(yesterday.getDate()).padStart(2,'0');
-    const startDateStr = `${y_yyyy}-${y_mm}-${y_dd}`; // เมื่อวาน
+    // ย้อนหลัง 30 วัน
+    const pastDate = new Date(bkkTime);
+    pastDate.setDate(pastDate.getDate() - 30);
+    const s_yyyy = pastDate.getFullYear();
+    const s_mm = String(pastDate.getMonth()+1).padStart(2,'0');
+    const s_dd = String(pastDate.getDate()).padStart(2,'0');
+    const startDateStr = `${s_yyyy}-${s_mm}-${s_dd}`; 
 
-    const currentHour = bkkTime.getHours();
-    const prevHour = currentHour === 0 ? 23 : currentHour - 1;
-    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
-
-    // 3. สร้างแถวเวลาของชั่วโมงปัจจุบันรอไว้
-    let latestRow = history.find(r => r.date === endDateStr && r.timeRange === timeRange);
-    if (!latestRow) {
-      latestRow = { date: endDateStr, timeRange: timeRange };
-      BKK_STATIONS.forEach(s => latestRow[s] = "-");
-      history.push(latestRow);
-      console.log(`สร้างแถวใหม่: วันที่ ${endDateStr} | ${timeRange}`);
-    }
-
-    console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลังข้ามวัน (${startDateStr} ถึง ${endDateStr})...`);
+    console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลัง 30 วัน (${startDateStr} ถึง ${endDateStr})...`);
     
-    // 4. ทยอยดึงข้อมูลทีละ 5 สถานี (Chunking) เพื่อความเสถียร
+    // 3. ทยอยดึงข้อมูลทีละ 5 สถานี
     const chunkSize = 5;
     for (let i = 0; i < BKK_STATIONS.length; i += chunkSize) {
       const chunk = BKK_STATIONS.slice(i, i + chunkSize);
-      console.log(`กำลังดึงข้อมูลสถานี: ${chunk.join(', ')}`);
+      console.log(`กำลังดึงข้อมูลกลุ่มสถานี: ${chunk.join(', ')}`);
       
       const promises = chunk.map(async (stn) => {
          const stnData = await fetchRawHistory(stn, startDateStr, endDateStr);
          
          if (stnData && Array.isArray(stnData)) {
-             // สแกนข้อมูลของวันนี้ทุกชั่วโมง แล้วนำไปเติมย้อนหลังให้ตรงช่องเป๊ะๆ (True Backfilling)
              stnData.forEach(pastHr => {
                  if (pastHr.PM25 && pastHr.PM25 !== "-") {
-                     // DATETIMEDATA จะมาในรูปแบบ "2026-05-06 14:00:00"
+                     // DATETIMEDATA มาในรูปแบบ "2026-05-06 14:00:00"
                      const pTimeStr = pastHr.DATETIMEDATA; 
                      const pHour = parseInt(pTimeStr.split(' ')[1].split(':')[0], 10);
                      const pPrevHour = pHour === 0 ? 23 : pHour - 1;
                      const pTimeRange = `${String(pPrevHour).padStart(2, '0')}:00 - ${String(pHour).padStart(2, '0')}:00`;
                      const pDateStr = pTimeStr.split(' ')[0];
                      
+                     // ค้นหาแถวเวลา ถ้าไม่มีให้สร้างใหม่ (Dynamic Row Creation)
                      let targetRow = history.find(r => r.date === pDateStr && r.timeRange === pTimeRange);
-                     if (targetRow) {
-                         targetRow[stn] = parseFloat(pastHr.PM25);
+                     if (!targetRow) {
+                         targetRow = { date: pDateStr, timeRange: pTimeRange };
+                         BKK_STATIONS.forEach(s => targetRow[s] = "-"); // ตั้งค่าเริ่มต้นเป็น "-"
+                         history.push(targetRow);
                      }
+                     
+                     // ใส่ข้อมูลจริงลงไป
+                     targetRow[stn] = parseFloat(pastHr.PM25);
                  }
              });
          }
       });
       
-      await Promise.all(promises); // รอให้ครบ 5 สถานี
-      await delay(1000); // พักหายใจ 1 วินาที ป้องกันโดนแบน
+      await Promise.all(promises);
+      await delay(1500); // พักหายใจ 1.5 วิ เพราะข้อมูลชุดใหญ่ขึ้น
     }
 
-    // --- หมายเหตุ: ส่วนของ Data Healing ถูกลบออกทั้งหมดตามความต้องการของงานวิจัย ---
+    // 4. เรียงลำดับข้อมูลตามวัน-เวลา (Sort Chronologically)
+    history.sort((a, b) => {
+        // แปลงวันที่และช่วงเวลาให้เป็นตัวเลข Timestamp เพื่อเทียบกัน
+        const hourA = a.timeRange.split(' - ')[0]; // หยิบชั่วโมงเริ่มมา เช่น "13:00"
+        const hourB = b.timeRange.split(' - ')[0];
+        const timeA = new Date(`${a.date}T${hourA}:00+07:00`).getTime();
+        const timeB = new Date(`${b.date}T${hourB}:00+07:00`).getTime();
+        return timeA - timeB;
+    });
 
-    // 5. ตัดหางปล่อยวัด เก็บประวัติไว้แค่ 72 ชั่วโมง เพื่อให้หน้าเว็บโหลดไว
-    if (history.length > 72) {
-      history = history.slice(history.length - 72); 
+    // 5. ตัดข้อมูลเก่าทิ้ง เก็บไว้สูงสุด 800 แถว (ครอบคลุม ~33 วัน)
+    if (history.length > 800) {
+      history = history.slice(history.length - 800); 
     }
 
+    // เขียนทับไฟล์ history.json
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log('✅ บันทึกข้อมูล Raw Hourly (ปราศจากการแทรกแซง) เสร็จสมบูรณ์!');
+    console.log(`✅ สำเร็จ! บันทึกประวัติทั้งหมด ${history.length} ชั่วโมงเรียบร้อยแล้ว`);
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาดรุนแรง:', error.message);
