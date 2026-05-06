@@ -76,6 +76,8 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .dctrl label{font-size:11px;color:var(--muted);font-family:var(--mono)}
 .dselect{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;}
 .dselect:focus{outline:none;border-color:var(--accent)}
+optgroup { font-family: var(--mono); color: var(--muted); font-weight: 600; font-size: 11px; }
+
 .dash-grid{display:grid;gap:16px}
 .dash-row-2{grid-template-columns:1fr 1fr}
 .chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;}
@@ -92,7 +94,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .kpi-delta{font-size:12px;margin-top:auto;padding-top:6px;color:var(--muted)}
 .kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}.kpi-delta.blue{color:#4a9eff}
 
-/* ตารางแสดงประวัติรายสถานี */
 .comp-table{width:100%;border-collapse:collapse;font-size:13px}
 .comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(255,255,255,0.02);}
 .comp-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
@@ -123,16 +124,16 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
     <div class="logo-icon">🌫</div>
     <div>
       <div class="logo-text">Bangkok PM2.5 Monitor</div>
-      <div class="logo-sub">Flat JSON Format · EPA NowCast</div>
+      <div class="logo-sub">Area-based Research Prototype</div>
     </div>
   </div>
   <div class="tabs">
-    <button class="tab" onclick="switchTab('map', event)">🗺 แผนที่</button>
-    <button class="tab active" onclick="switchTab('dash', event)">📊 Dashboard</button>
+    <button class="tab" onclick="switchTab('map', event)">🗺 แผนที่โซน (Area)</button>
+    <button class="tab active" onclick="switchTab('dash', event)">📊 Dashboard & สถิติ</button>
   </div>
 </header>
 
-<div id="global-status">⏳ กำลังประมวลผลข้อมูล Flat JSON และดึงพิกัดสถานี...</div>
+<div id="global-status">⏳ กำลังอ่านข้อมูลฐานข้อมูล...</div>
 
 <div id="panel-map" class="panel">
   <div class="map-layout">
@@ -147,8 +148,8 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       </div>
 
       <div class="nowcast-note">
-        <b style="color:var(--accent)">PM2.5 Real-time Analytics</b><br>
-        แสดงข้อมูลจากโครงสร้าง Flat JSON<br>
+        <b style="color:var(--accent)">Area-based Clustering</b><br>
+        แสดงข้อมูลจาก 6 กลุ่มเขตกรุงเทพมหานคร<br>
         ใช้เกณฑ์สีมาตรฐาน PCD 2566
       </div>
 
@@ -166,7 +167,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 <div id="panel-dash" class="panel active">
   <div id="dash-no-data" class="no-data-placeholder">
     <div class="nd-icon">⏳</div>
-    <div class="nd-title">กำลังอ่านโครงสร้าง Flat JSON...</div>
+    <div class="nd-title">กำลังอ่านประวัติ...</div>
   </div>
 
   <div id="dash-content" style="display:none">
@@ -176,10 +177,9 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
       <div class="dash-controls">
         <div class="dctrl">
-          <label>พื้นที่สถานี</label>
+          <label>พื้นที่ / สถานีวิจัย</label>
           <select class="dselect" id="dash-station" onchange="updateDashboard()">
-            <option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>
-          </select>
+            </select>
         </div>
       </div>
 
@@ -221,7 +221,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       <div class="dash-sub">วิเคราะห์ความแม่นยำ (Accuracy) และเปรียบเทียบประสิทธิภาพในการลดความผันผวน (Volatility)</div>
 
       <div class="dash-grid dash-row-2" style="margin-bottom: 16px;">
-        
         <div style="display:flex; flex-direction:column; gap:16px;">
            <div class="kpi-row" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
               <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);">
@@ -242,7 +241,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
                 <div class="kpi-delta">Station-based Volatility</div>
               </div>
               <div class="kpi-card">
-                <div class="kpi-label">ความผันผวน (SD) : กลุ่มพื้นที่</div>
+                <div class="kpi-label" id="lbl-sd-area">ความผันผวน (SD) : กลุ่มพื้นที่</div>
                 <div class="kpi-val" id="kpi-sd-area">—</div>
                 <div class="kpi-delta">Area-based Volatility</div>
               </div>
@@ -254,7 +253,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
           <div class="chart-card-sub">การวิเคราะห์ประสิทธิภาพระหว่าง Station-based กับ Area-based</div>
           <div style="position:relative; height:180px; margin-top: 16px;"><canvas id="chart-volatility"></canvas></div>
         </div>
-
       </div>
 
       <div class="chart-card" id="station-table-card" style="display:none; margin-bottom: 16px;">
@@ -281,68 +279,79 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <script>
 // ═══════════════════════════════════════════
-// GLOBAL STATE & CONFIGURATIONS
+// GLOBAL STATE & ZONING CONFIGURATION
 // ═══════════════════════════════════════════
+// นิยามโซนแผนที่ (6 กลุ่มเขต กทม.)
+const ZONE_META = {
+  "กรุงเทพกลาง": { color: "#e91e63" },
+  "กรุงเทพใต้": { color: "#9c27b0" },
+  "กรุงเทพเหนือ": { color: "#2196f3" },
+  "กรุงเทพตะวันออก": { color: "#4caf50" },
+  "กรุงธนเหนือ": { color: "#ff9800" },
+  "กรุงธนใต้": { color: "#795548" }
+};
+
+// ฐานข้อมูลสถานี พร้อมระบุโซน (Area Clustering)
 const STATION_META = {
-  "02t": { nameTH: "ม.ราชภัฏบ้านสมเด็จเจ้าพระยา", nameEN: "Bansomdejchaopraya Rajabhat University", lat: 13.732846, lng: 100.487662 },
-  "03t": { nameTH: "ริมถนนทางหลวงหมายเลข 3902", nameEN: "Highway NO.3902 km.13 +600", lat: 13.636514, lng: 100.414262 },
-  "05t": { nameTH: "กรมอุตุนิยมวิทยาบางนา", nameEN: "Thai Meteorological Department", lat: 13.666183, lng: 100.605742 },
-  "12t": { nameTH: "โรงเรียนนนทรีวิทยา", nameEN: "Nonsi Witthaya School", lat: 13.70806667, lng: 100.5473333 },
-  "50t": { nameTH: "โรงพยาบาลจุฬาลงกรณ์", nameEN: "Chulalongkorn Hospital", lat: 13.729852, lng: 100.536501 },
-  "52t": { nameTH: "การไฟฟ้าย่อยธนบุรี", nameEN: "Thonburi Power Sub-Station", lat: 13.727622, lng: 100.486568 },
-  "53t": { nameTH: "สถานีตำรวจนครบาลโชคชัย", nameEN: "Chokchai Police Station", lat: 13.7954248, lng: 100.5930298 },
-  "54t": { nameTH: "การเคหะชุมชนดินแดง", nameEN: "National Housing Authority Dindaeng", lat: 13.76251667, lng: 100.5502 },
-  "59t": { nameTH: "กรมประชาสัมพันธ์", nameEN: "The Government Public Relations Dept", lat: 13.783185, lng: 100.540489 },
-  "61t": { nameTH: "โรงเรียนบดินทรเดชา", nameEN: "Bodindecha School", lat: 13.769634, lng: 100.614567 },
-  "bkp101t": { nameTH: "สำนักงานเขตคลองสามวา", nameEN: "Khlong Sam Wa District Office", lat: 13.859911, lng: 100.704002 },
-  "bkp102t": { nameTH: "สำนักงานเขตจอมทอง", nameEN: "Chomthong District Office", lat: 13.677757, lng: 100.483861 },
-  "bkp103t": { nameTH: "สำนักงานเขตบางพลัด", nameEN: "Bang Phlat District Office", lat: 13.793965, lng: 100.504956 },
-  "bkp104t": { nameTH: "สำนักงานเขตบางแค", nameEN: "Bang Khae District Office", lat: 13.696314, lng: 100.409049 },
-  "bkp105t": { nameTH: "สำนักงานเขตบางขุนเทียน", nameEN: "Bang Khun Thian District Office", lat: 13.659908, lng: 100.435902 },
-  "bkp56t": { nameTH: "สำนักงานเขตดินแดง", nameEN: "Din Dang District Office", lat: 13.7619223, lng: 100.558606 },
-  "bkp57t": { nameTH: "สำนักงานเขตพระโขนง", nameEN: "Phra Kanong District Office", lat: 13.691511, lng: 100.61457 },
-  "bkp58t": { nameTH: "สำนักงานเขตราษฎร์บูรณะ", nameEN: "Rat Burana District Office", lat: 13.6821364, lng: 100.5060513 },
-  "bkp59t": { nameTH: "สำนักงานเขตราชเทวี", nameEN: "Ratchathewi District Office", lat: 13.7590851, lng: 100.5345788 },
-  "bkp60t": { nameTH: "ตรงข้ามสำนักงานเขตดุสิต", nameEN: "Dusit District Office", lat: 13.776664, lng: 100.520982 },
-  "bkp61t": { nameTH: "สนง.สภาพัฒนาการเศรษฐกิจฯ", nameEN: "NESDC Office", lat: 13.756281, lng: 100.514267 },
-  "bkp62t": { nameTH: "วงเวียนโอเดียน", nameEN: "Odeon Circus", lat: 13.737136, lng: 100.512734 },
-  "bkp63t": { nameTH: "แฟลตทหารบก สามเสน", nameEN: "Army Apartment Sam Sen", lat: 13.783554, lng: 100.5344645 },
-  "bkp64t": { nameTH: "สำนักงานเขตวังทองหลาง", nameEN: "Wang Thonglang District Office", lat: 13.778981, lng: 100.622294 },
-  "bkp65t": { nameTH: "สามย่านมิตรทาวน์", nameEN: "Samyan Mitrtown", lat: 13.733136, lng: 100.52829 },
-  "bkp66t": { nameTH: "ลานบางรักเลิฟลี่ พลาซ่า", nameEN: "Bangrak Lovely Plaza", lat: 13.726136, lng: 100.528055 },
-  "bkp67t": { nameTH: "สำนักงานเขตสาทร", nameEN: "Sathon District Office", lat: 13.707763, lng: 100.526787 },
-  "bkp69t": { nameTH: "ธนาคารกรุงศรีอยุธยา สำนักงานใหญ่", nameEN: "Bank of Ayuthaya Head Office", lat: 13.679226, lng: 100.54687 },
-  "bkp70t": { nameTH: "ริมถนนซอยสุขุมวิท 63", nameEN: "Soi Sukhumwit 63 Roadside", lat: 13.722096, lng: 100.584559 },
-  "bkp71t": { nameTH: "สำนักงานเขตสวนหลวง", nameEN: "Suan Luang District Office", lat: 13.731051, lng: 100.651705 },
-  "bkp72t": { nameTH: "บิ๊กซี ซุปเปอร์เซ็นเตอร์ บางนา", nameEN: "Big C Supercenter Bang Na", lat: 13.667987, lng: 100.635313 },
-  "bkp73t": { nameTH: "มหาวิทยาลัยเกษตรศาสตร์", nameEN: "Kasertsart University", lat: 13.839923, lng: 100.575632 },
-  "bkp74t": { nameTH: "สำนักงานเขตดอนเมือง", nameEN: "Don Mueng District Office", lat: 13.910986, lng: 100.594877 },
-  "bkp75t": { nameTH: "สำนักงานเขตสายไหม", nameEN: "Sai Mai District Office", lat: 13.896035, lng: 100.660628 },
-  "bkp76t": { nameTH: "สำนักงานเขตบางกะปิ", nameEN: "Bang Kapi District Office", lat: 13.766478, lng: 100.647785 },
-  "bkp77t": { nameTH: "แยกสวนสยาม-รามอินทรา", nameEN: "Suan Sayam-Ram Intra Intersection", lat: 13.813844, lng: 100.686594 },
-  "bkp78t": { nameTH: "โรงพยาบาลลาดกระบัง", nameEN: "Lat Krabang Hospital", lat: 13.72205, lng: 100.784069 },
-  "bkp79t": { nameTH: "สวนเฉลิมพระเกียรติ ร.9", nameEN: "Chaloem Phrakiat Rama 9 Park", lat: 13.813578, lng: 100.73208 },
-  "bkp80t": { nameTH: "สำนักงานเขตหนองจอก", nameEN: "Nong Chok District Office", lat: 13.855362, lng: 100.86267 },
-  "bkp81t": { nameTH: "ซีคอน สแควร์", nameEN: "Seacon Square", lat: 13.695561, lng: 100.647615 },
-  "bkp82t": { nameTH: "แยกมไหศวรรย์", nameEN: "Mahaisawan Intersection", lat: 13.70515, lng: 100.48465 },
-  "bkp83t": { nameTH: "ใต้สะพานสมเด็จพระเจ้าตากสิน", nameEN: "Under King Taksin Bridge", lat: 13.719705, lng: 100.508782 },
-  "bkp84t": { nameTH: "สี่แยกท่าพระ", nameEN: "Tha phra Intersection", lat: 13.729431, lng: 100.474373 },
-  "bkp85t": { nameTH: "สถานีตำรวจรถไฟบางกอกน้อย", nameEN: "Bangkok Noi Train Police Station", lat: 13.759619, lng: 100.481137 },
-  "bkp86t": { nameTH: "ถ.พุทธมณฑลสาย 1 ตัด ถ.บรมฯ", nameEN: "Phutthamonthon 1 Intersection", lat: 13.780778, lng: 100.426727 },
-  "bkp87t": { nameTH: "ตลาดธนบุรีสนามหลวง 2", nameEN: "Thon Buri Market Sanam Luang 2", lat: 13.746257, lng: 100.355099 },
-  "bkp88t": { nameTH: "มหาวิทยาลัยสยาม", nameEN: "Siam University", lat: 13.718689, lng: 100.45391 },
-  "bkp89t": { nameTH: "ถนนมาเจริญ เพชรเกษม 81", nameEN: "Ma Charean Roadside", lat: 13.705582, lng: 100.343164 },
-  "bkp90t": { nameTH: "ตลาดบางบอน 5", nameEN: "Bang Bon 5 Market", lat: 13.639165, lng: 100.372958 },
-  "bkp91t": { nameTH: "ม.เทคโนโลยีพระจอมเกล้าธนบุรี", nameEN: "KMUTT", lat: 13.651004, lng: 100.496673 },
-  "bkp92t": { nameTH: "สำนักงานเขตพระนคร", nameEN: "Phra Nakhon District Office", lat: 13.76415, lng: 100.499077 },
-  "bkp93t": { nameTH: "สำนักงานเขตห้วยขวาง", nameEN: "Huai Khwang District Office", lat: 13.77682, lng: 100.579543 },
-  "bkp94t": { nameTH: "สำนักงานเขตคลองเตย", nameEN: "Khlong Toei District Office", lat: 13.708488, lng: 100.583747 },
-  "bkp95t": { nameTH: "สำนักงานเขตบางซื่อ", nameEN: "Bang Sue District Office", lat: 13.809596, lng: 100.537883 },
-  "bkp96t": { nameTH: "สำนักงานเขตลาดพร้าว", nameEN: "Ladphrao District Office", lat: 13.803587, lng: 100.607535 },
-  "bkp97t": { nameTH: "สำนักงานเขตหลักสี่", nameEN: "Lak Si District Office", lat: 13.887395, lng: 100.579247 },
-  "bkp98t": { nameTH: "สำนักงานเขตบางเขน", nameEN: "Bang Khen District Office", lat: 13.873603, lng: 100.595839 },
-  "bkp99t": { nameTH: "สำนักงานเขตสะพานสูง", nameEN: "Saphan Sung District Office", lat: 13.768892, lng: 100.685743 },
-  "o10": { nameTH: "เคหะชุมชนคลองจั่น", nameEN: "NHA Klongchan", lat: 13.779873, lng: 100.646009 }
+  "02t": { zone: "กรุงธนเหนือ", nameTH: "ม.ราชภัฏบ้านสมเด็จเจ้าพระยา", nameEN: "Bansomdejchaopraya Rajabhat University", lat: 13.732846, lng: 100.487662 },
+  "03t": { zone: "กรุงธนใต้", nameTH: "ริมถนนทางหลวงหมายเลข 3902", nameEN: "Highway NO.3902 km.13 +600", lat: 13.636514, lng: 100.414262 },
+  "05t": { zone: "กรุงเทพใต้", nameTH: "กรมอุตุนิยมวิทยาบางนา", nameEN: "Thai Meteorological Department", lat: 13.666183, lng: 100.605742 },
+  "12t": { zone: "กรุงเทพใต้", nameTH: "โรงเรียนนนทรีวิทยา", nameEN: "Nonsi Witthaya School", lat: 13.70806667, lng: 100.5473333 },
+  "50t": { zone: "กรุงเทพกลาง", nameTH: "โรงพยาบาลจุฬาลงกรณ์", nameEN: "Chulalongkorn Hospital", lat: 13.729852, lng: 100.536501 },
+  "52t": { zone: "กรุงธนใต้", nameTH: "การไฟฟ้าย่อยธนบุรี", nameEN: "Thonburi Power Sub-Station", lat: 13.727622, lng: 100.486568 },
+  "53t": { zone: "กรุงเทพเหนือ", nameTH: "สถานีตำรวจนครบาลโชคชัย", nameEN: "Chokchai Police Station", lat: 13.7954248, lng: 100.5930298 },
+  "54t": { zone: "กรุงเทพกลาง", nameTH: "การเคหะชุมชนดินแดง", nameEN: "National Housing Authority Dindaeng", lat: 13.76251667, lng: 100.5502 },
+  "59t": { zone: "กรุงเทพกลาง", nameTH: "กรมประชาสัมพันธ์", nameEN: "The Government Public Relations Dept", lat: 13.783185, lng: 100.540489 },
+  "61t": { zone: "กรุงเทพเหนือ", nameTH: "โรงเรียนบดินทรเดชา", nameEN: "Bodindecha School", lat: 13.769634, lng: 100.614567 },
+  "bkp101t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตคลองสามวา", nameEN: "Khlong Sam Wa District Office", lat: 13.859911, lng: 100.704002 },
+  "bkp102t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตจอมทอง", nameEN: "Chomthong District Office", lat: 13.677757, lng: 100.483861 },
+  "bkp103t": { zone: "กรุงธนเหนือ", nameTH: "สำนักงานเขตบางพลัด", nameEN: "Bang Phlat District Office", lat: 13.793965, lng: 100.504956 },
+  "bkp104t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตบางแค", nameEN: "Bang Khae District Office", lat: 13.696314, lng: 100.409049 },
+  "bkp105t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตบางขุนเทียน", nameEN: "Bang Khun Thian District Office", lat: 13.659908, lng: 100.435902 },
+  "bkp56t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตดินแดง", nameEN: "Din Dang District Office", lat: 13.7619223, lng: 100.558606 },
+  "bkp57t": { zone: "กรุงเทพใต้", nameTH: "สำนักงานเขตพระโขนง", nameEN: "Phra Kanong District Office", lat: 13.691511, lng: 100.61457 },
+  "bkp58t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตราษฎร์บูรณะ", nameEN: "Rat Burana District Office", lat: 13.6821364, lng: 100.5060513 },
+  "bkp59t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตราชเทวี", nameEN: "Ratchathewi District Office", lat: 13.7590851, lng: 100.5345788 },
+  "bkp60t": { zone: "กรุงเทพกลาง", nameTH: "ตรงข้ามสำนักงานเขตดุสิต", nameEN: "Dusit District Office", lat: 13.776664, lng: 100.520982 },
+  "bkp61t": { zone: "กรุงเทพกลาง", nameTH: "สนง.สภาพัฒนาการเศรษฐกิจฯ", nameEN: "NESDC Office", lat: 13.756281, lng: 100.514267 },
+  "bkp62t": { zone: "กรุงเทพกลาง", nameTH: "วงเวียนโอเดียน", nameEN: "Odeon Circus", lat: 13.737136, lng: 100.512734 },
+  "bkp63t": { zone: "กรุงเทพเหนือ", nameTH: "แฟลตทหารบก สามเสน", nameEN: "Army Apartment Sam Sen", lat: 13.783554, lng: 100.5344645 },
+  "bkp64t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตวังทองหลาง", nameEN: "Wang Thonglang District Office", lat: 13.778981, lng: 100.622294 },
+  "bkp65t": { zone: "กรุงเทพกลาง", nameTH: "สามย่านมิตรทาวน์", nameEN: "Samyan Mitrtown", lat: 13.733136, lng: 100.52829 },
+  "bkp66t": { zone: "กรุงเทพกลาง", nameTH: "ลานบางรักเลิฟลี่ พลาซ่า", nameEN: "Bangrak Lovely Plaza", lat: 13.726136, lng: 100.528055 },
+  "bkp67t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตสาทร", nameEN: "Sathon District Office", lat: 13.707763, lng: 100.526787 },
+  "bkp69t": { zone: "กรุงเทพใต้", nameTH: "ธนาคารกรุงศรีอยุธยา สำนักงานใหญ่", nameEN: "Bank of Ayuthaya Head Office", lat: 13.679226, lng: 100.54687 },
+  "bkp70t": { zone: "กรุงเทพใต้", nameTH: "ริมถนนซอยสุขุมวิท 63", nameEN: "Soi Sukhumwit 63 Roadside", lat: 13.722096, lng: 100.584559 },
+  "bkp71t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตสวนหลวง", nameEN: "Suan Luang District Office", lat: 13.731051, lng: 100.651705 },
+  "bkp72t": { zone: "กรุงเทพใต้", nameTH: "บิ๊กซี ซุปเปอร์เซ็นเตอร์ บางนา", nameEN: "Big C Supercenter Bang Na", lat: 13.667987, lng: 100.635313 },
+  "bkp73t": { zone: "กรุงเทพเหนือ", nameTH: "มหาวิทยาลัยเกษตรศาสตร์", nameEN: "Kasertsart University", lat: 13.839923, lng: 100.575632 },
+  "bkp74t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตดอนเมือง", nameEN: "Don Mueng District Office", lat: 13.910986, lng: 100.594877 },
+  "bkp75t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตสายไหม", nameEN: "Sai Mai District Office", lat: 13.896035, lng: 100.660628 },
+  "bkp76t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตบางกะปิ", nameEN: "Bang Kapi District Office", lat: 13.766478, lng: 100.647785 },
+  "bkp77t": { zone: "กรุงเทพตะวันออก", nameTH: "แยกสวนสยาม-รามอินทรา", nameEN: "Suan Sayam-Ram Intra Intersection", lat: 13.813844, lng: 100.686594 },
+  "bkp78t": { zone: "กรุงเทพตะวันออก", nameTH: "โรงพยาบาลลาดกระบัง", nameEN: "Lat Krabang Hospital", lat: 13.72205, lng: 100.784069 },
+  "bkp79t": { zone: "กรุงเทพตะวันออก", nameTH: "สวนเฉลิมพระเกียรติ ร.9", nameEN: "Chaloem Phrakiat Rama 9 Park", lat: 13.813578, lng: 100.73208 },
+  "bkp80t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตหนองจอก", nameEN: "Nong Chok District Office", lat: 13.855362, lng: 100.86267 },
+  "bkp81t": { zone: "กรุงเทพตะวันออก", nameTH: "ซีคอน สแควร์", nameEN: "Seacon Square", lat: 13.695561, lng: 100.647615 },
+  "bkp82t": { zone: "กรุงธนใต้", nameTH: "แยกมไหศวรรย์", nameEN: "Mahaisawan Intersection", lat: 13.70515, lng: 100.48465 },
+  "bkp83t": { zone: "กรุงธนเหนือ", nameTH: "ใต้สะพานสมเด็จพระเจ้าตากสิน", nameEN: "Under King Taksin Bridge", lat: 13.719705, lng: 100.508782 },
+  "bkp84t": { zone: "กรุงธนใต้", nameTH: "สี่แยกท่าพระ", nameEN: "Tha phra Intersection", lat: 13.729431, lng: 100.474373 },
+  "bkp85t": { zone: "กรุงธนเหนือ", nameTH: "สถานีตำรวจรถไฟบางกอกน้อย", nameEN: "Bangkok Noi Train Police Station", lat: 13.759619, lng: 100.481137 },
+  "bkp86t": { zone: "กรุงธนเหนือ", nameTH: "ถ.พุทธมณฑลสาย 1 ตัด ถ.บรมฯ", nameEN: "Phutthamonthon 1 Intersection", lat: 13.780778, lng: 100.426727 },
+  "bkp87t": { zone: "กรุงธนใต้", nameTH: "ตลาดธนบุรีสนามหลวง 2", nameEN: "Thon Buri Market Sanam Luang 2", lat: 13.746257, lng: 100.355099 },
+  "bkp88t": { zone: "กรุงธนใต้", nameTH: "มหาวิทยาลัยสยาม", nameEN: "Siam University", lat: 13.718689, lng: 100.45391 },
+  "bkp89t": { zone: "กรุงธนใต้", nameTH: "ถนนมาเจริญ เพชรเกษม 81", nameEN: "Ma Charean Roadside", lat: 13.705582, lng: 100.343164 },
+  "bkp90t": { zone: "กรุงธนใต้", nameTH: "ตลาดบางบอน 5", nameEN: "Bang Bon 5 Market", lat: 13.639165, lng: 100.372958 },
+  "bkp91t": { zone: "กรุงธนใต้", nameTH: "ม.เทคโนโลยีพระจอมเกล้าธนบุรี", nameEN: "KMUTT", lat: 13.651004, lng: 100.496673 },
+  "bkp92t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตพระนคร", nameEN: "Phra Nakhon District Office", lat: 13.76415, lng: 100.499077 },
+  "bkp93t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตห้วยขวาง", nameEN: "Huai Khwang District Office", lat: 13.77682, lng: 100.579543 },
+  "bkp94t": { zone: "กรุงเทพใต้", nameTH: "สำนักงานเขตคลองเตย", nameEN: "Khlong Toei District Office", lat: 13.708488, lng: 100.583747 },
+  "bkp95t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตบางซื่อ", nameEN: "Bang Sue District Office", lat: 13.809596, lng: 100.537883 },
+  "bkp96t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตลาดพร้าว", nameEN: "Ladphrao District Office", lat: 13.803587, lng: 100.607535 },
+  "bkp97t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตหลักสี่", nameEN: "Lak Si District Office", lat: 13.887395, lng: 100.579247 },
+  "bkp98t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตบางเขน", nameEN: "Bang Khen District Office", lat: 13.873603, lng: 100.595839 },
+  "bkp99t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตสะพานสูง", nameEN: "Saphan Sung District Office", lat: 13.768892, lng: 100.685743 },
+  "o10": { zone: "กรุงเทพตะวันออก", nameTH: "เคหะชุมชนคลองจั่น", nameEN: "NHA Klongchan", lat: 13.779873, lng: 100.646009 }
 };
 
 let STATION_KEYS = [];   
@@ -380,14 +389,10 @@ function nowcast(vals) {
   return den > 0 ? Math.round(num / den * 10) / 10 : null;
 }
 
-// ฟังก์ชันทางสถิติสำหรับงานวิจัย
 function calcRMSE(arr1, arr2) {
   let sum = 0, count = 0;
   for(let i=0; i<arr1.length; i++) {
-    if(arr1[i] != null && arr2[i] != null) {
-      sum += Math.pow(arr1[i] - arr2[i], 2);
-      count++;
-    }
+    if(arr1[i] != null && arr2[i] != null) { sum += Math.pow(arr1[i] - arr2[i], 2); count++; }
   }
   return count > 0 ? Math.sqrt(sum / count) : null;
 }
@@ -441,11 +446,7 @@ async function initializeData() {
         
         let avg24Val = lookback24.length > 0 ? (lookback24.reduce((sum, val) => sum + val, 0) / lookback24.length) : null;
 
-        row._parsed[key] = {
-          raw: rawVal,
-          nc: nowcast(lookback12),
-          avg24: avg24Val
-        };
+        row._parsed[key] = { raw: rawVal, nc: nowcast(lookback12), avg24: avg24Val };
       });
     });
 
@@ -470,6 +471,7 @@ async function initializeData() {
 // ═══════════════════════════════════════════
 let mapInstance = null; 
 let mapMarkers = {};
+let mapZones = {};
 
 function initMap() {
   mapInstance = L.map('map', { center: [13.75, 100.52], zoom: 11 });
@@ -481,10 +483,20 @@ function initMap() {
 
 function buildDynamicUI() {
   const dashSelect = document.getElementById('dash-station');
-  dashSelect.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>';
-  STATION_KEYS.forEach(k => { 
-    if(STATION_META[k]) dashSelect.innerHTML += `<option value="${k}">${STATION_META[k].nameTH}</option>`; 
-  });
+  
+  // จัดกลุ่ม Dropdown ตาม Zone
+  let optHTML = '<option value="all">ทุกสถานี (กทม. ภาพรวม)</option>';
+  for (const zName in ZONE_META) {
+    optHTML += `<optgroup label="กลุ่มพื้นที่: ${zName}">`;
+    optHTML += `<option value="zone_${zName}">>> ค่าเฉลี่ยกลุ่มพื้นที่ ${zName} <<</option>`;
+    STATION_KEYS.forEach(k => { 
+      if(STATION_META[k].zone === zName) {
+        optHTML += `<option value="${k}">[${k}] ${STATION_META[k].nameTH}</option>`; 
+      }
+    });
+    optHTML += `</optgroup>`;
+  }
+  dashSelect.innerHTML = optHTML;
 
   const timeSelect = document.getElementById('tp-history');
   timeSelect.innerHTML = '';
@@ -492,14 +504,54 @@ function buildDynamicUI() {
     timeSelect.innerHTML += `<option value="${idx}">วันที่ ${row.date} | ${row.timeRange}</option>`;
   });
 
+  // ลบหมุดเดิม
   for(const k in mapMarkers) { mapInstance.removeLayer(mapMarkers[k].marker); }
-  mapMarkers = {};
+  for(const z in mapZones) { mapInstance.removeLayer(mapZones[z]); }
+  mapMarkers = {}; mapZones = {};
+
+  // วาดโซนรัศมี (Area Boundaries) แบบอัตโนมัติ
+  const zonePoints = {};
+  STATION_KEYS.forEach(k => {
+    const z = STATION_META[k].zone;
+    if (!zonePoints[z]) zonePoints[z] = { latSum: 0, lngSum: 0, count: 0, points: [] };
+    zonePoints[z].latSum += STATION_META[k].lat;
+    zonePoints[z].lngSum += STATION_META[k].lng;
+    zonePoints[z].count++;
+    zonePoints[z].points.push(L.latLng(STATION_META[k].lat, STATION_META[k].lng));
+  });
+
+  for (const z in zonePoints) {
+    if(zonePoints[z].count > 0) {
+      const cLat = zonePoints[z].latSum / zonePoints[z].count;
+      const cLng = zonePoints[z].lngSum / zonePoints[z].count;
+      const center = L.latLng(cLat, cLng);
+      
+      let maxDist = 0;
+      zonePoints[z].points.forEach(p => {
+        const d = center.distanceTo(p);
+        if (d > maxDist) maxDist = d;
+      });
+
+      mapZones[z] = L.circle(center, {
+        radius: maxDist + 1000, // รัศมีคลุมทุกสถานี + เผื่อขอบ 1 กม.
+        color: ZONE_META[z].color,
+        fillColor: ZONE_META[z].color,
+        fillOpacity: 0.1,
+        weight: 2,
+        dashArray: '5, 5'
+      }).addTo(mapInstance).bindTooltip(z, {permanent: false, direction: 'center', className: 'zone-tooltip'});
+    }
+  }
+
+  // วาดหมุดสถานี
   for(const key of STATION_KEYS) {
     if(!STATION_META[key]) continue;
     const m = STATION_META[key];
     const div = document.createElement('div');
     div.className = 'pm-marker';
-    div.style.cssText = 'width:52px;height:52px;background:#333;border-color:rgba(255,255,255,.5)';
+    // ใช้สีขอบหมุดตามสีของโซน เพื่อให้ดูง่าย
+    const zColor = ZONE_META[m.zone].color;
+    div.style.cssText = `width:52px;height:52px;background:#333;border:3px solid ${zColor}88`;
     div.textContent = '…';
     const icon = L.divIcon({ html: div, className: '', iconSize: [52,52], iconAnchor: [26,26] });
     const marker = L.marker([m.lat, m.lng], { icon }).addTo(mapInstance);
@@ -542,7 +594,7 @@ function updateMap() {
     
     return `<div class="scard" id="sc-${key}" onclick="selectStation('${key}')">
       <div class="scard-top">
-        <div><div class="scard-name">${m.nameTH}</div><div class="scard-sub">${m.nameEN || '-'}</div></div>
+        <div><div class="scard-name">${m.nameTH}</div><div class="scard-sub">${m.zone}</div></div>
         <span class="aqi-badge" style="background:${color};color:${tc};border:none">${band?.label ?? 'ไม่มีข้อมูล'}</span>
       </div>
       <div class="scard-vals">
@@ -559,7 +611,6 @@ function updateMap() {
     const color = band?.color ?? '#555';
     const {div, marker} = mapMarkers[key];
     div.style.background = nc != null ? color : '#333';
-    div.style.borderColor = nc != null ? color+'88' : 'rgba(255,255,255,.2)';
     div.style.color = nc != null ? (band?.textColor ?? '#fff') : '#fff';
     div.textContent = nc != null ? nc.toFixed(0) : '?';
     marker.setPopupContent(buildPopup(key, nc, avg24, rowData.date, rowData.timeRange));
@@ -585,9 +636,6 @@ function buildPopup(key, nc, avg24, dateStr, timeRange) {
         <div style="font-size:22px;font-weight:700;color:${avg24Band?.color??'#444'};margin-bottom:4px">${avg24!=null?avg24.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
       </div>
     </div>
-    <div style="margin-top:8px;background:#1f2229;border-radius:8px;padding:8px 10px;font-family:monospace;font-size:12px">
-      NowCast − เฉลี่ย 24 ชม: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${diffSign}${diff} µg/m³</b>
-    </div>
   </div>`;
 }
 
@@ -595,7 +643,10 @@ function selectStation(key) {
   document.querySelectorAll('.scard').forEach(c => c.classList.remove('selected'));
   const sc = document.getElementById('sc-'+key);
   if(sc) { sc.classList.add('selected'); sc.scrollIntoView({behavior:'smooth',block:'nearest'}); }
-  if(mapMarkers[key]) mapMarkers[key].marker.openPopup();
+  if(mapMarkers[key]) {
+    mapInstance.flyTo(mapMarkers[key].marker.getLatLng(), 13);
+    mapMarkers[key].marker.openPopup();
+  }
 }
 
 function goToLatest() {
@@ -611,9 +662,7 @@ function goToLatest() {
 let charts = {};
 function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
-function extractFlatData(stationKey) {
-  const keys = stationKey === 'all' ? STATION_KEYS.filter(k => STATION_META[k]) : [stationKey];
-  
+function extractFlatData(targetKeys) {
   const tlLabels = []; const tlRaw = []; const tlNC = []; const tlAvg24 = [];
   const rawCats = {}; const ncCats = {};
   for(const b of AQI_BREAKS) { rawCats[b.label] = 0; ncCats[b.label] = 0; }
@@ -627,7 +676,7 @@ function extractFlatData(stationKey) {
 
      let sRaw = 0, cRaw = 0, sNC = 0, cNC = 0, sAvg24 = 0, cAvg24 = 0;
 
-     keys.forEach(k => {
+     targetKeys.forEach(k => {
         const parsed = row._parsed[k];
         if (parsed) {
           if(parsed.raw !== null) { sRaw += parsed.raw; cRaw++; }
@@ -640,9 +689,7 @@ function extractFlatData(stationKey) {
      const avgNC = cNC > 0 ? sNC/cNC : null;
      const avgAvg24 = cAvg24 > 0 ? sAvg24/cAvg24 : null;
      
-     tlRaw.push(avgRaw); 
-     tlNC.push(avgNC);
-     tlAvg24.push(avgAvg24);
+     tlRaw.push(avgRaw); tlNC.push(avgNC); tlAvg24.push(avgAvg24);
 
      if(avgRaw !== null) {
        allRawVals.push(avgRaw);
@@ -667,11 +714,36 @@ function extractFlatData(stationKey) {
 function updateDashboard() {
   if (HISTORY_RECORDS.length === 0) return;
   
-  const stationKey = document.getElementById('dash-station').value;
-  const fd = extractFlatData(stationKey);
-  const fdAll = extractFlatData('all'); // ดึงข้อมูล Area-based ไว้เสมอสำหรับเทียบสถิติ
+  const selection = document.getElementById('dash-station').value;
+  let targetKeys = [];
+  let areaKeys = []; // สำหรับดึงค่าคู่เทียบ Area-based
 
-  // --- ข้อมูลสถิติพื้นฐาน ---
+  let statContext = "";
+  let areaContext = "";
+
+  if (selection === 'all') {
+    targetKeys = STATION_KEYS;
+    areaKeys = STATION_KEYS;
+    statContext = "ภาพรวมทั้งกรุงเทพฯ";
+    areaContext = "ภาพรวมทั้งกรุงเทพฯ";
+  } else if (selection.startsWith('zone_')) {
+    const zName = selection.replace('zone_', '');
+    targetKeys = STATION_KEYS.filter(k => STATION_META[k].zone === zName);
+    areaKeys = targetKeys;
+    statContext = `กลุ่มพื้นที่ ${zName}`;
+    areaContext = `กลุ่มพื้นที่ ${zName}`;
+  } else {
+    // เลือกสถานีเดี่ยว
+    targetKeys = [selection];
+    const zName = STATION_META[selection].zone;
+    areaKeys = STATION_KEYS.filter(k => STATION_META[k].zone === zName); // คู่เทียบคือโซนที่ตัวเองอยู่!
+    statContext = STATION_META[selection].nameTH;
+    areaContext = `กลุ่มพื้นที่ ${zName}`;
+  }
+
+  const fd = extractFlatData(targetKeys);
+  const fdArea = extractFlatData(areaKeys); 
+
   document.getElementById('kpi-avg').innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
   document.getElementById('kpi-nc').innerHTML = fd.avgNC != null ? fd.avgNC.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
   document.getElementById('kpi-bad').innerHTML = fd.badHours+'<span class="kpi-unit">ชม.</span>';
@@ -679,34 +751,31 @@ function updateDashboard() {
   
   const diffVal = (fd.avgRaw != null && fd.avgNC != null) ? fd.avgNC - fd.avgRaw : null;
   document.getElementById('kpi-nc-d').innerHTML = diffVal != null ? `<span class="${diffVal>0?'up':'down'}">${diffVal>0?'▲':'▼'} ${Math.abs(diffVal).toFixed(1)} จากค่า Raw</span>` : '';
-  document.getElementById('kpi-bad-d').textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง (${(fd.badHours/Math.max(fd.totalHours,1)*100).toFixed(1)}%)`;
+  document.getElementById('kpi-bad-d').textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง`;
 
-  // --- 🎯 หมวดการประเมินประสิทธิภาพ (วิจัย) ---
-  // 1. คำนวณ RMSE ระหว่าง NowCast กับ เฉลี่ย 24 ชม. (Objective 2)
+  // --- 🎯 หมวดวิจัย: RMSE & Volatility (SD) ---
   const rmseValue = calcRMSE(fd.tlNC, fd.tlAvg24);
   document.getElementById('kpi-rmse').innerHTML = rmseValue != null ? rmseValue.toFixed(3) : '—';
 
-  // 2. คำนวณความผันผวน SD (Objective 3)
   let sdStationVal;
-  const sdAreaVal = calcSD(fdAll.tlNC); // Area-based คือ SD ของเส้นเฉลี่ยทุกสถานี
+  const sdAreaVal = calcSD(fdArea.tlNC);
 
-  if (stationKey === 'all') {
-    // ถ้าดูภาพรวมทั้งหมด ให้คำนวณ SD ของแต่ละสถานี แล้วเอามาเฉลี่ยกัน เพื่อเป็นตัวแทน "Station-based"
+  if (selection === 'all' || selection.startsWith('zone_')) {
     let totalSD = 0, countSD = 0;
-    STATION_KEYS.forEach(k => {
-      let stnSD = calcSD(extractFlatData(k).tlNC);
+    targetKeys.forEach(k => {
+      let stnSD = calcSD(extractFlatData([k]).tlNC);
       if(stnSD != null) { totalSD += stnSD; countSD++; }
     });
     sdStationVal = countSD > 0 ? (totalSD / countSD) : null;
+    document.getElementById('lbl-sd-area').innerHTML = `ความผันผวน (SD) : กลุ่มพื้นที่`;
   } else {
-    // ถ้าเลือกสถานีใดสถานีหนึ่ง ก็ใช้ SD ของสถานีนั้นได้เลย
     sdStationVal = calcSD(fd.tlNC);
+    document.getElementById('lbl-sd-area').innerHTML = `ความผันผวน (SD) : ${areaContext}`; // ระบุชัดเจนว่าเทียบกับโซนไหน
   }
 
   document.getElementById('kpi-sd-stn').innerHTML = sdStationVal != null ? sdStationVal.toFixed(2) : '—';
   document.getElementById('kpi-sd-area').innerHTML = sdAreaVal != null ? sdAreaVal.toFixed(2) : '—';
 
-  // 3. คำนวณเปรียบเทียบ % การลดความผันผวน
   if (sdStationVal != null && sdAreaVal != null && sdStationVal > 0) {
     const reduction = ((sdStationVal - sdAreaVal) / sdStationVal) * 100;
     const isReduced = reduction >= 0;
@@ -716,135 +785,65 @@ function updateDashboard() {
     document.getElementById('kpi-sd-diff').innerHTML = '—';
   }
 
-  // วาดกราฟแท่งเปรียบเทียบความผันผวน (Volatility Chart)
   destroyChart('volatility');
   charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
     type: 'bar',
     data: {
       labels: ['รายสถานี (Station-based)', 'กลุ่มพื้นที่ (Area-based)'],
       datasets: [{
-        label: 'Standard Deviation (SD)',
+        label: 'SD',
         data: [sdStationVal, sdAreaVal],
         backgroundColor: ['rgba(74,158,255,0.7)', 'rgba(0,212,170,0.7)'],
-        borderColor: ['#4a9eff', '#00d4aa'],
-        borderWidth: 1,
-        borderRadius: 4
+        borderColor: ['#4a9eff', '#00d4aa'], borderWidth: 1, borderRadius: 4
       }]
     },
-    options: {
-      indexAxis: 'y', // ทำเป็นกราฟแท่งแนวนอนเพื่อประหยัดพื้นที่
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` SD: ${ctx.raw.toFixed(2)}` } } },
-      scales: { x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks:{ color:'#7a8090', font:{family:'IBM Plex Mono'} } }, y: { grid: { display: false }, ticks:{ color:'#fff', font:{family:'Sarabun'} } } }
-    }
+    options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks:{ color:'#7a8090'} }, y: { grid: { display: false }, ticks:{ color:'#fff'} } } }
   });
 
-
-  // --- กราฟไทม์ไลน์หลัก (Bar Chart สำหรับ Raw) ---
+  // --- กราฟไทม์ไลน์ ---
   destroyChart('timeline');
   charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
     type: 'line',
     data: { labels: fd.tlLabels, datasets: [
-      {
-        type: 'bar',
-        label: 'รายชั่วโมง (Raw)',
-        data: fd.tlRaw,
-        backgroundColor: 'rgba(74,158,255,0.4)',
-        borderColor: '#4a9eff',
-        borderWidth: 1,
-        borderRadius: 4
-      },
-      {
-        type: 'line',
-        label: 'NowCast (w=0.4)',
-        data: fd.tlNC,
-        borderColor: '#00d4aa',
-        backgroundColor: 'rgba(0,212,170,.1)',
-        tension: .3,
-        pointRadius: 3,
-        fill: true,
-        borderWidth: 3,
-        spanGaps: true
-      },
-      {
-        type: 'line',
-        label: 'เฉลี่ย 24 ชม.',
-        data: fd.tlAvg24,
-        borderColor: '#f5a623',
-        backgroundColor: 'rgba(245,166,35,.1)',
-        tension: .3,
-        pointRadius: 2,
-        fill: false,
-        borderWidth: 2,
-        borderDash: [2, 2],
-        spanGaps: true
-      }
+      { type: 'bar', label: 'รายชั่วโมง (Raw)', data: fd.tlRaw, backgroundColor: 'rgba(74,158,255,0.4)', borderColor: '#4a9eff', borderWidth: 1, borderRadius: 4 },
+      { type: 'line', label: 'NowCast (w=0.4)', data: fd.tlNC, borderColor: '#00d4aa', backgroundColor: 'rgba(0,212,170,.1)', tension: .3, pointRadius: 3, fill: true, borderWidth: 3, spanGaps: true },
+      { type: 'line', label: 'เฉลี่ย 24 ชม.', data: fd.tlAvg24, borderColor: '#f5a623', backgroundColor: 'rgba(245,166,35,.1)', tension: .3, pointRadius: 2, fill: false, borderWidth: 2, borderDash: [2, 2], spanGaps: true }
     ]},
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#7a8090', font: { family: 'Sarabun', size: 12 } } },
-        tooltip: { mode: 'index', intersect: false }
-      },
-      scales: {
-        x: { ticks: { color: '#7a8090', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,.05)' } },
-        y: { ticks: { color: '#7a8090', font: { family: 'IBM Plex Mono', size: 11 } }, grid: { color: 'rgba(255,255,255,.05)' } }
-      }
-    }
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#7a8090' } } }, scales: { x: { ticks: { color: '#7a8090', maxRotation: 45 }, grid: { color: 'rgba(255,255,255,.05)' } }, y: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,.05)' } } } }
   });
 
-  const catLabels = AQI_BREAKS.map(b=>b.label); 
-  const catColors = AQI_BREAKS.map(b=>b.color);
-  
-  const rawCounts = catLabels.map(l => fd.rawCats[l]||0); 
-  const ncCounts = catLabels.map(l => fd.ncCats[l]||0);
-  const totalRaw = rawCounts.reduce((a,b) => a+b, 0);
-  const totalNC = ncCounts.reduce((a,b) => a+b, 0);
+  // --- โดนัทเปอร์เซ็นต์ ---
+  const catLabels = AQI_BREAKS.map(b=>b.label); const catColors = AQI_BREAKS.map(b=>b.color);
+  const rawCounts = catLabels.map(l => fd.rawCats[l]||0); const ncCounts = catLabels.map(l => fd.ncCats[l]||0);
+  const totalRaw = rawCounts.reduce((a,b) => a+b, 0); const totalNC = ncCounts.reduce((a,b) => a+b, 0);
 
-  // --- กราฟโดนัท (เปอร์เซ็นต์) ---
   destroyChart('donut-raw');
-  charts['donut-raw'] = new Chart(document.getElementById('chart-donut-raw'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:rawCounts,backgroundColor:catColors.map(c=>c+'cc'),borderColor:'rgba(0,0,0,0)',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
-  document.getElementById('legend-raw').innerHTML = catLabels.map((l,i) => {
-    const pct = totalRaw > 0 ? ((rawCounts[i] / totalRaw) * 100).toFixed(1) : 0;
-    return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
-  }).join('');
+  charts['donut-raw'] = new Chart(document.getElementById('chart-donut-raw'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:rawCounts,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+  document.getElementById('legend-raw').innerHTML = catLabels.map((l,i) => `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${totalRaw > 0 ? ((rawCounts[i] / totalRaw) * 100).toFixed(1) : 0}%)</span></div>`).join('');
 
   destroyChart('donut-nc');
-  charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderColor:'rgba(0,0,0,0)',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
-  document.getElementById('legend-nc').innerHTML = catLabels.map((l,i) => {
-    const pct = totalNC > 0 ? ((ncCounts[i] / totalNC) * 100).toFixed(1) : 0;
-    return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
-  }).join('');
+  charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+  document.getElementById('legend-nc').innerHTML = catLabels.map((l,i) => `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${totalNC > 0 ? ((ncCounts[i] / totalNC) * 100).toFixed(1) : 0}%)</span></div>`).join('');
 
-  // --- ตารางรายสถานี ---
+  // --- ตารางประวัติรายสถานี ---
   const stationTableCard = document.getElementById('station-table-card');
   const tableBody = document.querySelector('#station-ts-table tbody');
   
-  if (stationKey === 'all') {
+  if (selection === 'all' || selection.startsWith('zone_')) {
     stationTableCard.style.display = 'none';
   } else {
     stationTableCard.style.display = 'block';
-    const stnName = STATION_META[stationKey]?.nameTH || stationKey;
-    document.getElementById('station-table-sub').textContent = `แสดงข้อมูลย้อนหลังของสถานี: ${stnName}`;
-    
+    document.getElementById('station-table-sub').textContent = `แสดงข้อมูลย้อนหลังของสถานี: ${statContext} (${areaContext})`;
     let tableHTML = '';
     for (let i = HISTORY_RECORDS.length - 1; i >= 0; i--) {
       const row = HISTORY_RECORDS[i];
-      const parsed = row._parsed[stationKey];
+      const parsed = row._parsed[selection];
       if (!parsed) continue;
       const rawVal = parsed.raw; const ncVal = parsed.nc;
       const rawBand = getAQIBand(rawVal); const ncBand = getAQIBand(ncVal);
       const rawStr = rawVal !== null ? `<span style="color:${rawBand.color}">${rawVal.toFixed(1)}</span>` : '—';
       const ncStr = ncVal !== null ? `<span style="color:${ncBand.color}">${ncVal.toFixed(1)}</span>` : '—';
-      
-      tableHTML += `<tr>
-        <td>${row.date}</td>
-        <td style="font-family: var(--mono);">${row.timeRange}</td>
-        <td style="font-family: var(--mono); font-weight: bold;">${rawStr}</td>
-        <td style="font-family: var(--mono); font-weight: bold;">${ncStr}</td>
-      </tr>`;
+      tableHTML += `<tr><td>${row.date}</td><td style="font-family: var(--mono);">${row.timeRange}</td><td style="font-family: var(--mono); font-weight: bold;">${rawStr}</td><td style="font-family: var(--mono); font-weight: bold;">${ncStr}</td></tr>`;
     }
     tableBody.innerHTML = tableHTML;
   }
