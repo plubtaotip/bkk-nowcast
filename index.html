@@ -639,7 +639,7 @@ function updateDashboard() {
     type: 'line', // รูปแบบกราฟหลักยังเป็น Line
     data: { labels: fd.tlLabels, datasets: [
       {
-        type: 'bar', // เปลี่ยน Dataset ของ Raw ให้แสดงผลเป็นกราฟแท่ง
+        type: 'line', 
         label: 'รายชั่วโมง (Raw)',
         data: fd.tlRaw,
         backgroundColor: 'rgba(74,158,255,0.4)',
