@@ -741,12 +741,12 @@ function updateDashboard() {
   });
 
 
-  // --- กราฟไทม์ไลน์หลัก (Bar Chart สำหรับ Raw) ---
-  destroyChart('timeline');
-  charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
-    type: 'line',
-    data: { labels: fd.tlLabels, datasets: [
-      {
+  
+ // --- กราฟไทม์ไลน์ (Time-Series) ---
+  if(charts.timeline) charts.timeline.destroy();
+  charts.timeline = new Chart(document.getElementById('chart-timeline'), {
+    data: { labels: fd.labels, datasets: [
+      { 
         type:'line', 
         label:'Raw (รายชั่วโมง)', 
         data: fd.raw, 
@@ -755,34 +755,40 @@ function updateDashboard() {
         borderWidth:2, 
         tension:0.3, 
         pointRadius:2, 
-        fill:true
+        fill:true 
       },
-      {
-        type: 'line',
-        label: 'NowCast (w=0.4)',
-        data: fd.tlNC,
-        borderColor: '#00d4aa',
-        backgroundColor: 'rgba(0,212,170,.1)',
-        tension: .3,
-        pointRadius: 3,
-        fill: true,
-        borderWidth: 3,
-        spanGaps: true
+      { 
+        type:'line', 
+        label:'NowCast', 
+        data: fd.nc, 
+        borderColor:'#00d4aa', 
+        borderWidth:3, 
+        tension:0.3,
+        pointRadius:3
       },
-      {
-        type: 'line',
-        label: 'เฉลี่ย 24 ชม.',
-        data: fd.tlAvg24,
-        borderColor: '#f5a623',
-        backgroundColor: 'rgba(245,166,35,.1)',
-        tension: .3,
-        pointRadius: 2,
-        fill: false,
-        borderWidth: 2,
-        borderDash: [2, 2],
-        spanGaps: true
+      { 
+        type:'line', 
+        label:'Avg24 (เฉลี่ย 24 ชม.)', 
+        data: fd.avg24, 
+        borderColor:'#f5a623', 
+        borderDash:[5,5],
+        borderWidth:2,
+        tension:0.3,
+        pointRadius:0
       }
     ]},
+    options: { 
+      responsive:true, 
+      maintainAspectRatio:false,
+      plugins: {
+        legend: { labels: { color: '#7a8090', font: { family: 'IBM Plex Mono' } } }
+      },
+      scales: {
+        x: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
     options: {
       responsive: true,
       maintainAspectRatio: false,
