@@ -85,14 +85,14 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .chart-wrap-lg{position:relative;height:320px}
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
 @media(max-width:900px){.kpi-row{grid-template-columns:1fr 1fr}}
-.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;display:flex;flex-direction:column;}
 .kpi-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
 .kpi-val{font-size:28px;font-weight:700;color:#fff;font-family:var(--mono);line-height:1}
 .kpi-unit{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
-.kpi-delta{font-size:12px;margin-top:6px;color:var(--muted)}
-.kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}
+.kpi-delta{font-size:12px;margin-top:auto;padding-top:6px;color:var(--muted)}
+.kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}.kpi-delta.blue{color:#4a9eff}
 
-/* ตารางแสดงประวัติแบบเจาะจงสถานี */
+/* ตารางแสดงประวัติรายสถานี */
 .comp-table{width:100%;border-collapse:collapse;font-size:13px}
 .comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(255,255,255,0.02);}
 .comp-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
@@ -178,7 +178,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         <div class="dctrl">
           <label>พื้นที่สถานี</label>
           <select class="dselect" id="dash-station" onchange="updateDashboard()">
-            <option value="all">ทุกสถานี (เฉลี่ยภาพรวม)</option>
+            <option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>
           </select>
         </div>
       </div>
@@ -217,6 +217,46 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         </div>
       </div>
 
+      <div class="dash-title" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 24px;">🎯 การประเมินประสิทธิภาพ (Research Objectives)</div>
+      <div class="dash-sub">วิเคราะห์ความแม่นยำ (Accuracy) และเปรียบเทียบประสิทธิภาพในการลดความผันผวน (Volatility)</div>
+
+      <div class="dash-grid dash-row-2" style="margin-bottom: 16px;">
+        
+        <div style="display:flex; flex-direction:column; gap:16px;">
+           <div class="kpi-row" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+              <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);">
+                <div class="kpi-label" style="color: #4a9eff;">ความแม่นยำ NowCast (RMSE)</div>
+                <div class="kpi-val" id="kpi-rmse">—</div>
+                <div class="kpi-delta">เทียบกับค่าเฉลี่ย 24 ชม. จริง (ยิ่งเข้าใกล้ 0 ยิ่งแม่นยำ)</div>
+              </div>
+              <div class="kpi-card" style="border-color: rgba(0,212,170,0.3);">
+                <div class="kpi-label" style="color: #00d4aa;">ลดความผันผวนได้ทั้งหมด</div>
+                <div class="kpi-val" id="kpi-sd-diff">—<span class="kpi-unit">%</span></div>
+                <div class="kpi-delta">Area-based ลดสัญญาณหลอกได้ดีกว่า Station-based</div>
+              </div>
+           </div>
+           <div class="kpi-row" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
+              <div class="kpi-card">
+                <div class="kpi-label">ความผันผวน (SD) : รายสถานี</div>
+                <div class="kpi-val" id="kpi-sd-stn">—</div>
+                <div class="kpi-delta">Station-based Volatility</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">ความผันผวน (SD) : กลุ่มพื้นที่</div>
+                <div class="kpi-val" id="kpi-sd-area">—</div>
+                <div class="kpi-delta">Area-based Volatility</div>
+              </div>
+           </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-card-title">เปรียบเทียบระดับความผันผวนของข้อมูล (Standard Deviation)</div>
+          <div class="chart-card-sub">การวิเคราะห์ประสิทธิภาพระหว่าง Station-based กับ Area-based</div>
+          <div style="position:relative; height:180px; margin-top: 16px;"><canvas id="chart-volatility"></canvas></div>
+        </div>
+
+      </div>
+
       <div class="chart-card" id="station-table-card" style="display:none; margin-bottom: 16px;">
         <div class="chart-card-title">ประวัติข้อมูลรายชั่วโมงของสถานี (Time-Series)</div>
         <div class="chart-card-sub" id="station-table-sub">แสดงข้อมูลย้อนหลัง</div>
@@ -243,7 +283,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 // ═══════════════════════════════════════════
 // GLOBAL STATE & CONFIGURATIONS
 // ═══════════════════════════════════════════
-// ฝังพิกัดและชื่อสถานีไว้ในโค้ดเลย (Static Metadata) เพื่อให้เว็บโหลดเร็วที่สุด!
 const STATION_META = {
   "02t": { nameTH: "ม.ราชภัฏบ้านสมเด็จเจ้าพระยา", nameEN: "Bansomdejchaopraya Rajabhat University", lat: 13.732846, lng: 100.487662 },
   "03t": { nameTH: "ริมถนนทางหลวงหมายเลข 3902", nameEN: "Highway NO.3902 km.13 +600", lat: 13.636514, lng: 100.414262 },
@@ -341,6 +380,26 @@ function nowcast(vals) {
   return den > 0 ? Math.round(num / den * 10) / 10 : null;
 }
 
+// ฟังก์ชันทางสถิติสำหรับงานวิจัย
+function calcRMSE(arr1, arr2) {
+  let sum = 0, count = 0;
+  for(let i=0; i<arr1.length; i++) {
+    if(arr1[i] != null && arr2[i] != null) {
+      sum += Math.pow(arr1[i] - arr2[i], 2);
+      count++;
+    }
+  }
+  return count > 0 ? Math.sqrt(sum / count) : null;
+}
+
+function calcSD(arr) {
+  const valid = arr.filter(v => v != null && !isNaN(v));
+  if(valid.length < 2) return null;
+  const mean = valid.reduce((a,b)=>a+b,0) / valid.length;
+  const variance = valid.reduce((a,b)=>a+Math.pow(b-mean, 2),0) / (valid.length - 1);
+  return Math.sqrt(variance);
+}
+
 // ═══════════════════════════════════════════
 // DATA FETCHING & PARSING
 // ═══════════════════════════════════════════
@@ -352,7 +411,6 @@ async function initializeData() {
   try {
     statusEl.innerHTML = '⏳ กำลังอ่านข้อมูลจากฐานข้อมูล...';
     
-    // โหลดข้อมูลจากไฟล์ history.json โดยตรง
     const histRes = await fetch('history.json?t=' + new Date().getTime());
     if (!histRes.ok) throw new Error("ไม่สามารถโหลดไฟล์ history.json ได้");
     HISTORY_RECORDS = await histRes.json();
@@ -364,7 +422,6 @@ async function initializeData() {
 
     HISTORY_RECORDS.forEach((row, i) => {
       row._parsed = {};
-      
       STATION_KEYS.forEach(key => {
         let rawVal = row[key];
         if (rawVal === '-' || rawVal === undefined) rawVal = null;
@@ -373,17 +430,13 @@ async function initializeData() {
         let lookback12 = [];
         for(let j = i; j >= Math.max(0, i - 11); j--) {
           let pastVal = HISTORY_RECORDS[j][key];
-          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) {
-            lookback12.push(parseFloat(pastVal));
-          }
+          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) { lookback12.push(parseFloat(pastVal)); }
         }
         
         let lookback24 = [];
         for(let j = i; j >= Math.max(0, i - 23); j--) {
           let pastVal = HISTORY_RECORDS[j][key];
-          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) {
-            lookback24.push(parseFloat(pastVal));
-          }
+          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) { lookback24.push(parseFloat(pastVal)); }
         }
         
         let avg24Val = lookback24.length > 0 ? (lookback24.reduce((sum, val) => sum + val, 0) / lookback24.length) : null;
@@ -428,7 +481,7 @@ function initMap() {
 
 function buildDynamicUI() {
   const dashSelect = document.getElementById('dash-station');
-  dashSelect.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยภาพรวม)</option>';
+  dashSelect.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>';
   STATION_KEYS.forEach(k => { 
     if(STATION_META[k]) dashSelect.innerHTML += `<option value="${k}">${STATION_META[k].nameTH}</option>`; 
   });
@@ -467,10 +520,8 @@ function switchTab(tab, e) {
 
 function updateMap() {
   if (HISTORY_RECORDS.length === 0) return;
-  
   const selectedIdx = parseInt(document.getElementById('tp-history').value, 10);
   const rowData = HISTORY_RECORDS[selectedIdx];
-  
   const cardsEl = document.getElementById('stn-cards');
   
   const sortedKeys = STATION_KEYS.filter(k => STATION_META[k]).sort((a,b) => {
@@ -482,13 +533,10 @@ function updateMap() {
   cardsEl.innerHTML = sortedKeys.map(key => {
     const m = STATION_META[key];
     const {nc, avg24} = rowData._parsed[key];
-    
     const band = getAQIBand(nc);
     const color = band?.color ?? '#666';
     const tc = band?.textColor ?? '#fff';
-    
     const avg24Band = getAQIBand(avg24);
-    
     const ncPct = nc != null ? Math.min(nc / 75 * 100, 100) : 0;
     const avg24Pct = avg24 != null ? Math.min(avg24 / 75 * 100, 100) : 0;
     
@@ -510,12 +558,10 @@ function updateMap() {
     const band = getAQIBand(nc);
     const color = band?.color ?? '#555';
     const {div, marker} = mapMarkers[key];
-    
     div.style.background = nc != null ? color : '#333';
     div.style.borderColor = nc != null ? color+'88' : 'rgba(255,255,255,.2)';
     div.style.color = nc != null ? (band?.textColor ?? '#fff') : '#fff';
     div.textContent = nc != null ? nc.toFixed(0) : '?';
-    
     marker.setPopupContent(buildPopup(key, nc, avg24, rowData.date, rowData.timeRange));
   }
 }
@@ -623,7 +669,9 @@ function updateDashboard() {
   
   const stationKey = document.getElementById('dash-station').value;
   const fd = extractFlatData(stationKey);
+  const fdAll = extractFlatData('all'); // ดึงข้อมูล Area-based ไว้เสมอสำหรับเทียบสถิติ
 
+  // --- ข้อมูลสถิติพื้นฐาน ---
   document.getElementById('kpi-avg').innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
   document.getElementById('kpi-nc').innerHTML = fd.avgNC != null ? fd.avgNC.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
   document.getElementById('kpi-bad').innerHTML = fd.badHours+'<span class="kpi-unit">ชม.</span>';
@@ -633,13 +681,73 @@ function updateDashboard() {
   document.getElementById('kpi-nc-d').innerHTML = diffVal != null ? `<span class="${diffVal>0?'up':'down'}">${diffVal>0?'▲':'▼'} ${Math.abs(diffVal).toFixed(1)} จากค่า Raw</span>` : '';
   document.getElementById('kpi-bad-d').textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง (${(fd.badHours/Math.max(fd.totalHours,1)*100).toFixed(1)}%)`;
 
-  // --- ปรับกราฟไทม์ไลน์: เปลี่ยน Raw เป็นกราฟแท่ง ---
+  // --- 🎯 หมวดการประเมินประสิทธิภาพ (วิจัย) ---
+  // 1. คำนวณ RMSE ระหว่าง NowCast กับ เฉลี่ย 24 ชม. (Objective 2)
+  const rmseValue = calcRMSE(fd.tlNC, fd.tlAvg24);
+  document.getElementById('kpi-rmse').innerHTML = rmseValue != null ? rmseValue.toFixed(3) : '—';
+
+  // 2. คำนวณความผันผวน SD (Objective 3)
+  let sdStationVal;
+  const sdAreaVal = calcSD(fdAll.tlNC); // Area-based คือ SD ของเส้นเฉลี่ยทุกสถานี
+
+  if (stationKey === 'all') {
+    // ถ้าดูภาพรวมทั้งหมด ให้คำนวณ SD ของแต่ละสถานี แล้วเอามาเฉลี่ยกัน เพื่อเป็นตัวแทน "Station-based"
+    let totalSD = 0, countSD = 0;
+    STATION_KEYS.forEach(k => {
+      let stnSD = calcSD(extractFlatData(k).tlNC);
+      if(stnSD != null) { totalSD += stnSD; countSD++; }
+    });
+    sdStationVal = countSD > 0 ? (totalSD / countSD) : null;
+  } else {
+    // ถ้าเลือกสถานีใดสถานีหนึ่ง ก็ใช้ SD ของสถานีนั้นได้เลย
+    sdStationVal = calcSD(fd.tlNC);
+  }
+
+  document.getElementById('kpi-sd-stn').innerHTML = sdStationVal != null ? sdStationVal.toFixed(2) : '—';
+  document.getElementById('kpi-sd-area').innerHTML = sdAreaVal != null ? sdAreaVal.toFixed(2) : '—';
+
+  // 3. คำนวณเปรียบเทียบ % การลดความผันผวน
+  if (sdStationVal != null && sdAreaVal != null && sdStationVal > 0) {
+    const reduction = ((sdStationVal - sdAreaVal) / sdStationVal) * 100;
+    const isReduced = reduction >= 0;
+    document.getElementById('kpi-sd-diff').innerHTML = `${isReduced ? '▼' : '▲'} ${Math.abs(reduction).toFixed(1)}<span class="kpi-unit">%</span>`;
+    document.getElementById('kpi-sd-diff').style.color = isReduced ? '#00d4aa' : '#f44336';
+  } else {
+    document.getElementById('kpi-sd-diff').innerHTML = '—';
+  }
+
+  // วาดกราฟแท่งเปรียบเทียบความผันผวน (Volatility Chart)
+  destroyChart('volatility');
+  charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
+    type: 'bar',
+    data: {
+      labels: ['รายสถานี (Station-based)', 'กลุ่มพื้นที่ (Area-based)'],
+      datasets: [{
+        label: 'Standard Deviation (SD)',
+        data: [sdStationVal, sdAreaVal],
+        backgroundColor: ['rgba(74,158,255,0.7)', 'rgba(0,212,170,0.7)'],
+        borderColor: ['#4a9eff', '#00d4aa'],
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      indexAxis: 'y', // ทำเป็นกราฟแท่งแนวนอนเพื่อประหยัดพื้นที่
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` SD: ${ctx.raw.toFixed(2)}` } } },
+      scales: { x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks:{ color:'#7a8090', font:{family:'IBM Plex Mono'} } }, y: { grid: { display: false }, ticks:{ color:'#fff', font:{family:'Sarabun'} } } }
+    }
+  });
+
+
+  // --- กราฟไทม์ไลน์หลัก (Bar Chart สำหรับ Raw) ---
   destroyChart('timeline');
   charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
-    type: 'line', // รูปแบบกราฟหลักยังเป็น Line
+    type: 'line',
     data: { labels: fd.tlLabels, datasets: [
       {
-        type: 'line', 
+        type: 'bar',
         label: 'รายชั่วโมง (Raw)',
         data: fd.tlRaw,
         backgroundColor: 'rgba(74,158,255,0.4)',
@@ -692,12 +800,10 @@ function updateDashboard() {
   
   const rawCounts = catLabels.map(l => fd.rawCats[l]||0); 
   const ncCounts = catLabels.map(l => fd.ncCats[l]||0);
-  
-  // คำนวณจำนวนชั่วโมงรวมทั้งหมด เพื่อเอาไปหาเปอร์เซ็นต์
   const totalRaw = rawCounts.reduce((a,b) => a+b, 0);
   const totalNC = ncCounts.reduce((a,b) => a+b, 0);
 
-  // --- ปรับกราฟโดนัท Raw ให้แสดงผลเป็นเปอร์เซ็นต์ ---
+  // --- กราฟโดนัท (เปอร์เซ็นต์) ---
   destroyChart('donut-raw');
   charts['donut-raw'] = new Chart(document.getElementById('chart-donut-raw'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:rawCounts,backgroundColor:catColors.map(c=>c+'cc'),borderColor:'rgba(0,0,0,0)',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
   document.getElementById('legend-raw').innerHTML = catLabels.map((l,i) => {
@@ -705,7 +811,6 @@ function updateDashboard() {
     return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
   }).join('');
 
-  // --- ปรับกราฟโดนัท NowCast ให้แสดงผลเป็นเปอร์เซ็นต์ ---
   destroyChart('donut-nc');
   charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderColor:'rgba(0,0,0,0)',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
   document.getElementById('legend-nc').innerHTML = catLabels.map((l,i) => {
@@ -713,7 +818,7 @@ function updateDashboard() {
     return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
   }).join('');
 
-  // --- อัปเดตตารางแสดงประวัติรายสถานี ---
+  // --- ตารางรายสถานี ---
   const stationTableCard = document.getElementById('station-table-card');
   const tableBody = document.querySelector('#station-ts-table tbody');
   
@@ -729,13 +834,8 @@ function updateDashboard() {
       const row = HISTORY_RECORDS[i];
       const parsed = row._parsed[stationKey];
       if (!parsed) continue;
-
-      const rawVal = parsed.raw;
-      const ncVal = parsed.nc;
-      
-      const rawBand = getAQIBand(rawVal);
-      const ncBand = getAQIBand(ncVal);
-      
+      const rawVal = parsed.raw; const ncVal = parsed.nc;
+      const rawBand = getAQIBand(rawVal); const ncBand = getAQIBand(ncVal);
       const rawStr = rawVal !== null ? `<span style="color:${rawBand.color}">${rawVal.toFixed(1)}</span>` : '—';
       const ncStr = ncVal !== null ? `<span style="color:${ncBand.color}">${ncVal.toFixed(1)}</span>` : '—';
       
