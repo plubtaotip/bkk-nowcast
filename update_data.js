@@ -14,9 +14,9 @@ const BKK_STATIONS = [
 // ฟังก์ชันหน่วงเวลา ป้องกันการโดนบล็อคจากเซิร์ฟเวอร์
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// 🕵️‍♂️ ฟังก์ชันมุดหลังบ้าน ไปดึง API ลับของหน้าเว็บ Air4Thai
-async function fetchRawHistory(stationID, dateStr) {
-    const targetUrl = `http://air4thai.com/forweb/getHistoryData.php?stationID=${stationID}&param=PM25&type=hr&sdate=${dateStr}&edate=${dateStr}`;
+// 🕵️‍♂️ ฟังก์ชันมุดหลังบ้าน (อัปเกรดดึงข้ามวัน)
+async function fetchRawHistory(stationID, startDateStr, endDateStr) {
+    const targetUrl = `http://air4thai.com/forweb/getHistoryData.php?stationID=${stationID}&param=PM25&type=hr&sdate=${startDateStr}&edate=${endDateStr}`;
     const encodedUrl = encodeURIComponent(targetUrl);
     
     // ใช้ Proxy เพื่อพรางตัวและหลบ CORS
@@ -58,27 +58,34 @@ async function fetchAndSave() {
       }
     }
 
-    // 2. ตั้งเวลาปัจจุบัน (Asia/Bangkok)
+    // 2. คำนวณเวลา วันนี้ และ เมื่อวาน (Asia/Bangkok)
     const bkkTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Bangkok"}));
     const yyyy = bkkTime.getFullYear();
     const mm = String(bkkTime.getMonth()+1).padStart(2,'0');
     const dd = String(bkkTime.getDate()).padStart(2,'0');
-    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const endDateStr = `${yyyy}-${mm}-${dd}`; // วันนี้
+
+    const yesterday = new Date(bkkTime);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const y_yyyy = yesterday.getFullYear();
+    const y_mm = String(yesterday.getMonth()+1).padStart(2,'0');
+    const y_dd = String(yesterday.getDate()).padStart(2,'0');
+    const startDateStr = `${y_yyyy}-${y_mm}-${y_dd}`; // เมื่อวาน
+
     const currentHour = bkkTime.getHours();
-    
     const prevHour = currentHour === 0 ? 23 : currentHour - 1;
     const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
 
     // 3. สร้างแถวเวลาของชั่วโมงปัจจุบันรอไว้
-    let latestRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
+    let latestRow = history.find(r => r.date === endDateStr && r.timeRange === timeRange);
     if (!latestRow) {
-      latestRow = { date: dateStr, timeRange: timeRange };
+      latestRow = { date: endDateStr, timeRange: timeRange };
       BKK_STATIONS.forEach(s => latestRow[s] = "-");
       history.push(latestRow);
-      console.log(`สร้างแถวใหม่: วันที่ ${dateStr} | ${timeRange}`);
+      console.log(`สร้างแถวใหม่: วันที่ ${endDateStr} | ${timeRange}`);
     }
 
-    console.log(`🚀 กำลังดูดข้อมูลดิบ (Raw Hourly) จาก API ลับของ Air4Thai...`);
+    console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลังข้ามวัน (${startDateStr} ถึง ${endDateStr})...`);
     
     // 4. ทยอยดึงข้อมูลทีละ 5 สถานี (Chunking) เพื่อความเสถียร
     const chunkSize = 5;
@@ -87,7 +94,7 @@ async function fetchAndSave() {
       console.log(`กำลังดึงข้อมูลสถานี: ${chunk.join(', ')}`);
       
       const promises = chunk.map(async (stn) => {
-         const stnData = await fetchRawHistory(stn, dateStr);
+         const stnData = await fetchRawHistory(stn, startDateStr, endDateStr);
          
          if (stnData && Array.isArray(stnData)) {
              // สแกนข้อมูลของวันนี้ทุกชั่วโมง แล้วนำไปเติมย้อนหลังให้ตรงช่องเป๊ะๆ (True Backfilling)
@@ -113,32 +120,7 @@ async function fetchAndSave() {
       await delay(1000); // พักหายใจ 1 วินาที ป้องกันโดนแบน
     }
 
-    // ═════════════════════════════════════════════════════
-    // 🛠️ SWEEPING DATA HEALING: ซ่อมรอยโหว่ (เหมือนเดิม)
-    // ═════════════════════════════════════════════════════
-    let healedCount = 0;
-    BKK_STATIONS.forEach(key => {
-      let lastValidIdx = -1;
-      for (let i = 0; i < history.length; i++) {
-        const val = history[i][key];
-        if (val !== "-" && val !== null && val !== undefined) {
-          if (lastValidIdx !== -1) {
-            const gapCount = i - lastValidIdx - 1;
-            if (gapCount > 0 && gapCount <= 6) {
-              const startVal = history[lastValidIdx][key];
-              const endVal = history[i][key];
-              const step = (endVal - startVal) / (gapCount + 1);
-              for (let j = 1; j <= gapCount; j++) {
-                history[lastValidIdx + j][key] = parseFloat((startVal + (step * j)).toFixed(1));
-              }
-              healedCount++;
-            }
-          }
-          lastValidIdx = i;
-        }
-      }
-    });
-    if(healedCount > 0) console.log(`✨ [Data Healing] ซ่อมรอยโหว่สำเร็จ ${healedCount} จุด!`);
+    // --- หมายเหตุ: ส่วนของ Data Healing ถูกลบออกทั้งหมดตามความต้องการของงานวิจัย ---
 
     // 5. ตัดหางปล่อยวัด เก็บประวัติไว้แค่ 72 ชั่วโมง เพื่อให้หน้าเว็บโหลดไว
     if (history.length > 72) {
@@ -146,7 +128,7 @@ async function fetchAndSave() {
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log('✅ บันทึกข้อมูล Raw Hourly เสร็จสมบูรณ์!');
+    console.log('✅ บันทึกข้อมูล Raw Hourly (ปราศจากการแทรกแซง) เสร็จสมบูรณ์!');
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาดรุนแรง:', error.message);
