@@ -1,7 +1,6 @@
 // ไฟล์: update_data.js
 const fs = require('fs');
 
-// ลิสต์รายชื่อสถานี กทม. ทั้งหมด
 const BKK_STATIONS = [
   "02t","03t","05t","12t","50t","52t","53t","54t","59t","61t",
   "bkp101t","bkp102t","bkp103t","bkp104t","bkp105t","bkp56t","bkp57t","bkp58t","bkp59t","bkp60t",
@@ -13,12 +12,10 @@ const BKK_STATIONS = [
 
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
-// 🕵️‍♂️ ฟังก์ชันมุดหลังบ้านแบบ "ยิงตรง" ไม่ผ่าน Proxy
 async function fetchRawHistory(stationID, startDateStr, endDateStr) {
     const targetUrl = `http://air4thai.com/forweb/getHistoryData.php?stationID=${stationID}&param=PM25&type=hr&sdate=${startDateStr}&edate=${endDateStr}`;
     
     try {
-        // 1. ลองยิงตรงๆ เข้า API รัฐ (Node.js ทำได้ ไม่ติด CORS) เร็วและเสถียรสุด 100%
         const res = await fetch(targetUrl, {
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -31,7 +28,6 @@ async function fetchRawHistory(stationID, startDateStr, endDateStr) {
             return data?.res?.stations?.[0]?.data || data?.stations?.[0]?.data || null;
         }
     } catch (e) {
-        // 2. แผนสำรอง: ถ้าสมมติ GitHub โดนบล็อค ค่อยมุดผ่าน Proxy
         const encodedUrl = encodeURIComponent(targetUrl);
         try {
             const pRes = await fetch(`https://api.allorigins.win/get?disableCache=true&url=${encodedUrl}`);
@@ -55,35 +51,64 @@ async function fetchAndSave() {
       }
     }
 
-    const bkkTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Bangkok"}));
-    const yyyy = bkkTime.getFullYear();
-    const mm = String(bkkTime.getMonth()+1).padStart(2,'0');
-    const dd = String(bkkTime.getDate()).padStart(2,'0');
+    // ใช้การคำนวณเวลาแบบ UTC Offset (ปลอดภัย 100% ไม่ว่ารันบนเซิร์ฟเวอร์ไหน)
+    const utcNow = new Date();
+    const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
+    
+    const yyyy = bkkTime.getUTCFullYear();
+    const mm = String(bkkTime.getUTCMonth()+1).padStart(2,'0');
+    const dd = String(bkkTime.getUTCDate()).padStart(2,'0');
     const endDateStr = `${yyyy}-${mm}-${dd}`; 
 
-    // ---- ตั้งค่าย้อนหลัง 8 ชั่วโมง ----
-    const pastTime = new Date(bkkTime.getTime() - (5 * 60 * 60 * 1000));
-    
-    const s_yyyy = pastTime.getFullYear();
-    const s_mm = String(pastTime.getMonth()+1).padStart(2,'0');
-    const s_dd = String(pastTime.getDate()).padStart(2,'0');
+    const pastTime = new Date(bkkTime.getTime() - (8 * 60 * 60 * 1000));
+    const s_yyyy = pastTime.getUTCFullYear();
+    const s_mm = String(pastTime.getUTCMonth()+1).padStart(2,'0');
+    const s_dd = String(pastTime.getUTCDate()).padStart(2,'0');
     const startDateStr = `${s_yyyy}-${s_mm}-${s_dd}`; 
 
     console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลัง 8 ชั่วโมง (${startDateStr} ถึง ${endDateStr})...`);
     
-    // ** เปลี่ยนมาดึงข้อมูลทีละสถานีเรียงตัว (Sequential) ป้องกันการโดนเตะทิ้ง **
+    const currentHour = bkkTime.getUTCHours();
+    const prevHour = currentHour === 0 ? 23 : currentHour - 1;
+    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
+    
+    let targetDateStr = endDateStr;
+    if (currentHour === 0) {
+        const yDay = new Date(bkkTime.getTime() - (24 * 60 * 60 * 1000));
+        targetDateStr = `${yDay.getUTCFullYear()}-${String(yDay.getUTCMonth()+1).padStart(2,'0')}-${String(yDay.getUTCDate()).padStart(2,'0')}`;
+    }
+
+    let latestRow = history.find(r => r.date === targetDateStr && r.timeRange === timeRange);
+    if (!latestRow) {
+        latestRow = { date: targetDateStr, timeRange: timeRange };
+        BKK_STATIONS.forEach(s => latestRow[s] = "-"); 
+        history.push(latestRow);
+    }
+
     for (const stn of BKK_STATIONS) {
-         console.log(`ดึงข้อมูล: ${stn}...`);
          const stnData = await fetchRawHistory(stn, startDateStr, endDateStr);
          
          if (stnData && Array.isArray(stnData)) {
              stnData.forEach(pastHr => {
                  if (pastHr.PM25 && pastHr.PM25 !== "-") {
                      const pTimeStr = pastHr.DATETIMEDATA; 
+                     
+                     // 🔥 กฎเหล็ก: ขจัดข้อมูลจากอนาคต (Future Data Filter)
+                     // เอาเวลาที่ API ส่งมา แปลงเป็น TimeStamp เพื่อเทียบกับเวลาปัจจุบัน
+                     const dataTime = new Date(pTimeStr.replace(' ', 'T') + '+07:00');
+                     if (dataTime.getTime() > utcNow.getTime()) {
+                         return; // 🛑 ถ้าเป็นเวลาในอนาคต ให้เตะทิ้งทันที!
+                     }
+
                      const pHour = parseInt(pTimeStr.split(' ')[1].split(':')[0], 10);
                      const pPrevHour = pHour === 0 ? 23 : pHour - 1;
                      const pTimeRange = `${String(pPrevHour).padStart(2, '0')}:00 - ${String(pHour).padStart(2, '0')}:00`;
-                     const pDateStr = pTimeStr.split(' ')[0];
+                     let pDateStr = pTimeStr.split(' ')[0];
+                     
+                     if (pHour === 0) {
+                         const tempDate = new Date(dataTime.getTime() - (24 * 60 * 60 * 1000));
+                         pDateStr = `${tempDate.getUTCFullYear()}-${String(tempDate.getUTCMonth()+1).padStart(2,'0')}-${String(tempDate.getUTCDate()).padStart(2,'0')}`;
+                     }
                      
                      let targetRow = history.find(r => r.date === pDateStr && r.timeRange === pTimeRange);
                      if (!targetRow) {
@@ -95,14 +120,10 @@ async function fetchAndSave() {
                      targetRow[stn] = parseFloat(pastHr.PM25);
                  }
              });
-         } else {
-             console.log(`⚠️ ไม่พบข้อมูลของ ${stn}`);
          }
-         
-         await delay(300); // พัก 0.3 วินาที ระหว่างสถานี (รับรองว่าเซิร์ฟเวอร์รัฐไม่บล็อคแน่นอน)
+         await delay(300); 
     }
 
-    // เรียงลำดับเวลา
     history.sort((a, b) => {
         const hourA = a.timeRange.split(' - ')[0]; 
         const hourB = b.timeRange.split(' - ')[0];
@@ -111,7 +132,6 @@ async function fetchAndSave() {
         return timeA - timeB;
     });
 
-    // ลิมิตไว้ 150 แถว
     if (history.length > 150) {
       history = history.slice(history.length - 150); 
     }
