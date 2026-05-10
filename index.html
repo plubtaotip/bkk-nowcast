@@ -66,11 +66,13 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .feature-list li .f-text b { color: var(--text); }
 
 /* MAP TAB */
-.map-layout{display:grid;grid-template-columns:350px 1fr;height:calc(100vh - 90px)}
+.map-layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 90px)}
 @media(max-width:900px){.map-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
 .map-sidebar{ background:var(--bg2);border-right:1px solid var(--border); overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px; }
 .btn-now{ width:100%;padding:9px;background:var(--accent-dim); border:1px solid rgba(0,212,170,.25);border-radius:7px;color:var(--accent); font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s; }
 .btn-now:hover{background:rgba(0,212,170,.18)}
+.zone-header { margin: 24px 0 8px 0; font-size: 15px; font-weight: 700; padding-bottom: 6px; border-bottom: 2px solid; letter-spacing: 0.02em; }
+.zone-header:first-child { margin-top: 0; }
 .station-cards{display:flex;flex-direction:column;gap:8px}
 .scard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .2s;}
 .scard:hover,.scard.selected{border-color:var(--accent);background:rgba(0,212,170,.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
@@ -92,8 +94,8 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .aqi-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
 .aqi-label { flex: 1; font-weight: 500; color: var(--text); }
 .aqi-range { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.zone-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.z-tag { font-size: 10px; padding: 3px 8px; border-radius: 12px; border: 1px solid; color: #fff; font-family: var(--font); }
+.zone-tags { display: flex; flex-direction: column; gap: 8px; }
+.z-tag { font-size: 12px; padding: 4px 10px; border-radius: 6px; border-left: 4px solid; color: var(--text); font-family: var(--font); background: rgba(255,255,255,0.02); font-weight: 500;}
 
 /* DASHBOARD TAB */
 .dash{padding:28px;max-width:1400px;margin:0 auto}
@@ -131,6 +133,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 /* Leaflet Overrides - วงกลมแบบไม่มีกรอบสีตามโซน */
 .pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s ease;box-shadow: 0 4px 10px rgba(0,0,0,0.5);border: 2px solid rgba(255,255,255,0.8);}
 .pm-marker:hover{transform:scale(1.2); z-index: 1000 !important;}
+
 .leaflet-popup-content-wrapper{background:var(--bg3) !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.6) !important;color:var(--text) !important;}
 .leaflet-popup-tip{background:var(--bg3) !important}
 .leaflet-popup-content{margin:14px 16px !important;font-family:var(--font)}
@@ -226,7 +229,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ff9800"></div><span class="aqi-label">มีผลต่อสุขภาพ</span><span class="aqi-range">37.6 - 75.0</span></div>
         <div class="aqi-legend-row" style="margin-bottom: 16px;"><div class="aqi-dot" style="background:#f44336"></div><span class="aqi-label">อันตราย</span><span class="aqi-range">75.1 ขึ้นไป</span></div>
         
-        <div class="legend-title" style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">📍 สีแบ่งกลุ่มพื้นที่ (Zoning)</div>
+        <div class="legend-title" style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">📍 สีแบ่งกลุ่มพื้นที่ 6 โซน กทม.</div>
         <div class="zone-tags" id="zone-tags-container"></div>
       </div>
 
@@ -255,7 +258,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         <div class="dctrl">
           <label>พื้นที่สถานี</label>
           <select class="dselect" id="dash-station" onchange="updateDashboard()">
-            <option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>
+            <option value="all">ทุกสถานี (ภาพรวม กทม.)</option>
           </select>
         </div>
       </div>
@@ -335,12 +338,26 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <script>
 // ═══════════════════════════════════════════
-// GLOBAL STATE & CONFIGURATIONS
+// GLOBAL STATE & CONFIGURATIONS (ZONE COLORS UPDATED)
 // ═══════════════════════════════════════════
+// อัปเดตสีตามรูปแผนที่อ้างอิงของคุณเป๊ะๆ
 const ZONE_COLORS = {
-  "กรุงเทพกลาง": "#e91e63", "กรุงเทพใต้": "#9c27b0", "กรุงเทพเหนือ": "#2196f3",
-  "กรุงเทพตะวันออก": "#4caf50", "กรุงธนเหนือ": "#ff9800", "กรุงธนใต้": "#795548"
+  "กรุงเทพกลาง": "#fbc02d", // 1. เหลือง
+  "กรุงเทพใต้": "#ff9800",  // 2. ส้ม
+  "กรุงเทพเหนือ": "#4db6ac", // 3. เขียวมิ้นต์
+  "กรุงเทพตะวันออก": "#aed581", // 4. เขียวอ่อน
+  "กรุงธนเหนือ": "#f06292", // 5. ชมพู
+  "กรุงธนใต้": "#7986cb"    // 6. ฟ้า
 };
+
+const ZONE_LABELS = [
+  { id: "กรุงเทพกลาง", title: "1. กลุ่มกรุงเทพกลาง" },
+  { id: "กรุงเทพใต้", title: "2. กลุ่มกรุงเทพใต้" },
+  { id: "กรุงเทพเหนือ", title: "3. กลุ่มกรุงเทพเหนือ" },
+  { id: "กรุงเทพตะวันออก", title: "4. กลุ่มกรุงเทพตะวันออก" },
+  { id: "กรุงธนเหนือ", title: "5. กลุ่มกรุงธนเหนือ" },
+  { id: "กรุงธนใต้", title: "6. กลุ่มกรุงธนใต้" }
+];
 
 const STATION_META = {
   "02t": { zone: "กรุงธนเหนือ", nameTH: "ม.ราชภัฏบ้านสมเด็จเจ้าพระยา", nameEN: "Bansomdejchaopraya Rajabhat University", lat: 13.732846, lng: 100.487662 },
@@ -535,21 +552,22 @@ function initMap() {
 
 function buildDynamicUI() {
   const dashSelect = document.getElementById('dash-station');
-  dashSelect.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>';
-  for (const z in ZONE_COLORS) {
-    dashSelect.innerHTML += `<optgroup label="กลุ่มพื้นที่: ${z}"><option value="zone_${z}">>> ค่าเฉลี่ยพื้นที่ ${z} <<</option>`;
-    STATION_KEYS.filter(k => STATION_META[k].zone === z).forEach(k => {
+  dashSelect.innerHTML = '<option value="all">ทุกสถานี (ภาพรวม กทม.)</option>';
+  ZONE_LABELS.forEach(zn => {
+    dashSelect.innerHTML += `<optgroup label="${zn.title}">`;
+    dashSelect.innerHTML += `<option value="zone_${zn.id}">>> ค่าเฉลี่ย ${zn.title} <<</option>`;
+    STATION_KEYS.filter(k => STATION_META[k].zone === zn.id).forEach(k => {
       dashSelect.innerHTML += `<option value="${k}">[${k}] ${STATION_META[k].nameTH}</option>`;
     });
     dashSelect.innerHTML += `</optgroup>`;
-  }
+  });
 
   const zTagsEl = document.getElementById('zone-tags-container');
   if (zTagsEl) {
       zTagsEl.innerHTML = '';
-      for (const z in ZONE_COLORS) {
-        zTagsEl.innerHTML += `<span class="z-tag" style="background: ${ZONE_COLORS[z]}33; border-color: ${ZONE_COLORS[z]};">${z}</span>`;
-      }
+      ZONE_LABELS.forEach(zn => {
+        zTagsEl.innerHTML += `<span class="z-tag" style="background: ${ZONE_COLORS[zn.id]}33; border-color: ${ZONE_COLORS[zn.id]}; color: ${ZONE_COLORS[zn.id]};">${zn.title}</span>`;
+      });
   }
 
   for(const k in mapMarkers) { mapInstance.removeLayer(mapMarkers[k].marker); }
@@ -560,13 +578,13 @@ function buildDynamicUI() {
     const m = STATION_META[key];
     const zoneColor = ZONE_COLORS[m.zone];
 
+    // 🎯 สร้างเงาสีครอบคลุมพื้นที่ (Zone Clouds) โดยไม่ต้องวาดเส้นขอบเขต
     L.circle([m.lat, m.lng], {
-      radius: 2500,
+      radius: 3800, // ขยายรัศมีให้สีกลืนกัน
       color: zoneColor,
-      weight: 1.5,
+      weight: 0, // ไม่ต้องมีเส้นขอบ
       fillColor: zoneColor,
-      fillOpacity: 0.12,
-      dashArray: '5, 5'
+      fillOpacity: 0.18 // โปร่งแสง
     }).addTo(mapInstance);
 
     const div = document.createElement('div');
@@ -603,37 +621,44 @@ function updateMap() {
       displayEl.textContent = `ข้อมูลวันที่: ${rowData.date} | ${rowData.timeRange}`;
   }
 
-  const sortedKeys = STATION_KEYS.filter(k => STATION_META[k]).sort((a,b) => {
-    const valA = rowData._parsed[a].nc ?? -1;
-    const valB = rowData._parsed[b].nc ?? -1;
-    return valB - valA;
-  });
+  let cardsHtml = '';
+  // 🎯 จัดเรียงแถบด้านข้างตามหัวข้อ Zone 1-6 เหมือนในแผนที่ที่คุณส่งมา
+  ZONE_LABELS.forEach(zn => {
+      const stnsInZone = STATION_KEYS.filter(k => STATION_META[k] && STATION_META[k].zone === zn.id);
+      if(stnsInZone.length === 0) return;
 
-  cardsEl.innerHTML = sortedKeys.map(key => {
-    const m = STATION_META[key];
-    const {nc, avg24} = rowData._parsed[key];
-    const band = getAQIBand(nc);
-    const color = band?.color ?? '#666';
-    const tc = band?.textColor ?? '#fff';
-    const avg24Band = getAQIBand(avg24);
-    
-    return `<div class="scard" id="sc-${key}" onclick="selectStation('${key}')">
-      <div class="scard-top">
-        <div><div class="scard-name">${m.nameTH}</div><div class="scard-sub">📍 ${m.zone}</div></div>
-        <span class="aqi-badge" style="background:${color};color:${tc};border:none">${band?.label ?? 'ไม่มีข้อมูล'}</span>
-      </div>
-      <div class="scard-vals">
-        <div class="sval-box">
-           <div class="sval-label">NowCast</div>
-           <div class="sval-num" style="color:${color}">${nc!=null?nc.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div>
-        </div>
-        <div class="sval-box">
-           <div class="sval-label">เฉลี่ย 24 ชม.</div>
-           <div class="sval-num" style="color:${avg24Band?.color??'#fff'}">${avg24!=null?avg24.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+      // เรียงลำดับจากค่าฝุ่นมากไปน้อยภายในโซนนั้นๆ
+      stnsInZone.sort((a,b) => (rowData._parsed[b].nc ?? -1) - (rowData._parsed[a].nc ?? -1));
+
+      cardsHtml += `<div class="zone-header" style="color:${ZONE_COLORS[zn.id]}; border-bottom-color:${ZONE_COLORS[zn.id]}55;">${zn.title}</div>`;
+
+      cardsHtml += stnsInZone.map(key => {
+        const m = STATION_META[key];
+        const {nc, avg24} = rowData._parsed[key];
+        const band = getAQIBand(nc);
+        const color = band?.color ?? '#666';
+        const tc = band?.textColor ?? '#fff';
+        const avg24Band = getAQIBand(avg24);
+        
+        return `<div class="scard" id="sc-${key}" onclick="selectStation('${key}')">
+          <div class="scard-top">
+            <div><div class="scard-name">${m.nameTH}</div><div class="scard-sub">${m.nameEN || '-'}</div></div>
+            <span class="aqi-badge" style="background:${color};color:${tc};border:none">${band?.label ?? 'ไม่มีข้อมูล'}</span>
+          </div>
+          <div class="scard-vals">
+            <div class="sval-box">
+               <div class="sval-label">NowCast</div>
+               <div class="sval-num" style="color:${color}">${nc!=null?nc.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div>
+            </div>
+            <div class="sval-box">
+               <div class="sval-label">เฉลี่ย 24 ชม.</div>
+               <div class="sval-num" style="color:${avg24Band?.color??'#fff'}">${avg24!=null?avg24.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+  });
+  cardsEl.innerHTML = cardsHtml;
 
   for(const key of STATION_KEYS) {
     if(!mapMarkers[key]) continue;
@@ -686,7 +711,7 @@ function selectStation(key) {
 let charts = {};
 function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
-// 🎯 ฟังก์ชันสกัดข้อมูลหลัก: รับค่าเป็น Array ของรหัสสถานี (แก้บั๊กชื่อโซน)
+// 🎯 อัปเดตฟังก์ชันเพื่อป้องกันการ Error
 function extractFlatData(keysToExtract) {
   const tlLabels = []; const tlRaw = []; const tlNC = []; const tlAvg24 = [];
   const rawCats = {}; const ncCats = {};
@@ -743,26 +768,25 @@ function updateDashboard() {
   
   const stationKey = document.getElementById('dash-station').value;
   let tKeys = [], aKeys = [];
-  let areaName = "กทม. ภาพรวม";
+  let areaName = "ภาพรวม กทม.";
   
-  // แปลงค่าที่เลือกให้เป็น Array ของสถานีที่ถูกต้องเสมอ
   if(stationKey === 'all') { 
     tKeys = aKeys = STATION_KEYS.filter(k => STATION_META[k]); 
   }
   else if(stationKey.startsWith('zone_')) { 
-    areaName = stationKey.replace('zone_','');
-    tKeys = aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === areaName); 
+    const zId = stationKey.replace('zone_','');
+    areaName = ZONE_LABELS.find(z => z.id === zId)?.title || zId;
+    tKeys = aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === zId); 
   }
   else { 
-    areaName = STATION_META[stationKey].zone;
+    const zId = STATION_META[stationKey].zone;
+    areaName = ZONE_LABELS.find(z => z.id === zId)?.title || zId;
     tKeys = [stationKey]; 
-    aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === areaName); 
+    aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === zId); 
   }
 
-  // ดึงข้อมูลผ่าน Array ของ Key
   const fd = extractFlatData(tKeys);
   const fa = extractFlatData(aKeys);
-  const fdAll = extractFlatData(STATION_KEYS.filter(k => STATION_META[k])); 
 
   // --- ข้อมูลสถิติพื้นฐาน ---
   const elAvg = document.getElementById('kpi-avg');
@@ -834,16 +858,16 @@ function updateDashboard() {
       });
   }
 
-  // กราฟ Volatility เปรียบเทียบสองแท่ง
+  // กราฟ Volatility
   destroyChart('volatility');
   if(document.getElementById('chart-volatility')) {
       charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
-        type:'bar', data: { labels:['รายสถานี (Station)', `กลุ่มพื้นที่ (${areaName})`], datasets:[{data:[sdStationVal, sdAreaVal], backgroundColor:['#4a9eff','#00d4aa'], borderRadius: 4}] },
+        type:'bar', data: { labels:['รายสถานี (Station)', `${areaName}`], datasets:[{data:[sdStationVal, sdAreaVal], backgroundColor:['#4a9eff','#00d4aa'], borderRadius: 4}] },
         options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7a8090'}},y:{grid:{display:false},ticks:{color:'#fff',font:{family:'Sarabun'}}}} }
       });
   }
 
-  // กราฟ Donut (Raw & NC)
+  // กราฟ Donut
   const catLabels = AQI_BREAKS.map(b=>b.label); 
   const catColors = AQI_BREAKS.map(b=>b.color);
   const rawCounts = catLabels.map(l => fd.rawCats[l]||0); 
