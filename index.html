@@ -39,13 +39,8 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .tab.active{background:var(--bg);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .panel{display:none} .panel.active{display:block}
 
-/* ══════════════════════════════════════════
-   HOME — Claude-inspired refined aesthetic
-   ══════════════════════════════════════════ */
-
-/* Smooth entry animation */
+/* HOME PAGE STYLES */
 @keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
-@keyframes shimmer { 0%,100% { opacity:.5; } 50% { opacity:1; } }
 @keyframes dotPing { 0% { transform:scale(1); opacity:1; } 70%,100% { transform:scale(2.2); opacity:0; } }
 
 .home-container { max-width: 1060px; margin: 0 auto; padding: 48px 28px 80px; }
@@ -54,31 +49,12 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .home-section:nth-child(2) { animation-delay: .12s; }
 .home-section:nth-child(3) { animation-delay: .19s; }
 .home-section:nth-child(4) { animation-delay: .26s; }
-.home-section:nth-child(5) { animation-delay: .33s; }
-.home-section:nth-child(6) { animation-delay: .40s; }
 
-/* ── HERO ── */
 .hero-wrap { position: relative; margin-bottom: 40px; }
 .hero-bg-glow { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 24px; }
 .hero-bg-glow::before { content:""; position:absolute; top:-60px; left:50%; transform:translateX(-50%); width:600px; height:300px; background: radial-gradient(ellipse at center, rgba(0,212,170,.13) 0%, transparent 65%); }
-.hero-bg-glow::after { content:""; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent 0%, rgba(0,212,170,.25) 40%, rgba(74,158,255,.25) 60%, transparent 100%); }
-
-.hero-card {
-  background: linear-gradient(160deg, #0d1016 0%, #111520 100%);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 24px;
-  padding: 56px 48px 40px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-}
-
-/* noise texture overlay */
-.hero-card::before {
-  content:""; position:absolute; inset:0; border-radius:24px;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events:none; opacity:.6;
-}
+.hero-card { background: linear-gradient(160deg, #0d1016 0%, #111520 100%); border: 1px solid rgba(255,255,255,0.09); border-radius: 24px; padding: 56px 48px 40px; text-align: center; position: relative; overflow: hidden; }
+.hero-card::before { content:""; position:absolute; inset:0; border-radius:24px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; opacity:.6; }
 
 .h-eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:24px; }
 .h-eyebrow-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); position:relative; }
@@ -95,34 +71,20 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .h-stat-val span { font-size:12px; color:var(--muted); font-weight:400; margin-left:2px; }
 .h-stat-label { font-size:10px; color:var(--muted); margin-top:5px; font-family:var(--mono); letter-spacing:.04em; }
 
-/* team row */
 .hero-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent); margin-bottom:28px; }
 .team-row { display:flex; justify-content:center; align-items:stretch; gap:0; flex-wrap:wrap; }
 .team-pill { display:flex; flex-direction:column; align-items:center; gap:5px; padding:8px 32px; border-right:1px solid rgba(255,255,255,.07); }
 .team-pill:last-child { border-right:none; }
 .team-pill-role { font-size:9.5px; font-family:var(--mono); color:var(--accent); text-transform:uppercase; letter-spacing:.1em; opacity:.8; }
 .team-pill-name { font-size:13.5px; font-weight:600; color:rgba(255,255,255,.85); text-align:center; line-height:1.4; }
-.team-pill-id { font-size:10px; font-family:var(--mono); color:var(--muted); }
 
-/* ── SECTION LABEL ── */
 .sec-label { display:flex; align-items:center; gap:12px; margin:44px 0 20px; }
 .sec-label-line { flex:1; height:1px; background:rgba(255,255,255,.06); }
 .sec-label-text { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; }
 
-/* ── TWO-COL GRID ── */
 .home-2col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 @media(max-width:780px){ .home-2col { grid-template-columns:1fr; } }
-
-/* ── BASE CARD ── */
-.h-card {
-  background: #0f1218;
-  border: 1px solid rgba(255,255,255,.07);
-  border-radius: 18px;
-  padding: 28px 30px;
-  position: relative;
-  overflow: hidden;
-  transition: border-color .25s, box-shadow .25s;
-}
+.h-card { background: #0f1218; border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 28px 30px; position: relative; overflow: hidden; transition: border-color .25s, box-shadow .25s; }
 .h-card:hover { border-color:rgba(255,255,255,.14); box-shadow:0 8px 32px rgba(0,0,0,.35); }
 .h-card-icon { width:38px; height:38px; border-radius:10px; background:rgba(0,212,170,.08); border:1px solid rgba(0,212,170,.15); display:flex; align-items:center; justify-content:center; font-size:17px; margin-bottom:18px; }
 .h-card-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:12px; letter-spacing:-.01em; }
@@ -130,7 +92,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .h-card-body strong { color:rgba(255,255,255,.75); font-weight:600; }
 .h-card-body .hl { color:var(--accent); font-weight:600; }
 
-/* objective list */
 .obj-items { display:flex; flex-direction:column; gap:10px; }
 .obj-item { display:flex; gap:12px; align-items:flex-start; padding:11px 14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:10px; transition:border-color .2s; }
 .obj-item:hover { border-color:rgba(255,255,255,.11); }
@@ -138,73 +99,20 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .obj-text { font-size:13px; color:rgba(255,255,255,.6); line-height:1.65; }
 .obj-text strong { color:rgba(255,255,255,.8); }
 
-/* ── METHODOLOGY STEPS ── */
-.method-steps { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-@media(max-width:780px){ .method-steps { grid-template-columns:1fr; } }
-.m-step {
-  background:#0f1218;
-  border:1px solid rgba(255,255,255,.07);
-  border-radius:16px;
-  padding:22px 24px;
-  position:relative;
-  transition:border-color .25s, transform .25s;
-  cursor:default;
-}
-.m-step:hover { border-color:rgba(0,212,170,.22); transform:translateY(-2px); }
-.m-step-accent { position:absolute; top:0; left:0; right:0; height:2px; border-radius:16px 16px 0 0; background:linear-gradient(90deg, var(--accent), transparent); opacity:0; transition:opacity .25s; }
-.m-step:hover .m-step-accent { opacity:1; }
-.m-step-num { font-size:10px; font-family:var(--mono); font-weight:700; color:var(--accent); letter-spacing:.1em; margin-bottom:10px; opacity:.7; }
-.m-step-title { font-size:13.5px; font-weight:700; color:#fff; margin-bottom:9px; letter-spacing:-.01em; }
-.m-step-body { font-size:12px; color:rgba(255,255,255,.42); line-height:1.8; }
-.m-step-body strong { color:rgba(255,255,255,.65); font-weight:600; }
-.m-step-chip { display:inline-flex; align-items:center; gap:5px; margin-top:14px; font-size:10px; font-family:var(--mono); color:#4a9eff; background:rgba(74,158,255,.08); border:1px solid rgba(74,158,255,.18); border-radius:5px; padding:3px 8px; font-weight:600; letter-spacing:.03em; }
+.feature-list { list-style: none; padding: 0; margin-top: 16px; }
+.feature-list li { display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border); }
+.feature-list li .f-icon { color: var(--accent); font-family: var(--mono); font-weight: bold; font-size: 11px; margin-top:2px; }
+.feature-list li .f-text { font-size: 13px; color: var(--muted); }
+.feature-list li .f-text b { color: var(--text); }
 
-/* step 5 full width */
-.m-step-full { grid-column:1 / -1; }
-.m-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
-
-/* ── TIMELINE ── */
-.tl-wrap { position:relative; padding-left:32px; }
-.tl-rail { position:absolute; left:8px; top:12px; bottom:12px; width:1px; background:linear-gradient(180deg, var(--accent) 0%, rgba(0,212,170,.08) 100%); }
-.tl-item { position:relative; margin-bottom:22px; }
-.tl-item:last-child { margin-bottom:0; }
-.tl-node { position:absolute; left:-32px; top:3px; width:17px; height:17px; display:flex; align-items:center; justify-content:center; }
-.tl-node-ring { width:13px; height:13px; border-radius:50%; border:1.5px solid var(--accent); background:#0f1218; display:flex; align-items:center; justify-content:center; }
-.tl-node-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); }
-.tl-period { font-size:10px; font-family:var(--mono); color:var(--accent); letter-spacing:.07em; font-weight:700; margin-bottom:3px; opacity:.8; }
-.tl-task { font-size:13px; font-weight:600; color:rgba(255,255,255,.8); margin-bottom:3px; }
-.tl-detail { font-size:11.5px; color:rgba(255,255,255,.35); line-height:1.6; }
-
-/* ── FEATURES BOTTOM CARD ── */
-.feat-list { display:flex; flex-direction:column; gap:10px; }
-.feat-item { display:flex; gap:14px; align-items:flex-start; padding:14px 16px; background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.065); border-radius:12px; transition:border-color .2s, background .2s; }
-.feat-item:hover { border-color:rgba(0,212,170,.2); background:rgba(0,212,170,.025); }
-.feat-num { font-size:10.5px; font-family:var(--mono); font-weight:700; color:var(--accent); background:rgba(0,212,170,.09); border:1px solid rgba(0,212,170,.18); border-radius:6px; padding:3px 8px; flex-shrink:0; margin-top:1px; letter-spacing:.04em; }
-.feat-content { flex:1; }
-.feat-title { font-size:13px; font-weight:700; color:rgba(255,255,255,.8); margin-bottom:4px; }
-.feat-desc { font-size:12px; color:rgba(255,255,255,.4); line-height:1.65; }
-
-/* ── CTA BUTTON ── */
 .home-cta { margin-top:32px; text-align:center; }
-.cta-btn {
-  display:inline-flex; align-items:center; gap:10px;
-  background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(74,158,255,.12));
-  border:1px solid rgba(0,212,170,.3);
-  color:#fff; border-radius:12px; padding:13px 32px;
-  font-family:var(--font); font-size:14px; font-weight:600;
-  cursor:pointer; transition:all .25s; letter-spacing:.01em;
-  text-decoration:none;
-}
-.cta-btn:hover { background:linear-gradient(135deg,rgba(0,212,170,.25),rgba(74,158,255,.2)); border-color:rgba(0,212,170,.5); transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,212,170,.15); }
-.cta-arrow { font-size:16px; transition:transform .2s; }
-.cta-btn:hover .cta-arrow { transform:translateX(4px); }
+.cta-btn { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(74,158,255,.12)); border:1px solid rgba(0,212,170,.3); color:#fff; border-radius:12px; padding:13px 32px; font-family:var(--font); font-size:14px; font-weight:600; cursor:pointer; transition:all .25s; text-decoration:none; }
+.cta-btn:hover { background:linear-gradient(135deg,rgba(0,212,170,.25),rgba(74,158,255,.2)); border-color:rgba(0,212,170,.5); box-shadow:0 8px 24px rgba(0,212,170,.15); }
 
 /* MAP TAB */
 .map-layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 90px)}
 @media(max-width:900px){.map-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
 .map-sidebar{ background:var(--bg2);border-right:1px solid var(--border); overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px; }
-.btn-now{ width:100%;padding:9px;background:var(--accent-dim); border:1px solid rgba(0,212,170,.25);border-radius:7px;color:var(--accent); font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s; }
-.btn-now:hover{background:rgba(0,212,170,.18)}
 .zone-header { margin: 24px 0 8px 0; font-size: 15px; font-weight: 700; padding-bottom: 6px; border-bottom: 2px solid; letter-spacing: 0.02em; }
 .zone-header:first-child { margin-top: 0; }
 .station-cards{display:flex;flex-direction:column;gap:8px}
@@ -246,8 +154,12 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .chart-card-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
 .chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;font-family:var(--mono)}
 .chart-wrap-lg{position:relative;height:320px}
+
+/* KPI ROWS: Updated to support 5 items for MAE */
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-@media(max-width:900px){.kpi-row{grid-template-columns:1fr 1fr}}
+.kpi-row-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:1200px){.kpi-row-5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.kpi-row{grid-template-columns:1fr 1fr} .kpi-row-5{grid-template-columns:1fr 1fr}}
 .kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;display:flex;flex-direction:column;}
 .kpi-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
 .kpi-val{font-size:28px;font-weight:700;color:#fff;font-family:var(--mono);line-height:1}
@@ -299,14 +211,13 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <div id="panel-home" class="panel active">
   <div class="home-container">
-
-    <!-- ── HERO ── -->
+    
     <div class="home-section hero-wrap">
       <div class="hero-bg-glow"></div>
       <div class="hero-card">
         <div class="h-eyebrow">
           <div class="h-eyebrow-dot"></div>
-          <span class="h-eyebrow-text">Environmental Engineering · Final Project · ภาคต้น ปีการศึกษา 2568</span>
+          <span class="h-eyebrow-text">Environmental Engineering · Final Project</span>
         </div>
         <div class="hero-th">การพัฒนาระบบ BKK NowCast<br>เพื่อการแจ้งเตือนคุณภาพอากาศ (PM2.5) ในกรุงเทพมหานคร</div>
         <div class="hero-en">Development of BKK NowCast System for PM2.5 Air Quality Warning in Bangkok</div>
@@ -314,7 +225,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         <div class="hero-stats">
           <div class="h-stat"><div class="h-stat-val">100<span>+</span></div><div class="h-stat-label">สถานีตรวจวัด</div></div>
           <div class="h-stat"><div class="h-stat-val">37.5<span>µg/m³</span></div><div class="h-stat-label">มาตรฐานไทยใหม่</div></div>
-          <div class="h-stat"><div class="h-stat-val">12<span>ชม.</span></div><div class="h-stat-label">Lookback Window</div></div>
+          <div class="h-stat" style="border-color:rgba(0,212,170,.3);"><div class="h-stat-val" style="color:var(--accent)">8<span>ชม.</span></div><div class="h-stat-label">Lookback Window</div></div>
           <div class="h-stat"><div class="h-stat-val">RMSE</div><div class="h-stat-label">ตัวชี้วัดหลัก</div></div>
         </div>
 
@@ -339,110 +250,53 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       </div>
     </div>
 
-    <!-- ── BACKGROUND + OBJECTIVES ── -->
     <div class="home-section">
       <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">ความเป็นมาและวัตถุประสงค์</div><div class="sec-label-line"></div></div>
       <div class="home-2col">
-
         <div class="h-card">
           <div class="h-card-icon">💡</div>
           <div class="h-card-title">ความเป็นมาของปัญหา</div>
           <div class="h-card-body">
-            กรมควบคุมมลพิษ (PCD) และ กทม. มีสถานีตรวจวัดกว่า <strong>100 จุด</strong> แต่การรายงานอ้างอิง<strong>ค่าเฉลี่ย 24 ชั่วโมง</strong> ซึ่งล่าช้าและไม่สะท้อนสถานการณ์จริงในช่วงวิกฤต<br><br>
-            ระบบ <span class="hl">EPA NowCast</span> ของสหรัฐฯ ตอบสนองได้เร็วกว่าด้วย Weighted Average แต่ยังอิงมาตรฐานเก่า <strong>35 µg/m³</strong> ต่างจากมาตรฐานใหม่ของไทย <span class="hl">37.5 µg/m³</span> (มีผลบังคับใช้ปี 2566)
+            การรายงานผลคุณภาพอากาศในปัจจุบันมักอ้างอิง <strong>ค่าเฉลี่ย 24 ชั่วโมง</strong> ซึ่งมีความล่าช้า ไม่สะท้อนสถานการณ์จริงในช่วงวิกฤต ในขณะที่ระบบ <span class="hl">EPA NowCast</span> ของสหรัฐฯ สามารถตอบสนองได้เร็วกว่า แต่ยังอ้างอิงมาตรฐานเดิม <strong>(35 µg/m³)</strong> ซึ่งไม่ตรงกับมาตรฐานใหม่ของไทย <span class="hl">(37.5 µg/m³)</span>
           </div>
         </div>
-
         <div class="h-card">
           <div class="h-card-icon">🎯</div>
           <div class="h-card-title">วัตถุประสงค์การวิจัย</div>
           <div class="obj-items">
             <div class="obj-item">
               <span class="obj-n">01</span>
-              <span class="obj-text">ปรับปรุงอัลกอริทึม EPA NowCast ให้สอดคล้องกับมาตรฐาน PM2.5 ของไทย <strong>(37.5 µg/m³)</strong> และลักษณะฝุ่นใน กทม.</span>
+              <span class="obj-text">ปรับปรุงอัลกอริทึม EPA NowCast ให้สอดคล้องกับมาตรฐานฝุ่นละออง กทม. <strong>(37.5 µg/m³)</strong></span>
             </div>
             <div class="obj-item">
               <span class="obj-n">02</span>
-              <span class="obj-text">เปรียบเทียบความแม่นยำด้วย <strong>Root Mean Square Error (RMSE)</strong> เทียบกับค่าเฉลี่ย 24 ชม. จริง</span>
+              <span class="obj-text">เปรียบเทียบความแม่นยำด้วย <strong>RMSE และ MAE</strong> เทียบกับค่าเฉลี่ย 24 ชม.</span>
             </div>
             <div class="obj-item">
               <span class="obj-n">03</span>
-              <span class="obj-text">เปรียบเทียบประสิทธิภาพ <strong>Station-based</strong> กับ <strong>Area-based</strong> เพื่อลดความผันผวนของข้อมูล</span>
+              <span class="obj-text">ทดสอบลดความผันผวนของข้อมูลด้วยการจัดกลุ่มเขต <strong>(Area-based)</strong></span>
             </div>
           </div>
         </div>
-
       </div>
     </div>
 
-    <!-- ── METHODOLOGY ── -->
     <div class="home-section">
-      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">วิธีการดำเนินงานวิจัย</div><div class="sec-label-line"></div></div>
-      <div class="method-steps">
-
-        <div class="m-step">
-          <div class="m-step-accent"></div>
-          <div class="m-step-num">STEP 01</div>
-          <div class="m-step-title">การรวบรวมและจัดเตรียมข้อมูล</div>
-          <div class="m-step-body">รวบรวมข้อมูล PM2.5 รายชั่วโมงย้อนหลัง 1 ปี <strong>(ม.ค.–ธ.ค. 2568)</strong> จาก API ของ PCD (aqmthai.com) และ กทม. (airbkk.com) รวมกว่า 100 สถานี พร้อมตรวจสอบ Missing Data และ Outlier</div>
-          <div class="m-step-chip">📡 Data Collection & QC</div>
-        </div>
-
-        <div class="m-step">
-          <div class="m-step-accent"></div>
-          <div class="m-step-num">STEP 02</div>
-          <div class="m-step-title">การพัฒนาอัลกอริทึม BKK NowCast</div>
-          <div class="m-step-body">ปรับจูน <strong>Lookback period</strong> 8–12 ชม. และ <strong>Weight factor bounds</strong> 0.4–1.0 ให้เหมาะกับ กทม. รวมถึงปรับ Breakpoint ให้ตรงกับมาตรฐานไทย 37.5 µg/m³</div>
-          <div class="m-step-chip">⚙️ Model Development</div>
-        </div>
-
-        <div class="m-step">
-          <div class="m-step-accent"></div>
-          <div class="m-step-num">STEP 03</div>
-          <div class="m-step-title">การทดสอบและวิเคราะห์ผล</div>
-          <div class="m-step-body">คำนวณ <strong>RMSE, MAE</strong> เปรียบเทียบ BKK NowCast กับค่าเฉลี่ย 24 ชม. และ Baseline 12 ชม. วิเคราะห์ Alert Timing ว่าเตือนได้เร็วขึ้นเมื่อฝุ่นเกิน 37.5 µg/m³</div>
-          <div class="m-step-chip">📊 Validation & Analysis</div>
-        </div>
-
-        <div class="m-step">
-          <div class="m-step-accent"></div>
-          <div class="m-step-num">STEP 04</div>
-          <div class="m-step-title">การศึกษาแบบกลุ่มพื้นที่ (Area-based)</div>
-          <div class="m-step-body">จัดกลุ่มสถานีเป็น <strong>5–10 โซน</strong> ตามเขตใน กทม. คำนวณค่าเฉลี่ยรายโซน และเปรียบเทียบกับรายสถานีเดี่ยวด้านความเสถียรเชิงพื้นที่ (Spatial Variability)</div>
-          <div class="m-step-chip">🗺 Area-based Clustering</div>
-        </div>
-
-        <div class="m-step m-step-full">
-          <div class="m-step-accent"></div>
-          <div class="m-step-num">STEP 05</div>
-          <div class="m-step-title">การสร้างต้นแบบและสรุปผล</div>
-          <div class="m-step-body">พัฒนา <strong>Dashboard สาธิตแบบ Real-time</strong> (ต้นแบบโปรเจกต์นี้) สำหรับแสดงผล NowCast บนแผนที่ กทม. พร้อมกราฟ Time-Series และสถิติเปรียบเทียบ ก่อนสรุปผลพร้อมข้อเสนอแนะเชิงนโยบายต่อ PCD และ กทม.</div>
-          <div class="m-chips">
-            <div class="m-step-chip">🐍 Python Prototype</div>
-            <div class="m-step-chip">📈 Real-time Dashboard</div>
-            <div class="m-step-chip">📋 Policy Recommendations</div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- ── TIMELINE ── -->
-    <div class="home-section">
-      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">ระยะเวลาดำเนินงาน</div><div class="sec-label-line"></div></div>
-      <div class="h-card">
-        <div class="tl-wrap">
-          <div class="tl-rail"></div>
-          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">ม.ค. – ก.พ.</div><div class="tl-task">รวบรวมข้อมูลและตรวจสอบคุณภาพ</div><div class="tl-detail">ดึงข้อมูล PM2.5 รายชั่วโมงจาก PCD & BMA API · Data Quality Check · จัดการ Missing Data</div></div>
-          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">ก.พ. – มี.ค.</div><div class="tl-task">พัฒนาอัลกอริทึม BKK NowCast</div><div class="tl-detail">ปรับจูน Weight/Lookback · คำนวณ Baseline · ทดสอบพารามิเตอร์</div></div>
-          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">มี.ค. – เม.ย.</div><div class="tl-task">ทดสอบความแม่นยำและวิเคราะห์ Alert Timing</div><div class="tl-detail">คำนวณ RMSE · เปรียบเทียบกับ Avg24 · วิเคราะห์ความไวการแจ้งเตือน</div></div>
-          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">เม.ย.</div><div class="tl-task">พัฒนา NowCast แบบพื้นที่ (Area-based Clustering)</div><div class="tl-detail">จัดกลุ่มโซน กทม. · เปรียบเทียบ Station vs Area SD</div></div>
-          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">พ.ค.</div><div class="tl-task">สรุปผลการศึกษา · จัดทำ Dashboard และรายงานฉบับสมบูรณ์</div><div class="tl-detail">Dashboard Prototype · ข้อเสนอแนะเชิงนโยบาย · รายงานวิจัย</div></div>
+      <div class="h-card" style="margin-top: 24px; border-color: rgba(0,212,170,0.3); background: linear-gradient(180deg, rgba(0,212,170,0.03) 0%, transparent 100%);">
+        <div class="h-card-icon" style="background: rgba(0,212,170,0.15);">⚙️</div>
+        <div class="h-card-title" style="color: var(--accent); font-size: 18px;">การปรับจูนพารามิเตอร์ BKK NowCast (Equation Tuning)</div>
+        <div class="h-card-body">
+          การนำสมการของอเมริกามาใช้ในกรุงเทพฯ จำเป็นต้องปรับจูนพารามิเตอร์ให้เข้ากับพลวัตของฝุ่นและสภาพการจราจรในพื้นที่:
+          <ul class="obj-list" style="margin-top: 16px;">
+            <li><strong style="color:#fff;">การย้อนดูข้อมูล (Lookback Window) = 8 ชั่วโมง:</strong><br> 
+            ลดจากมาตรฐานเดิม 12 ชั่วโมง เนื่องจาก กทม. เป็นเมืองร้อนที่มีการเปลี่ยนแปลงพฤติกรรมระหว่างวันเร็วมาก (เช่น รถติดช่วงเช้า, ลมพัดช่วงบ่าย) การใช้ข้อมูลย้อนหลังถึง 12 ชั่วโมงจะทำให้ค่าเฉลี่ยดึงข้อมูลเก่าข้ามฝั่งวันมากเกินไป การใช้ 8 ชั่วโมงจึงตอบสนองต่อ <b>สถานการณ์ ณ ปัจจุบัน</b> ได้ Real-time และสะท้อนความจริงได้ดีกว่า</li>
+            <li style="margin-top: 12px;"><strong style="color:#fff;">ค่าน้ำหนักขั้นต่ำ ($W_{min}$) = 0.4:</strong><br>
+            ลดจากมาตรฐานเดิม 0.5 การทำเช่นนี้ทำให้สมการมีตัวหารที่ลดทอน (Decay) ความสำคัญของข้อมูลชั่วโมงเก่าๆ ให้กลายเป็นศูนย์ได้ <b>"เร็วขึ้น"</b> ส่งผลให้ระบบให้ความสำคัญกับค่าฝุ่น <b>"ชั่วโมงล่าสุด"</b> สูงขึ้นอย่างมีนัยสำคัญ ระบบจึง <i>"แจ้งเตือนได้ไวขึ้นเมื่อฝุ่นพุ่งสูงกะทันหัน"</i> แต่ยังคงรักษาสมดุลความสมูทของกราฟไว้ได้</li>
+          </ul>
         </div>
       </div>
     </div>
 
-    <!-- ── PROTOTYPE FEATURES ── -->
     <div class="home-section">
       <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">ความสามารถของ Dashboard Prototype</div><div class="sec-label-line"></div></div>
       <div class="h-card">
@@ -465,14 +319,13 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
             <div class="feat-num">03</div>
             <div class="feat-content">
               <div class="feat-title">คำนวณสถิติประเมินประสิทธิภาพ (Real-time Analytics)</div>
-              <div class="feat-desc">Dashboard คำนวณค่า RMSE และเปรียบเทียบค่าความผันผวน (SD) ระหว่างข้อมูลรายสถานีและกลุ่มพื้นที่แบบอัตโนมัติ</div>
+              <div class="feat-desc">Dashboard คำนวณค่า RMSE, MAE และเปรียบเทียบค่าความผันผวน (SD) ระหว่างข้อมูลรายสถานีและกลุ่มพื้นที่แบบอัตโนมัติ</div>
             </div>
           </div>
         </div>
         <div class="home-cta">
           <button class="cta-btn" onclick="document.querySelectorAll('.tab')[1].click()">
             <span>🗺 เข้าสู่หน้าแผนที่โซน</span>
-            <span class="cta-arrow">→</span>
           </button>
         </div>
       </div>
@@ -544,8 +397,9 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       </div>
 
       <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">🎯 การประเมินประสิทธิภาพ (Research Objectives)</div>
-      <div class="kpi-row" style="margin-top: 16px;">
+      <div class="kpi-row-5" style="margin-top: 16px;">
         <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);"><div class="kpi-label" style="color:#4a9eff; font-weight:bold;">ความแม่นยำ (RMSE)</div><div class="kpi-val" id="kpi-rmse">—</div><div class="kpi-delta">เทียบ NowCast กับ Avg24</div></div>
+        <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);"><div class="kpi-label" style="color:#4a9eff; font-weight:bold;">ความคลาดเคลื่อน (MAE)</div><div class="kpi-val" id="kpi-mae">—</div><div class="kpi-delta">Mean Absolute Error</div></div>
         <div class="kpi-card" style="border-color: rgba(0,212,170,0.3);"><div class="kpi-label" style="color:#00d4aa; font-weight:bold;">การลดความผันผวน</div><div class="kpi-val" id="kpi-sd-diff">—</div><div class="kpi-delta">เปอร์เซ็นต์ลดสัญญาณหลอก</div></div>
         <div class="kpi-card"><div class="kpi-label">ความผันผวน (SD) สถานี</div><div class="kpi-val" id="kpi-sd-stn">—</div><div class="kpi-delta">Station-based Volatility</div></div>
         <div class="kpi-card"><div class="kpi-label">ความผันผวน (SD) พื้นที่</div><div class="kpi-val" id="kpi-sd-area">—</div><div class="kpi-delta">Area-based Volatility</div></div>
@@ -610,7 +464,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <script>
 // ═══════════════════════════════════════════
-// GLOBAL STATE & CONFIGURATIONS (ZONE COLORS UPDATED)
+// GLOBAL STATE & CONFIGURATIONS
 // ═══════════════════════════════════════════
 const ZONE_COLORS = {
   "กรุงเทพกลาง": "#fbc02d", // 1. เหลือง
@@ -716,7 +570,7 @@ function nowcast(vals) {
   const cmin = Math.min(...valid);
   if(cmax <= 0) return null;
   const wRate = 1 - (cmax - cmin) / cmax;
-  const w = Math.max(wRate, 0.4);
+  const w = Math.max(wRate, 0.4); // 🎯 Wmin = 0.4 ตามเป้าหมายวิจัย
   let num = 0, den = 0;
   for(let i = 0; i < vals.length; i++) {
     if(vals[i] !== null && vals[i] !== undefined && !isNaN(vals[i])) {
@@ -735,6 +589,15 @@ function calcRMSE(arr1, arr2) {
   return count > 0 ? Math.sqrt(sum / count) : null;
 }
 
+// 🎯 ฟังก์ชันใหม่: คำนวณ Mean Absolute Error (MAE)
+function calcMAE(arr1, arr2) {
+  let sum = 0, count = 0;
+  for(let i=0; i<arr1.length; i++) {
+    if(arr1[i] != null && arr2[i] != null) { sum += Math.abs(arr1[i] - arr2[i]); count++; }
+  }
+  return count > 0 ? (sum / count) : null;
+}
+
 function calcSD(arr) {
   const valid = arr.filter(v => v != null && !isNaN(v));
   if(valid.length < 2) return null;
@@ -743,7 +606,6 @@ function calcSD(arr) {
   return Math.sqrt(variance);
 }
 
-// 🎯 อัลกอริทึม Convex Hull สำหรับลากเส้นคลุมสถานีในแต่ละโซน
 function getConvexHull(points) {
   if (points.length < 3) return points;
   points.sort((a, b) => a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]);
@@ -790,10 +652,11 @@ async function initializeData() {
         if (rawVal === '-' || rawVal === undefined) rawVal = null;
         else rawVal = parseFloat(rawVal);
 
-        let lookback12 = [];
-        for(let j = i; j >= Math.max(0, i - 11); j--) {
+        // 🎯 แก้ Lookback เป็น 8 ชั่วโมง (ดึงข้อมูลตัวมันเอง + ย้อนหลัง 7 ชม.)
+        let lookback8 = [];
+        for(let j = i; j >= Math.max(0, i - 7); j--) {
           let pastVal = HISTORY_RECORDS[j][key];
-          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) { lookback12.push(parseFloat(pastVal)); }
+          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) { lookback8.push(parseFloat(pastVal)); }
         }
         
         let lookback24 = [];
@@ -806,7 +669,7 @@ async function initializeData() {
 
         row._parsed[key] = {
           raw: rawVal,
-          nc: nowcast(lookback12),
+          nc: nowcast(lookback8), // โยน Array 8 ชม. เข้าสมการ NowCast
           avg24: avg24Val
         };
       });
@@ -869,7 +732,6 @@ function buildDynamicUI() {
   for(const k in mapMarkers) { mapInstance.removeLayer(mapMarkers[k].marker); }
   mapMarkers = {};
   
-  // 🎯 วาดเฉพาะเส้น Polygon (Convex Hull) ล้อมโซน (ลบการวาดวงกลมออกทั้งหมด)
   for (const zId in ZONE_COLORS) {
       const zColor = ZONE_COLORS[zId];
       const zKeys = STATION_KEYS.filter(k => STATION_META[k] && STATION_META[k].zone === zId);
@@ -881,20 +743,12 @@ function buildDynamicUI() {
       
       if (hull.length >= 3) {
           const polygon = L.polygon(hull, {
-              color: zColor,
-              weight: 3,         // เส้นขอบโซนที่ชัดเจน
-              opacity: 0.8,
-              fillColor: zColor,
-              fillOpacity: 0.15, // ใส่สีพื้นหลังบางๆ ให้พอมองเห็นขอบเขต
-              dashArray: '5, 8'  // เส้นประ
+              color: zColor, weight: 3, opacity: 0.8,
+              fillColor: zColor, fillOpacity: 0.15, dashArray: '5, 8'
           }).addTo(mapInstance);
           window.zoneLayers.push(polygon);
       } else if (hull.length === 2) {
-          const line = L.polyline(hull, {
-              color: zColor, 
-              weight: 3, 
-              dashArray: '5, 8'
-          }).addTo(mapInstance);
+          const line = L.polyline(hull, { color: zColor, weight: 3, dashArray: '5, 8' }).addTo(mapInstance);
           window.zoneLayers.push(line);
       }
   }
@@ -1120,9 +974,15 @@ function updateDashboard() {
   const elBadD = document.getElementById('kpi-bad-d');
   if(elBadD) elBadD.textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง (${(fd.badHours/Math.max(fd.totalHours,1)*100).toFixed(1)}%)`;
 
+  // 🎯 เพิ่มการคำนวณ MAE คู่กับ RMSE
   const rmseValue = calcRMSE(fd.tlNC, fd.tlAvg24);
+  const maeValue = calcMAE(fd.tlNC, fd.tlAvg24);
+  
   const elRmse = document.getElementById('kpi-rmse');
   if(elRmse) elRmse.innerHTML = rmseValue != null ? rmseValue.toFixed(3) : '—';
+  
+  const elMae = document.getElementById('kpi-mae');
+  if(elMae) elMae.innerHTML = maeValue != null ? maeValue.toFixed(3) : '—';
 
   let sdStationVal;
   const sdAreaVal = calcSD(fa.tlNC); 
