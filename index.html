@@ -39,31 +39,165 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .tab.active{background:var(--bg);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .panel{display:none} .panel.active{display:block}
 
-/* HOME PAGE STYLES */
-.home-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
-.hero-card { background: linear-gradient(145deg, var(--bg2), var(--bg3)); border: 1px solid var(--border); border-radius: 16px; padding: 40px; margin-bottom: 24px; text-align: center; position: relative; overflow: hidden; }
-.hero-card::before { content: ""; position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: var(--accent); filter: blur(100px); opacity: 0.15; }
-.project-tag { display: inline-block; background: rgba(0, 212, 170, 0.15); color: var(--accent); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-family: var(--mono); font-weight: 600; margin-bottom: 16px; border: 1px solid rgba(0, 212, 170, 0.3); }
-.hero-title { font-size: 28px; font-weight: 700; color: #fff; line-height: 1.4; margin-bottom: 12px; }
-.hero-subtitle { font-size: 16px; color: var(--muted); margin-bottom: 32px; font-family: var(--mono); }
-.team-info { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
-.team-member { display: flex; flex-direction: column; align-items: center; }
-.team-role { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-.team-name { font-size: 15px; font-weight: 600; color: var(--text); }
-.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-@media(max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
-.info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 28px; }
-.info-icon { font-size: 24px; margin-bottom: 16px; }
-.info-title { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 12px; }
-.info-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
-.obj-list { list-style: none; padding: 0; }
-.obj-list li { position: relative; padding-left: 28px; margin-bottom: 12px; font-size: 14px; color: var(--text); line-height: 1.6; }
-.obj-list li::before { content: "🎯"; position: absolute; left: 0; top: 0; font-size: 14px; }
-.feature-list { list-style: none; padding: 0; margin-top: 16px; }
-.feature-list li { display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: var(--bg3); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border); }
-.feature-list li .f-icon { color: var(--accent); font-family: var(--mono); font-weight: bold; }
-.feature-list li .f-text { font-size: 13px; color: var(--muted); }
-.feature-list li .f-text b { color: var(--text); }
+/* ══════════════════════════════════════════
+   HOME — Claude-inspired refined aesthetic
+   ══════════════════════════════════════════ */
+
+/* Smooth entry animation */
+@keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+@keyframes shimmer { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+@keyframes dotPing { 0% { transform:scale(1); opacity:1; } 70%,100% { transform:scale(2.2); opacity:0; } }
+
+.home-container { max-width: 1060px; margin: 0 auto; padding: 48px 28px 80px; }
+.home-section { animation: fadeUp .5s ease both; }
+.home-section:nth-child(1) { animation-delay: .05s; }
+.home-section:nth-child(2) { animation-delay: .12s; }
+.home-section:nth-child(3) { animation-delay: .19s; }
+.home-section:nth-child(4) { animation-delay: .26s; }
+.home-section:nth-child(5) { animation-delay: .33s; }
+.home-section:nth-child(6) { animation-delay: .40s; }
+
+/* ── HERO ── */
+.hero-wrap { position: relative; margin-bottom: 40px; }
+.hero-bg-glow { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 24px; }
+.hero-bg-glow::before { content:""; position:absolute; top:-60px; left:50%; transform:translateX(-50%); width:600px; height:300px; background: radial-gradient(ellipse at center, rgba(0,212,170,.13) 0%, transparent 65%); }
+.hero-bg-glow::after { content:""; position:absolute; bottom:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent 0%, rgba(0,212,170,.25) 40%, rgba(74,158,255,.25) 60%, transparent 100%); }
+
+.hero-card {
+  background: linear-gradient(160deg, #0d1016 0%, #111520 100%);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 24px;
+  padding: 56px 48px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* noise texture overlay */
+.hero-card::before {
+  content:""; position:absolute; inset:0; border-radius:24px;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none; opacity:.6;
+}
+
+.h-eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:24px; }
+.h-eyebrow-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); position:relative; }
+.h-eyebrow-dot::after { content:""; position:absolute; inset:0; border-radius:50%; background:var(--accent); animation:dotPing 2s ease infinite; }
+.h-eyebrow-text { font-size:11px; font-family:var(--mono); color:var(--accent); letter-spacing:.1em; text-transform:uppercase; font-weight:600; }
+
+.hero-th { font-size:28px; font-weight:700; color:#fff; line-height:1.45; margin-bottom:10px; letter-spacing:-.01em; }
+.hero-en { font-size:13px; color:rgba(255,255,255,.35); font-family:var(--mono); letter-spacing:.03em; margin-bottom:40px; }
+
+/* stat pills */
+.hero-stats { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:36px; }
+.h-stat { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:12px 20px; text-align:center; min-width:110px; }
+.h-stat-val { font-size:22px; font-weight:700; font-family:var(--mono); color:#fff; line-height:1; }
+.h-stat-val span { font-size:12px; color:var(--muted); font-weight:400; margin-left:2px; }
+.h-stat-label { font-size:10px; color:var(--muted); margin-top:5px; font-family:var(--mono); letter-spacing:.04em; }
+
+/* team row */
+.hero-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent); margin-bottom:28px; }
+.team-row { display:flex; justify-content:center; align-items:stretch; gap:0; flex-wrap:wrap; }
+.team-pill { display:flex; flex-direction:column; align-items:center; gap:5px; padding:8px 32px; border-right:1px solid rgba(255,255,255,.07); }
+.team-pill:last-child { border-right:none; }
+.team-pill-role { font-size:9.5px; font-family:var(--mono); color:var(--accent); text-transform:uppercase; letter-spacing:.1em; opacity:.8; }
+.team-pill-name { font-size:13.5px; font-weight:600; color:rgba(255,255,255,.85); text-align:center; line-height:1.4; }
+.team-pill-id { font-size:10px; font-family:var(--mono); color:var(--muted); }
+
+/* ── SECTION LABEL ── */
+.sec-label { display:flex; align-items:center; gap:12px; margin:44px 0 20px; }
+.sec-label-line { flex:1; height:1px; background:rgba(255,255,255,.06); }
+.sec-label-text { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; }
+
+/* ── TWO-COL GRID ── */
+.home-2col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:780px){ .home-2col { grid-template-columns:1fr; } }
+
+/* ── BASE CARD ── */
+.h-card {
+  background: #0f1218;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 18px;
+  padding: 28px 30px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color .25s, box-shadow .25s;
+}
+.h-card:hover { border-color:rgba(255,255,255,.14); box-shadow:0 8px 32px rgba(0,0,0,.35); }
+.h-card-icon { width:38px; height:38px; border-radius:10px; background:rgba(0,212,170,.08); border:1px solid rgba(0,212,170,.15); display:flex; align-items:center; justify-content:center; font-size:17px; margin-bottom:18px; }
+.h-card-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:12px; letter-spacing:-.01em; }
+.h-card-body { font-size:13px; color:rgba(255,255,255,.45); line-height:1.85; }
+.h-card-body strong { color:rgba(255,255,255,.75); font-weight:600; }
+.h-card-body .hl { color:var(--accent); font-weight:600; }
+
+/* objective list */
+.obj-items { display:flex; flex-direction:column; gap:10px; }
+.obj-item { display:flex; gap:12px; align-items:flex-start; padding:11px 14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:10px; transition:border-color .2s; }
+.obj-item:hover { border-color:rgba(255,255,255,.11); }
+.obj-n { font-size:10px; font-family:var(--mono); font-weight:700; color:var(--accent); background:rgba(0,212,170,.1); border:1px solid rgba(0,212,170,.18); border-radius:6px; padding:2px 7px; flex-shrink:0; margin-top:1px; letter-spacing:.04em; }
+.obj-text { font-size:13px; color:rgba(255,255,255,.6); line-height:1.65; }
+.obj-text strong { color:rgba(255,255,255,.8); }
+
+/* ── METHODOLOGY STEPS ── */
+.method-steps { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media(max-width:780px){ .method-steps { grid-template-columns:1fr; } }
+.m-step {
+  background:#0f1218;
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:16px;
+  padding:22px 24px;
+  position:relative;
+  transition:border-color .25s, transform .25s;
+  cursor:default;
+}
+.m-step:hover { border-color:rgba(0,212,170,.22); transform:translateY(-2px); }
+.m-step-accent { position:absolute; top:0; left:0; right:0; height:2px; border-radius:16px 16px 0 0; background:linear-gradient(90deg, var(--accent), transparent); opacity:0; transition:opacity .25s; }
+.m-step:hover .m-step-accent { opacity:1; }
+.m-step-num { font-size:10px; font-family:var(--mono); font-weight:700; color:var(--accent); letter-spacing:.1em; margin-bottom:10px; opacity:.7; }
+.m-step-title { font-size:13.5px; font-weight:700; color:#fff; margin-bottom:9px; letter-spacing:-.01em; }
+.m-step-body { font-size:12px; color:rgba(255,255,255,.42); line-height:1.8; }
+.m-step-body strong { color:rgba(255,255,255,.65); font-weight:600; }
+.m-step-chip { display:inline-flex; align-items:center; gap:5px; margin-top:14px; font-size:10px; font-family:var(--mono); color:#4a9eff; background:rgba(74,158,255,.08); border:1px solid rgba(74,158,255,.18); border-radius:5px; padding:3px 8px; font-weight:600; letter-spacing:.03em; }
+
+/* step 5 full width */
+.m-step-full { grid-column:1 / -1; }
+.m-chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:14px; }
+
+/* ── TIMELINE ── */
+.tl-wrap { position:relative; padding-left:32px; }
+.tl-rail { position:absolute; left:8px; top:12px; bottom:12px; width:1px; background:linear-gradient(180deg, var(--accent) 0%, rgba(0,212,170,.08) 100%); }
+.tl-item { position:relative; margin-bottom:22px; }
+.tl-item:last-child { margin-bottom:0; }
+.tl-node { position:absolute; left:-32px; top:3px; width:17px; height:17px; display:flex; align-items:center; justify-content:center; }
+.tl-node-ring { width:13px; height:13px; border-radius:50%; border:1.5px solid var(--accent); background:#0f1218; display:flex; align-items:center; justify-content:center; }
+.tl-node-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); }
+.tl-period { font-size:10px; font-family:var(--mono); color:var(--accent); letter-spacing:.07em; font-weight:700; margin-bottom:3px; opacity:.8; }
+.tl-task { font-size:13px; font-weight:600; color:rgba(255,255,255,.8); margin-bottom:3px; }
+.tl-detail { font-size:11.5px; color:rgba(255,255,255,.35); line-height:1.6; }
+
+/* ── FEATURES BOTTOM CARD ── */
+.feat-list { display:flex; flex-direction:column; gap:10px; }
+.feat-item { display:flex; gap:14px; align-items:flex-start; padding:14px 16px; background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.065); border-radius:12px; transition:border-color .2s, background .2s; }
+.feat-item:hover { border-color:rgba(0,212,170,.2); background:rgba(0,212,170,.025); }
+.feat-num { font-size:10.5px; font-family:var(--mono); font-weight:700; color:var(--accent); background:rgba(0,212,170,.09); border:1px solid rgba(0,212,170,.18); border-radius:6px; padding:3px 8px; flex-shrink:0; margin-top:1px; letter-spacing:.04em; }
+.feat-content { flex:1; }
+.feat-title { font-size:13px; font-weight:700; color:rgba(255,255,255,.8); margin-bottom:4px; }
+.feat-desc { font-size:12px; color:rgba(255,255,255,.4); line-height:1.65; }
+
+/* ── CTA BUTTON ── */
+.home-cta { margin-top:32px; text-align:center; }
+.cta-btn {
+  display:inline-flex; align-items:center; gap:10px;
+  background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(74,158,255,.12));
+  border:1px solid rgba(0,212,170,.3);
+  color:#fff; border-radius:12px; padding:13px 32px;
+  font-family:var(--font); font-size:14px; font-weight:600;
+  cursor:pointer; transition:all .25s; letter-spacing:.01em;
+  text-decoration:none;
+}
+.cta-btn:hover { background:linear-gradient(135deg,rgba(0,212,170,.25),rgba(74,158,255,.2)); border-color:rgba(0,212,170,.5); transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,212,170,.15); }
+.cta-arrow { font-size:16px; transition:transform .2s; }
+.cta-btn:hover .cta-arrow { transform:translateX(4px); }
 
 /* MAP TAB */
 .map-layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 90px)}
@@ -165,47 +299,185 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <div id="panel-home" class="panel active">
   <div class="home-container">
-    <div class="hero-card">
-      <div class="project-tag">Environmental Engineering Final Project</div>
-      <div class="hero-title">การพัฒนาระบบ BKK NowCast เพื่อการแจ้งเตือนคุณภาพอากาศ (PM2.5) ในกรุงเทพมหานคร</div>
-      <div class="hero-subtitle">Development of BKK NowCast System for PM2.5 Air Quality Warning in Bangkok</div>
-      
-      <div class="team-info">
-        <div class="team-member"><div class="team-role">ผู้วิจัย</div><div class="team-name">นายธนกฤต เถาว์ทิพย์ (6530153021)</div></div>
-        <div class="team-member"><div class="team-role">ผู้วิจัย</div><div class="team-name">นายชัยชญ โยธาพันธ์ (6530086621)</div></div>
-        <div class="team-member"><div class="team-role">อาจารย์ที่ปรึกษา</div><div class="team-name">รศ.ดร. ศิริมา ปัญญาเมธีกุล</div></div>
+
+    <!-- ── HERO ── -->
+    <div class="home-section hero-wrap">
+      <div class="hero-bg-glow"></div>
+      <div class="hero-card">
+        <div class="h-eyebrow">
+          <div class="h-eyebrow-dot"></div>
+          <span class="h-eyebrow-text">Environmental Engineering · Final Project · ภาคต้น ปีการศึกษา 2568</span>
+        </div>
+        <div class="hero-th">การพัฒนาระบบ BKK NowCast<br>เพื่อการแจ้งเตือนคุณภาพอากาศ (PM2.5) ในกรุงเทพมหานคร</div>
+        <div class="hero-en">Development of BKK NowCast System for PM2.5 Air Quality Warning in Bangkok</div>
+
+        <div class="hero-stats">
+          <div class="h-stat"><div class="h-stat-val">100<span>+</span></div><div class="h-stat-label">สถานีตรวจวัด</div></div>
+          <div class="h-stat"><div class="h-stat-val">37.5<span>µg/m³</span></div><div class="h-stat-label">มาตรฐานไทยใหม่</div></div>
+          <div class="h-stat"><div class="h-stat-val">12<span>ชม.</span></div><div class="h-stat-label">Lookback Window</div></div>
+          <div class="h-stat"><div class="h-stat-val">RMSE</div><div class="h-stat-label">ตัวชี้วัดหลัก</div></div>
+        </div>
+
+        <div class="hero-divider"></div>
+        <div class="team-row">
+          <div class="team-pill">
+            <div class="team-pill-role">ผู้วิจัย</div>
+            <div class="team-pill-name">ธนกฤต เถาว์ทิพย์</div>
+            <div class="team-pill-id">6530153021</div>
+          </div>
+          <div class="team-pill">
+            <div class="team-pill-role">ผู้วิจัย</div>
+            <div class="team-pill-name">ชัยชญ โยธาพันธ์</div>
+            <div class="team-pill-id">6530086621</div>
+          </div>
+          <div class="team-pill">
+            <div class="team-pill-role">อาจารย์ที่ปรึกษา</div>
+            <div class="team-pill-name">รศ.ดร. ศิริมา ปัญญาเมธีกุล</div>
+            <div class="team-pill-id">&nbsp;</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="info-grid">
-      <div class="info-card">
-        <div class="info-icon">💡</div>
-        <div class="info-title">ความเป็นมาของปัญหา</div>
-        <div class="info-desc">การรายงานผลคุณภาพอากาศในปัจจุบันมักอ้างอิง <b>ค่าเฉลี่ย 24 ชั่วโมง</b> ซึ่งมีความล่าช้า ไม่สะท้อนสถานการณ์จริงในช่วงวิกฤต ในขณะที่ระบบ EPA NowCast ของสหรัฐฯ สามารถตอบสนองได้เร็วกว่า แต่ยังอ้างอิงมาตรฐานเดิม (35 µg/m³) ซึ่งไม่ตรงกับมาตรฐานใหม่ของไทย (37.5 µg/m³) โครงการนี้จึงพัฒนาระบบ <b>BKK NowCast</b> เพื่อลดช่องว่างนี้</div>
-      </div>
-      <div class="info-card">
-        <div class="info-icon">🎯</div>
-        <div class="info-title">วัตถุประสงค์การวิจัย</div>
-        <ul class="obj-list">
-          <li>ปรับปรุงอัลกอริทึม EPA NowCast ให้สอดคล้องกับมาตรฐานฝุ่นละออง PM2.5 ของประเทศไทย (37.5 µg/m³)</li>
-          <li>เปรียบเทียบความแม่นยำ (Accuracy) ด้วยดัชนีทางสถิติ Root Mean Square Error (RMSE)</li>
-          <li>เปรียบเทียบประสิทธิภาพการแจ้งเตือนแบบรายสถานี (Station-based) และแบบกลุ่มพื้นที่ (Area-based) เพื่อลดความผันผวนของข้อมูล</li>
-        </ul>
+    <!-- ── BACKGROUND + OBJECTIVES ── -->
+    <div class="home-section">
+      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">ความเป็นมาและวัตถุประสงค์</div><div class="sec-label-line"></div></div>
+      <div class="home-2col">
+
+        <div class="h-card">
+          <div class="h-card-icon">💡</div>
+          <div class="h-card-title">ความเป็นมาของปัญหา</div>
+          <div class="h-card-body">
+            กรมควบคุมมลพิษ (PCD) และ กทม. มีสถานีตรวจวัดกว่า <strong>100 จุด</strong> แต่การรายงานอ้างอิง<strong>ค่าเฉลี่ย 24 ชั่วโมง</strong> ซึ่งล่าช้าและไม่สะท้อนสถานการณ์จริงในช่วงวิกฤต<br><br>
+            ระบบ <span class="hl">EPA NowCast</span> ของสหรัฐฯ ตอบสนองได้เร็วกว่าด้วย Weighted Average แต่ยังอิงมาตรฐานเก่า <strong>35 µg/m³</strong> ต่างจากมาตรฐานใหม่ของไทย <span class="hl">37.5 µg/m³</span> (มีผลบังคับใช้ปี 2566)
+          </div>
+        </div>
+
+        <div class="h-card">
+          <div class="h-card-icon">🎯</div>
+          <div class="h-card-title">วัตถุประสงค์การวิจัย</div>
+          <div class="obj-items">
+            <div class="obj-item">
+              <span class="obj-n">01</span>
+              <span class="obj-text">ปรับปรุงอัลกอริทึม EPA NowCast ให้สอดคล้องกับมาตรฐาน PM2.5 ของไทย <strong>(37.5 µg/m³)</strong> และลักษณะฝุ่นใน กทม.</span>
+            </div>
+            <div class="obj-item">
+              <span class="obj-n">02</span>
+              <span class="obj-text">เปรียบเทียบความแม่นยำด้วย <strong>Root Mean Square Error (RMSE)</strong> เทียบกับค่าเฉลี่ย 24 ชม. จริง</span>
+            </div>
+            <div class="obj-item">
+              <span class="obj-n">03</span>
+              <span class="obj-text">เปรียบเทียบประสิทธิภาพ <strong>Station-based</strong> กับ <strong>Area-based</strong> เพื่อลดความผันผวนของข้อมูล</span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
 
-    <div class="info-card" style="margin-top: 24px;">
-      <div class="info-icon">⚙️</div>
-      <div class="info-title">ระบบนี้ (Dashboard Prototype) ทำอะไรได้บ้าง?</div>
-      <ul class="feature-list">
-        <li><div class="f-icon">01</div><div class="f-text"><b>ดึงข้อมูลดิบรายชั่วโมง (True Raw Data):</b> ระบบจะดึงข้อมูลประวัติรายชั่วโมงจากฐานข้อมูล แบบไม่ถูกเจือปน เพื่อนำมาคำนวณเข้าสมการสถิติใหม่ได้อย่างถูกต้อง</div></li>
-        <li><div class="f-icon">02</div><div class="f-text"><b>การแบ่งกลุ่มพื้นที่ (Area-based Clustering):</b> แผนที่แสดงขอบเขตและหมุดแบ่งตาม 6 กลุ่มเขตกรุงเทพมหานคร เพื่อใช้ทดสอบสมมติฐานการกระจายตัวเชิงพื้นที่</div></li>
-        <li><div class="f-icon">03</div><div class="f-text"><b>คำนวณสถิติประเมินประสิทธิภาพ (Real-time Analytics):</b> Dashboard คำนวณค่า RMSE และเปรียบเทียบค่าความผันผวน (SD) ระหว่างข้อมูลรายสถานีและกลุ่มพื้นที่แบบอัตโนมัติ</div></li>
-      </ul>
-      <div style="margin-top: 24px; text-align: center;">
-        <button class="btn-now" onclick="document.querySelectorAll('.tab')[1].click()" style="width: auto; padding: 10px 24px;">เข้าสู่หน้าแผนที่โซน <span>→</span></button>
+    <!-- ── METHODOLOGY ── -->
+    <div class="home-section">
+      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">วิธีการดำเนินงานวิจัย</div><div class="sec-label-line"></div></div>
+      <div class="method-steps">
+
+        <div class="m-step">
+          <div class="m-step-accent"></div>
+          <div class="m-step-num">STEP 01</div>
+          <div class="m-step-title">การรวบรวมและจัดเตรียมข้อมูล</div>
+          <div class="m-step-body">รวบรวมข้อมูล PM2.5 รายชั่วโมงย้อนหลัง 1 ปี <strong>(ม.ค.–ธ.ค. 2568)</strong> จาก API ของ PCD (aqmthai.com) และ กทม. (airbkk.com) รวมกว่า 100 สถานี พร้อมตรวจสอบ Missing Data และ Outlier</div>
+          <div class="m-step-chip">📡 Data Collection & QC</div>
+        </div>
+
+        <div class="m-step">
+          <div class="m-step-accent"></div>
+          <div class="m-step-num">STEP 02</div>
+          <div class="m-step-title">การพัฒนาอัลกอริทึม BKK NowCast</div>
+          <div class="m-step-body">ปรับจูน <strong>Lookback period</strong> 8–12 ชม. และ <strong>Weight factor bounds</strong> 0.4–1.0 ให้เหมาะกับ กทม. รวมถึงปรับ Breakpoint ให้ตรงกับมาตรฐานไทย 37.5 µg/m³</div>
+          <div class="m-step-chip">⚙️ Model Development</div>
+        </div>
+
+        <div class="m-step">
+          <div class="m-step-accent"></div>
+          <div class="m-step-num">STEP 03</div>
+          <div class="m-step-title">การทดสอบและวิเคราะห์ผล</div>
+          <div class="m-step-body">คำนวณ <strong>RMSE, MAE</strong> เปรียบเทียบ BKK NowCast กับค่าเฉลี่ย 24 ชม. และ Baseline 12 ชม. วิเคราะห์ Alert Timing ว่าเตือนได้เร็วขึ้นเมื่อฝุ่นเกิน 37.5 µg/m³</div>
+          <div class="m-step-chip">📊 Validation & Analysis</div>
+        </div>
+
+        <div class="m-step">
+          <div class="m-step-accent"></div>
+          <div class="m-step-num">STEP 04</div>
+          <div class="m-step-title">การศึกษาแบบกลุ่มพื้นที่ (Area-based)</div>
+          <div class="m-step-body">จัดกลุ่มสถานีเป็น <strong>5–10 โซน</strong> ตามเขตใน กทม. คำนวณค่าเฉลี่ยรายโซน และเปรียบเทียบกับรายสถานีเดี่ยวด้านความเสถียรเชิงพื้นที่ (Spatial Variability)</div>
+          <div class="m-step-chip">🗺 Area-based Clustering</div>
+        </div>
+
+        <div class="m-step m-step-full">
+          <div class="m-step-accent"></div>
+          <div class="m-step-num">STEP 05</div>
+          <div class="m-step-title">การสร้างต้นแบบและสรุปผล</div>
+          <div class="m-step-body">พัฒนา <strong>Dashboard สาธิตแบบ Real-time</strong> (ต้นแบบโปรเจกต์นี้) สำหรับแสดงผล NowCast บนแผนที่ กทม. พร้อมกราฟ Time-Series และสถิติเปรียบเทียบ ก่อนสรุปผลพร้อมข้อเสนอแนะเชิงนโยบายต่อ PCD และ กทม.</div>
+          <div class="m-chips">
+            <div class="m-step-chip">🐍 Python Prototype</div>
+            <div class="m-step-chip">📈 Real-time Dashboard</div>
+            <div class="m-step-chip">📋 Policy Recommendations</div>
+          </div>
+        </div>
+
       </div>
     </div>
+
+    <!-- ── TIMELINE ── -->
+    <div class="home-section">
+      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">ระยะเวลาดำเนินงาน</div><div class="sec-label-line"></div></div>
+      <div class="h-card">
+        <div class="tl-wrap">
+          <div class="tl-rail"></div>
+          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">ม.ค. – ก.พ.</div><div class="tl-task">รวบรวมข้อมูลและตรวจสอบคุณภาพ</div><div class="tl-detail">ดึงข้อมูล PM2.5 รายชั่วโมงจาก PCD & BMA API · Data Quality Check · จัดการ Missing Data</div></div>
+          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">ก.พ. – มี.ค.</div><div class="tl-task">พัฒนาอัลกอริทึม BKK NowCast</div><div class="tl-detail">ปรับจูน Weight/Lookback · คำนวณ Baseline · ทดสอบพารามิเตอร์</div></div>
+          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">มี.ค. – เม.ย.</div><div class="tl-task">ทดสอบความแม่นยำและวิเคราะห์ Alert Timing</div><div class="tl-detail">คำนวณ RMSE · เปรียบเทียบกับ Avg24 · วิเคราะห์ความไวการแจ้งเตือน</div></div>
+          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">เม.ย.</div><div class="tl-task">พัฒนา NowCast แบบพื้นที่ (Area-based Clustering)</div><div class="tl-detail">จัดกลุ่มโซน กทม. · เปรียบเทียบ Station vs Area SD</div></div>
+          <div class="tl-item"><div class="tl-node"><div class="tl-node-ring"><div class="tl-node-dot"></div></div></div><div class="tl-period">พ.ค.</div><div class="tl-task">สรุปผลการศึกษา · จัดทำ Dashboard และรายงานฉบับสมบูรณ์</div><div class="tl-detail">Dashboard Prototype · ข้อเสนอแนะเชิงนโยบาย · รายงานวิจัย</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PROTOTYPE FEATURES ── -->
+    <div class="home-section">
+      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">ความสามารถของ Dashboard Prototype</div><div class="sec-label-line"></div></div>
+      <div class="h-card">
+        <div class="feat-list">
+          <div class="feat-item">
+            <div class="feat-num">01</div>
+            <div class="feat-content">
+              <div class="feat-title">ดึงข้อมูลดิบรายชั่วโมง (True Raw Data)</div>
+              <div class="feat-desc">ระบบดึงข้อมูลประวัติรายชั่วโมงจากฐานข้อมูลโดยไม่ถูกเจือปน เพื่อนำมาคำนวณเข้าสมการสถิติได้อย่างถูกต้อง</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-num">02</div>
+            <div class="feat-content">
+              <div class="feat-title">การแบ่งกลุ่มพื้นที่ (Area-based Clustering)</div>
+              <div class="feat-desc">แผนที่แสดงขอบเขตและหมุดแบ่งตาม 6 กลุ่มเขต กทม. เพื่อทดสอบสมมติฐานการกระจายตัวเชิงพื้นที่ (Spatial Variability)</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-num">03</div>
+            <div class="feat-content">
+              <div class="feat-title">คำนวณสถิติประเมินประสิทธิภาพ (Real-time Analytics)</div>
+              <div class="feat-desc">Dashboard คำนวณค่า RMSE และเปรียบเทียบค่าความผันผวน (SD) ระหว่างข้อมูลรายสถานีและกลุ่มพื้นที่แบบอัตโนมัติ</div>
+            </div>
+          </div>
+        </div>
+        <div class="home-cta">
+          <button class="cta-btn" onclick="document.querySelectorAll('.tab')[1].click()">
+            <span>🗺 เข้าสู่หน้าแผนที่โซน</span>
+            <span class="cta-arrow">→</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
