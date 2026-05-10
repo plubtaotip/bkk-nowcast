@@ -130,7 +130,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
 .dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
-/* Leaflet Overrides - วงกลมแบบไม่มีกรอบสีตามโซน */
+/* Leaflet Overrides */
 .pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s ease;box-shadow: 0 4px 10px rgba(0,0,0,0.5);border: 2px solid rgba(255,255,255,0.8);}
 .pm-marker:hover{transform:scale(1.2); z-index: 1000 !important;}
 
@@ -338,16 +338,15 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <script>
 // ═══════════════════════════════════════════
-// GLOBAL STATE & CONFIGURATIONS
+// GLOBAL STATE & CONFIGURATIONS (ZONE COLORS UPDATED)
 // ═══════════════════════════════════════════
-// อัปเดตสีให้ตรงกับภาพอ้างอิง
 const ZONE_COLORS = {
-  "กรุงเทพกลาง": "#fbc02d", // เหลือง
-  "กรุงเทพใต้": "#ff9800",  // ส้ม
-  "กรุงเทพเหนือ": "#4db6ac", // เขียวมิ้นต์
-  "กรุงเทพตะวันออก": "#aed581", // เขียวอ่อน
-  "กรุงธนเหนือ": "#f06292", // ชมพู
-  "กรุงธนใต้": "#7986cb"    // ฟ้า/ม่วง
+  "กรุงเทพกลาง": "#fbc02d", // 1. เหลือง
+  "กรุงเทพใต้": "#ff9800",  // 2. ส้ม
+  "กรุงเทพเหนือ": "#4db6ac", // 3. เขียวมิ้นต์
+  "กรุงเทพตะวันออก": "#aed581", // 4. เขียวอ่อน
+  "กรุงธนเหนือ": "#f06292", // 5. ชมพู
+  "กรุงธนใต้": "#7986cb"    // 6. ฟ้า
 };
 
 const ZONE_LABELS = [
@@ -590,7 +589,6 @@ function buildDynamicUI() {
       });
   }
 
-  // เคลียร์เลเยอร์เก่าทั้งหมดบนแผนที่ก่อนวาดใหม่
   if (window.zoneLayers) {
       window.zoneLayers.forEach(l => mapInstance.removeLayer(l));
   }
@@ -599,44 +597,36 @@ function buildDynamicUI() {
   for(const k in mapMarkers) { mapInstance.removeLayer(mapMarkers[k].marker); }
   mapMarkers = {};
   
-  // 🎯 วาดรูปทรงโซน (Area Boundaries) แบบเนียนๆ แทนการวาดวงกลมธรรมดา
+  // 🎯 วาดเฉพาะเส้น Polygon (Convex Hull) ล้อมโซน (ลบการวาดวงกลมออกทั้งหมด)
   for (const zId in ZONE_COLORS) {
       const zColor = ZONE_COLORS[zId];
       const zKeys = STATION_KEYS.filter(k => STATION_META[k] && STATION_META[k].zone === zId);
       
       if (zKeys.length === 0) continue;
 
-      // 1. วาดวงกลมรอบขอบๆ เพื่อให้พื้นที่มีความโค้งมน ครอบคลุมเขตอย่างสวยงาม
-      zKeys.forEach(k => {
-          const m = STATION_META[k];
-          const circle = L.circle([m.lat, m.lng], {
-              radius: 3500, // รัศมีขยายอาณาเขต
-              color: zColor,
-              weight: 0,
-              fillColor: zColor,
-              fillOpacity: 0.18
-          }).addTo(mapInstance);
-          window.zoneLayers.push(circle);
-      });
-
-      // 2. ลากเส้น Polygon (Convex Hull) เชื่อมจุดสถานีเข้าด้วยกัน ให้เกิดเป็นก้อนพื้นที่ชัดเจน
       const points = zKeys.map(k => [STATION_META[k].lat, STATION_META[k].lng]);
       const hull = getConvexHull(points);
       
       if (hull.length >= 3) {
           const polygon = L.polygon(hull, {
               color: zColor,
-              weight: 3,         // เส้นขอบโซนที่ชัดเจนขึ้น
+              weight: 3,         // เส้นขอบโซนที่ชัดเจน
               opacity: 0.8,
               fillColor: zColor,
-              fillOpacity: 0.18, 
-              dashArray: '5, 8'  // เส้นประให้ดูเป็นกรอบสมมติ
+              fillOpacity: 0.15, // ใส่สีพื้นหลังบางๆ ให้พอมองเห็นขอบเขต
+              dashArray: '5, 8'  // เส้นประ
           }).addTo(mapInstance);
           window.zoneLayers.push(polygon);
+      } else if (hull.length === 2) {
+          const line = L.polyline(hull, {
+              color: zColor, 
+              weight: 3, 
+              dashArray: '5, 8'
+          }).addTo(mapInstance);
+          window.zoneLayers.push(line);
       }
   }
 
-  // วาดหมุดสถานี (Markers) ทับลงไป
   for(const key of STATION_KEYS) {
     if(!STATION_META[key]) continue;
     const m = STATION_META[key];
