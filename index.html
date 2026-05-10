@@ -128,10 +128,9 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
 .dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
-/* Leaflet Overrides */
+/* Leaflet Overrides - วงกลมแบบไม่มีกรอบสีตามโซน */
 .pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s ease;box-shadow: 0 4px 10px rgba(0,0,0,0.5);border: 2px solid rgba(255,255,255,0.8);}
 .pm-marker:hover{transform:scale(1.2); z-index: 1000 !important;}
-
 .leaflet-popup-content-wrapper{background:var(--bg3) !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.6) !important;color:var(--text) !important;}
 .leaflet-popup-tip{background:var(--bg3) !important}
 .leaflet-popup-content{margin:14px 16px !important;font-family:var(--font)}
@@ -148,8 +147,8 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
   <div class="logo">
     <div class="logo-icon">🌫</div>
     <div>
-      <div class="logo-text">BKK NowCast Monitor</div>
-      <div class="logo-sub">Air Quality Research Prototype</div>
+      <div class="logo-text">Bangkok PM2.5 Monitor</div>
+      <div class="logo-sub">Flat JSON Format · EPA NowCast</div>
     </div>
   </div>
   <div class="tabs">
@@ -159,7 +158,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
   </div>
 </header>
 
-<div id="global-status">⏳ กำลังประมวลผลข้อมูล...</div>
+<div id="global-status">⏳ กำลังประมวลผลข้อมูล Flat JSON และดึงพิกัดสถานี...</div>
 
 <div id="panel-home" class="panel active">
   <div class="home-container">
@@ -261,6 +260,14 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         </div>
       </div>
 
+      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">📊 ข้อมูลสถิติพื้นฐาน (General Analytics)</div>
+      <div class="kpi-row" id="kpi-row">
+        <div class="kpi-card"><div class="kpi-label">PM2.5 เฉลี่ย (Raw)</div><div class="kpi-val" id="kpi-avg">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-avg-d">จากประวัติทั้งหมด</div></div>
+        <div class="kpi-card"><div class="kpi-label">NowCast (เฉลี่ย)</div><div class="kpi-val" id="kpi-nc">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-nc-d"></div></div>
+        <div class="kpi-card"><div class="kpi-label" id="kpi-bad-label">ชั่วโมงที่เกินมาตรฐาน (37.5)</div><div class="kpi-val" id="kpi-bad">—<span class="kpi-unit">ชม.</span></div><div class="kpi-delta" id="kpi-bad-d">จากทั้งหมด — ชั่วโมง</div></div>
+        <div class="kpi-card"><div class="kpi-label">ค่ามลพิษสูงสุดที่วัดได้</div><div class="kpi-val" id="kpi-max">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-max-d">ในประวัติรอบนี้</div></div>
+      </div>
+
       <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">🎯 การประเมินประสิทธิภาพ (Research Objectives)</div>
       <div class="kpi-row" style="margin-top: 16px;">
         <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);"><div class="kpi-label" style="color:#4a9eff; font-weight:bold;">ความแม่นยำ (RMSE)</div><div class="kpi-val" id="kpi-rmse">—</div><div class="kpi-delta">เทียบ NowCast กับ Avg24</div></div>
@@ -284,10 +291,21 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
           <div style="height:200px"><canvas id="chart-volatility"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (NowCast)</div>
+          <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Raw)</div>
           <div class="chart-card-sub">วิเคราะห์จากเกณฑ์สี PCD</div>
           <div style="height:200px;display:flex;align-items:center;gap:16px">
-            <div style="flex:1;height:180px"><canvas id="chart-donut-nc"></canvas></div>
+            <div style="flex:1;height:180px"><canvas id="chart-donut-raw"></canvas></div>
+            <div class="donut-legend" id="legend-raw"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="dash-grid dash-row-2" style="margin-bottom:16px">
+        <div class="chart-card" style="grid-column: span 2;">
+          <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (NowCast)</div>
+          <div class="chart-card-sub">วิเคราะห์จากเกณฑ์สี PCD</div>
+          <div style="height:200px;display:flex;align-items:center;justify-content:center;gap:32px">
+            <div style="width:250px;height:180px"><canvas id="chart-donut-nc"></canvas></div>
             <div class="donut-legend" id="legend-nc"></div>
           </div>
         </div>
@@ -519,7 +537,8 @@ function buildDynamicUI() {
   const dashSelect = document.getElementById('dash-station');
   dashSelect.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>';
   for (const z in ZONE_COLORS) {
-    dashSelect.innerHTML += `<optgroup label="กลุ่มพื้นที่: ${z}"><option value="zone_${z}">>> ค่าเฉลี่ยพื้นที่ ${z} <<</option>`;
+    dashSelect.innerHTML += `<optgroup label="กลุ่มพื้นที่: ${z}">`;
+    dashSelect.innerHTML += `<option value="zone_${z}">>> ค่าเฉลี่ยพื้นที่ ${z} <<</option>`;
     STATION_KEYS.filter(k => STATION_META[k].zone === z).forEach(k => {
       dashSelect.innerHTML += `<option value="${k}">[${k}] ${STATION_META[k].nameTH}</option>`;
     });
@@ -555,7 +574,7 @@ function buildDynamicUI() {
 
     const div = document.createElement('div');
     div.className = 'pm-marker';
-    // ลบขอบวงแหวนสีประจำโซนออก ให้เหลือแค่ดีไซน์คลีนๆ แบบมีเงา
+    // 🎯 ลบขอบวงแหวนสีประจำโซนออก ให้เหลือแค่ดีไซน์คลีนๆ แบบมีเงา
     div.style.cssText = `width:46px;height:46px;background:#333;`;
     div.textContent = '…';
     
@@ -580,7 +599,7 @@ function switchTab(tab, e) {
 
 function updateMap() {
   if (HISTORY_RECORDS.length === 0) return;
-  // ดึงข้อมูลแถวล่าสุดเสมอ (Live Monitor) แทนการดึงค่าจาก dropdown
+  // ดึงข้อมูลแถวล่าสุดเสมอ (Live Monitor)
   const rowData = HISTORY_RECORDS[HISTORY_RECORDS.length - 1];
   const cardsEl = document.getElementById('stn-cards');
   
@@ -675,10 +694,11 @@ function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts
 function extractFlatData(stationKey) {
   const keys = stationKey === 'all' ? STATION_KEYS.filter(k => STATION_META[k]) : [stationKey];
   const tlLabels = []; const tlRaw = []; const tlNC = []; const tlAvg24 = [];
-  const ncCats = {};
-  for(const b of AQI_BREAKS) { ncCats[b.label] = 0; }
+  const rawCats = {}; const ncCats = {};
+  for(const b of AQI_BREAKS) { rawCats[b.label] = 0; ncCats[b.label] = 0; }
 
   let allRawVals = []; let allNCVals = [];
+  const badThreshold = 37.5; 
 
   HISTORY_RECORDS.forEach(row => {
      const timeLabel = row.timeRange.split(' - ')[1] || row.timeRange;
@@ -703,7 +723,10 @@ function extractFlatData(stationKey) {
      tlNC.push(avgNC);
      tlAvg24.push(avgAvg24);
 
-     if(avgRaw !== null) { allRawVals.push(avgRaw); }
+     if(avgRaw !== null) { 
+        allRawVals.push(avgRaw); 
+        const bandR = getAQIBand(avgRaw); if(bandR) rawCats[bandR.label]++;
+     }
      if(avgNC !== null) {
        allNCVals.push(avgNC);
        const bandN = getAQIBand(avgNC); if(bandN) ncCats[bandN.label]++;
@@ -711,10 +734,12 @@ function extractFlatData(stationKey) {
   });
 
   return {
-    tlLabels, tlRaw, tlNC, tlAvg24, ncCats,
+    tlLabels, tlRaw, tlNC, tlAvg24, rawCats, ncCats,
     avgRaw: allRawVals.length ? allRawVals.reduce((a,b)=>a+b,0)/allRawVals.length : null,
     avgNC: allNCVals.length ? allNCVals.reduce((a,b)=>a+b,0)/allNCVals.length : null,
-    maxRaw: allRawVals.length ? Math.max(...allRawVals) : null
+    maxRaw: allRawVals.length ? Math.max(...allRawVals) : null,
+    badHours: allRawVals.filter(v => v > badThreshold).length,
+    totalHours: allRawVals.length
   };
 }
 
@@ -739,13 +764,30 @@ function updateDashboard() {
   const fdAll = extractFlatData('all'); 
   const fa = extractFlatData(aKeys.length > 1 ? `zone_${areaName}` : aKeys[0]);
 
-  // --- ข้อมูลสถิติพื้นฐาน ---
-  document.getElementById('kpi-avg').innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
-  document.getElementById('kpi-max').innerHTML = fd.maxRaw != null ? fd.maxRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
+  // --- ข้อมูลสถิติพื้นฐาน (อัปเดตอย่างปลอดภัย) ---
+  const elAvg = document.getElementById('kpi-avg');
+  if(elAvg) elAvg.innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
+  
+  const elNc = document.getElementById('kpi-nc');
+  if(elNc) elNc.innerHTML = fd.avgNC != null ? fd.avgNC.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
+  
+  const elBad = document.getElementById('kpi-bad');
+  if(elBad) elBad.innerHTML = fd.badHours+'<span class="kpi-unit">ชม.</span>';
+  
+  const elMax = document.getElementById('kpi-max');
+  if(elMax) elMax.innerHTML = fd.maxRaw != null ? fd.maxRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
+  
+  const diffVal = (fd.avgRaw != null && fd.avgNC != null) ? fd.avgNC - fd.avgRaw : null;
+  const elNcD = document.getElementById('kpi-nc-d');
+  if(elNcD) elNcD.innerHTML = diffVal != null ? `<span class="${diffVal>0?'up':'down'}">${diffVal>0?'▲':'▼'} ${Math.abs(diffVal).toFixed(1)} จากค่า Raw</span>` : '';
+  
+  const elBadD = document.getElementById('kpi-bad-d');
+  if(elBadD) elBadD.textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง (${(fd.badHours/Math.max(fd.totalHours,1)*100).toFixed(1)}%)`;
 
   // --- หมวดประเมินวิจัย ---
   const rmseValue = calcRMSE(fd.tlNC, fd.tlAvg24);
-  document.getElementById('kpi-rmse').innerHTML = rmseValue != null ? rmseValue.toFixed(3) : '—';
+  const elRmse = document.getElementById('kpi-rmse');
+  if(elRmse) elRmse.innerHTML = rmseValue != null ? rmseValue.toFixed(3) : '—';
 
   // SD (Volatility)
   let sdStationVal;
@@ -756,69 +798,98 @@ function updateDashboard() {
       let stnSD = calcSD(extractFlatData(k).tlNC);
       if(stnSD != null && stnSD > 0) { totalSD += stnSD; countSD++; }
     });
-    sdStationVal = countSD > 0 ? (totalSD / countSD) : 0;
+    sdStationVal = countSD > 0 ? (totalSD / countSD) : null;
   } else {
     sdStationVal = calcSD(fd.tlNC);
   }
   
-  document.getElementById('kpi-sd-stn').innerHTML = sdStationVal != null ? sdStationVal.toFixed(2) : '—';
-  document.getElementById('kpi-sd-area').innerHTML = sdAreaVal != null ? sdAreaVal.toFixed(2) : '—';
+  const elSdStn = document.getElementById('kpi-sd-stn');
+  if(elSdStn) elSdStn.innerHTML = sdStationVal != null ? sdStationVal.toFixed(2) : '—';
+  
+  const elSdArea = document.getElementById('kpi-sd-area');
+  if(elSdArea) elSdArea.innerHTML = sdAreaVal != null ? sdAreaVal.toFixed(2) : '—';
 
-  const red = (sdStationVal && sdStationVal > 0) ? ((sdStationVal-sdAreaVal)/sdStationVal*100).toFixed(1) : 0;
-  const isReduced = parseFloat(red) >= 0;
-  document.getElementById('kpi-sd-diff').innerHTML = `${isReduced ? '▼' : '▲'} ${Math.abs(red)}<span class="kpi-unit">%</span>`;
-  document.getElementById('kpi-sd-diff').style.color = isReduced ? '#00d4aa' : '#f44336';
+  const elSdDiff = document.getElementById('kpi-sd-diff');
+  if(elSdDiff) {
+      if (sdStationVal != null && sdAreaVal != null && sdStationVal > 0) {
+        const red = ((sdStationVal-sdAreaVal)/sdStationVal*100).toFixed(1);
+        const isReduced = parseFloat(red) >= 0;
+        elSdDiff.innerHTML = `${isReduced ? '▼' : '▲'} ${Math.abs(red)}<span class="kpi-unit">%</span>`;
+        elSdDiff.style.color = isReduced ? '#00d4aa' : '#f44336';
+      } else {
+        elSdDiff.innerHTML = '—';
+      }
+  }
 
   // กราฟไทม์ไลน์ 
   destroyChart('timeline');
-  charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
-    data: { labels: fd.tlLabels, datasets: [
-      { type:'line', label:'Raw (รายชั่วโมง)', data: fd.tlRaw, borderColor:'#4a9eff', backgroundColor:'rgba(74,158,255,0.1)', borderWidth:2, tension:0.3, pointRadius:2, fill:true },
-      { type:'line', label:'NowCast', data: fd.tlNC, borderColor:'#00d4aa', borderWidth:3, tension:0.3, pointRadius:3 },
-      { type:'line', label:'Avg24 (เฉลี่ย 24 ชม.)', data: fd.tlAvg24, borderColor:'#f5a623', borderDash:[5,5], borderWidth:2, tension:0.3, pointRadius:0 }
-    ]},
-    options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { labels: { color: '#7a8090', font: { family: 'Sarabun' } } } }, scales: { x: { ticks: { color: '#7a8090', font:{family:'IBM Plex Mono', size:10}, maxRotation:45 }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
-  });
+  if(document.getElementById('chart-timeline')) {
+      charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
+        data: { labels: fd.tlLabels, datasets: [
+          { type:'line', label:'Raw (รายชั่วโมง)', data: fd.tlRaw, borderColor:'#4a9eff', backgroundColor:'rgba(74,158,255,0.1)', borderWidth:2, tension:0.3, pointRadius:2, fill:true },
+          { type:'line', label:'NowCast', data: fd.tlNC, borderColor:'#00d4aa', borderWidth:3, tension:0.3, pointRadius:3 },
+          { type:'line', label:'Avg24 (เฉลี่ย 24 ชม.)', data: fd.tlAvg24, borderColor:'#f5a623', borderDash:[5,5], borderWidth:2, tension:0.3, pointRadius:0 }
+        ]},
+        options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { labels: { color: '#7a8090', font: { family: 'Sarabun' } } } }, scales: { x: { ticks: { color: '#7a8090', font:{family:'IBM Plex Mono', size:10}, maxRotation:45 }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
+      });
+  }
 
   // กราฟ Volatility
   destroyChart('volatility');
-  charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
-    type:'bar', data: { labels:['รายสถานี', `กลุ่มพื้นที่ (${areaName})`], datasets:[{data:[sdStationVal, sdAreaVal], backgroundColor:['#4a9eff','#00d4aa']}] },
-    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7a8090'}},y:{grid:{display:false},ticks:{color:'#fff',font:{family:'Sarabun'}}}} }
-  });
+  if(document.getElementById('chart-volatility')) {
+      charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
+        type:'bar', data: { labels:['รายสถานี', `กลุ่มพื้นที่ (${areaName})`], datasets:[{data:[sdStationVal, sdAreaVal], backgroundColor:['#4a9eff','#00d4aa']}] },
+        options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7a8090'}},y:{grid:{display:false},ticks:{color:'#fff',font:{family:'Sarabun'}}}} }
+      });
+  }
 
-  // กราฟ Donut
+  // กราฟ Donut (Raw & NC)
   const catLabels = AQI_BREAKS.map(b=>b.label); 
   const catColors = AQI_BREAKS.map(b=>b.color);
+  const rawCounts = catLabels.map(l => fd.rawCats[l]||0); 
   const ncCounts = catLabels.map(l => fd.ncCats[l]||0);
+  const totalRaw = rawCounts.reduce((a,b) => a+b, 0);
   const totalNC = ncCounts.reduce((a,b) => a+b, 0);
 
+  destroyChart('donut-raw');
+  if(document.getElementById('chart-donut-raw')) {
+      charts['donut-raw'] = new Chart(document.getElementById('chart-donut-raw'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:rawCounts,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+      document.getElementById('legend-raw').innerHTML = catLabels.map((l,i) => {
+        const pct = totalRaw > 0 ? ((rawCounts[i] / totalRaw) * 100).toFixed(1) : 0;
+        return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
+      }).join('');
+  }
+
   destroyChart('donut-nc');
-  charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
-  document.getElementById('legend-nc').innerHTML = catLabels.map((l,i) => {
-    const pct = totalNC > 0 ? ((ncCounts[i] / totalNC) * 100).toFixed(1) : 0;
-    return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
-  }).join('');
+  if(document.getElementById('chart-donut-nc')) {
+      charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+      document.getElementById('legend-nc').innerHTML = catLabels.map((l,i) => {
+        const pct = totalNC > 0 ? ((ncCounts[i] / totalNC) * 100).toFixed(1) : 0;
+        return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
+      }).join('');
+  }
 
   // Table
   const stationTableCard = document.getElementById('station-table-card');
   const tableBody = document.querySelector('#station-ts-table tbody');
   
-  if(stationKey==='all'||stationKey.startsWith('zone_')) { 
-    stationTableCard.style.display='none'; 
-  } else {
-    stationTableCard.style.display='block';
-    const stnName = STATION_META[stationKey]?.nameTH || stationKey;
-    document.getElementById('station-table-sub').textContent = `แสดงข้อมูลย้อนหลังของสถานี: ${stnName} (${areaName})`;
-    let h = '';
-    for(let i=HISTORY_RECORDS.length-1; i>=0; i--) {
-      const p = HISTORY_RECORDS[i]._parsed[stationKey];
-      const bRaw = getAQIBand(p.raw); const bNC = getAQIBand(p.nc);
-      const sRaw = p.raw != null ? `<span style="color:${bRaw?.color||'#fff'}">${p.raw.toFixed(1)}</span>` : '-';
-      const sNC = p.nc != null ? `<span style="color:${bNC?.color||'#fff'}">${p.nc.toFixed(1)}</span>` : '-';
-      h += `<tr><td>${HISTORY_RECORDS[i].date}</td><td style="font-family:var(--mono)">${HISTORY_RECORDS[i].timeRange}</td><td style="font-family:var(--mono); font-weight:bold">${sRaw}</td><td style="font-family:var(--mono); font-weight:bold">${sNC}</td></tr>`;
-    }
-    tableBody.innerHTML = h;
+  if(stationTableCard && tableBody) {
+      if(stationKey==='all'||stationKey.startsWith('zone_')) { 
+        stationTableCard.style.display='none'; 
+      } else {
+        stationTableCard.style.display='block';
+        const stnName = STATION_META[stationKey]?.nameTH || stationKey;
+        document.getElementById('station-table-sub').textContent = `แสดงข้อมูลย้อนหลังของสถานี: ${stnName} (${areaName})`;
+        let h = '';
+        for(let i=HISTORY_RECORDS.length-1; i>=0; i--) {
+          const p = HISTORY_RECORDS[i]._parsed[stationKey];
+          const bRaw = getAQIBand(p.raw); const bNC = getAQIBand(p.nc);
+          const sRaw = p.raw != null ? `<span style="color:${bRaw?.color||'#fff'}">${p.raw.toFixed(1)}</span>` : '—';
+          const sNC = p.nc != null ? `<span style="color:${bNC?.color||'#fff'}">${p.nc.toFixed(1)}</span>` : '—';
+          h += `<tr><td>${HISTORY_RECORDS[i].date}</td><td style="font-family:var(--mono)">${HISTORY_RECORDS[i].timeRange}</td><td style="font-family:var(--mono); font-weight:bold">${sRaw}</td><td style="font-family:var(--mono); font-weight:bold">${sNC}</td></tr>`;
+        }
+        tableBody.innerHTML = h;
+      }
   }
 }
 
