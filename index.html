@@ -537,15 +537,13 @@ function buildDynamicUI() {
   const dashSelect = document.getElementById('dash-station');
   dashSelect.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>';
   for (const z in ZONE_COLORS) {
-    dashSelect.innerHTML += `<optgroup label="กลุ่มพื้นที่: ${z}">`;
-    dashSelect.innerHTML += `<option value="zone_${z}">>> ค่าเฉลี่ยพื้นที่ ${z} <<</option>`;
+    dashSelect.innerHTML += `<optgroup label="กลุ่มพื้นที่: ${z}"><option value="zone_${z}">>> ค่าเฉลี่ยพื้นที่ ${z} <<</option>`;
     STATION_KEYS.filter(k => STATION_META[k].zone === z).forEach(k => {
       dashSelect.innerHTML += `<option value="${k}">[${k}] ${STATION_META[k].nameTH}</option>`;
     });
     dashSelect.innerHTML += `</optgroup>`;
   }
 
-  // สร้าง Zone Tags Legend ในหน้าแผนที่
   const zTagsEl = document.getElementById('zone-tags-container');
   if (zTagsEl) {
       zTagsEl.innerHTML = '';
@@ -562,7 +560,6 @@ function buildDynamicUI() {
     const m = STATION_META[key];
     const zoneColor = ZONE_COLORS[m.zone];
 
-    // รัศมีวงกลมโปร่งแสงขนาด 2.5 กิโลเมตร
     L.circle([m.lat, m.lng], {
       radius: 2500,
       color: zoneColor,
@@ -574,7 +571,6 @@ function buildDynamicUI() {
 
     const div = document.createElement('div');
     div.className = 'pm-marker';
-    // 🎯 ลบขอบวงแหวนสีประจำโซนออก ให้เหลือแค่ดีไซน์คลีนๆ แบบมีเงา
     div.style.cssText = `width:46px;height:46px;background:#333;`;
     div.textContent = '…';
     
@@ -599,7 +595,6 @@ function switchTab(tab, e) {
 
 function updateMap() {
   if (HISTORY_RECORDS.length === 0) return;
-  // ดึงข้อมูลแถวล่าสุดเสมอ (Live Monitor)
   const rowData = HISTORY_RECORDS[HISTORY_RECORDS.length - 1];
   const cardsEl = document.getElementById('stn-cards');
   
@@ -691,8 +686,8 @@ function selectStation(key) {
 let charts = {};
 function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
-function extractFlatData(stationKey) {
-  const keys = stationKey === 'all' ? STATION_KEYS.filter(k => STATION_META[k]) : [stationKey];
+// 🎯 ฟังก์ชันสกัดข้อมูลหลัก: รับค่าเป็น Array ของรหัสสถานี (แก้บั๊กชื่อโซน)
+function extractFlatData(keysToExtract) {
   const tlLabels = []; const tlRaw = []; const tlNC = []; const tlAvg24 = [];
   const rawCats = {}; const ncCats = {};
   for(const b of AQI_BREAKS) { rawCats[b.label] = 0; ncCats[b.label] = 0; }
@@ -706,7 +701,7 @@ function extractFlatData(stationKey) {
 
      let sRaw = 0, cRaw = 0, sNC = 0, cNC = 0, sAvg24 = 0, cAvg24 = 0;
 
-     keys.forEach(k => {
+     keysToExtract.forEach(k => {
         const parsed = row._parsed[k];
         if (parsed) {
           if(parsed.raw !== null) { sRaw += parsed.raw; cRaw++; }
@@ -749,7 +744,11 @@ function updateDashboard() {
   const stationKey = document.getElementById('dash-station').value;
   let tKeys = [], aKeys = [];
   let areaName = "กทม. ภาพรวม";
-  if(stationKey === 'all') { tKeys = aKeys = STATION_KEYS; }
+  
+  // แปลงค่าที่เลือกให้เป็น Array ของสถานีที่ถูกต้องเสมอ
+  if(stationKey === 'all') { 
+    tKeys = aKeys = STATION_KEYS.filter(k => STATION_META[k]); 
+  }
   else if(stationKey.startsWith('zone_')) { 
     areaName = stationKey.replace('zone_','');
     tKeys = aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === areaName); 
@@ -760,11 +759,12 @@ function updateDashboard() {
     aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === areaName); 
   }
 
-  const fd = extractFlatData(stationKey);
-  const fdAll = extractFlatData('all'); 
-  const fa = extractFlatData(aKeys.length > 1 ? `zone_${areaName}` : aKeys[0]);
+  // ดึงข้อมูลผ่าน Array ของ Key
+  const fd = extractFlatData(tKeys);
+  const fa = extractFlatData(aKeys);
+  const fdAll = extractFlatData(STATION_KEYS.filter(k => STATION_META[k])); 
 
-  // --- ข้อมูลสถิติพื้นฐาน (อัปเดตอย่างปลอดภัย) ---
+  // --- ข้อมูลสถิติพื้นฐาน ---
   const elAvg = document.getElementById('kpi-avg');
   if(elAvg) elAvg.innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
   
@@ -795,7 +795,7 @@ function updateDashboard() {
   if (stationKey === 'all' || stationKey.startsWith('zone_')) {
     let totalSD = 0, countSD = 0;
     tKeys.forEach(k => {
-      let stnSD = calcSD(extractFlatData(k).tlNC);
+      let stnSD = calcSD(extractFlatData([k]).tlNC);
       if(stnSD != null && stnSD > 0) { totalSD += stnSD; countSD++; }
     });
     sdStationVal = countSD > 0 ? (totalSD / countSD) : null;
@@ -834,11 +834,11 @@ function updateDashboard() {
       });
   }
 
-  // กราฟ Volatility
+  // กราฟ Volatility เปรียบเทียบสองแท่ง
   destroyChart('volatility');
   if(document.getElementById('chart-volatility')) {
       charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
-        type:'bar', data: { labels:['รายสถานี', `กลุ่มพื้นที่ (${areaName})`], datasets:[{data:[sdStationVal, sdAreaVal], backgroundColor:['#4a9eff','#00d4aa']}] },
+        type:'bar', data: { labels:['รายสถานี (Station)', `กลุ่มพื้นที่ (${areaName})`], datasets:[{data:[sdStationVal, sdAreaVal], backgroundColor:['#4a9eff','#00d4aa'], borderRadius: 4}] },
         options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7a8090'}},y:{grid:{display:false},ticks:{color:'#fff',font:{family:'Sarabun'}}}} }
       });
   }
@@ -883,6 +883,7 @@ function updateDashboard() {
         let h = '';
         for(let i=HISTORY_RECORDS.length-1; i>=0; i--) {
           const p = HISTORY_RECORDS[i]._parsed[stationKey];
+          if (!p) continue;
           const bRaw = getAQIBand(p.raw); const bNC = getAQIBand(p.nc);
           const sRaw = p.raw != null ? `<span style="color:${bRaw?.color||'#fff'}">${p.raw.toFixed(1)}</span>` : '—';
           const sNC = p.nc != null ? `<span style="color:${bNC?.color||'#fff'}">${p.nc.toFixed(1)}</span>` : '—';
