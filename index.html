@@ -199,7 +199,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       <div class="info-title">ระบบนี้ (Dashboard Prototype) ทำอะไรได้บ้าง?</div>
       <ul class="feature-list">
         <li><div class="f-icon">01</div><div class="f-text"><b>ดึงข้อมูลดิบรายชั่วโมง (True Raw Data):</b> ระบบจะดึงข้อมูลประวัติรายชั่วโมงจากฐานข้อมูล แบบไม่ถูกเจือปน เพื่อนำมาคำนวณเข้าสมการสถิติใหม่ได้อย่างถูกต้อง</div></li>
-        <li><div class="f-icon">02</div><div class="f-text"><b>การแบ่งกลุ่มพื้นที่ (Area-based Clustering):</b> แผนที่แสดงรัศมีและหมุดแบ่งตาม 6 กลุ่มเขตกรุงเทพมหานคร เพื่อใช้ทดสอบสมมติฐานการกระจายตัวเชิงพื้นที่</div></li>
+        <li><div class="f-icon">02</div><div class="f-text"><b>การแบ่งกลุ่มพื้นที่ (Area-based Clustering):</b> แผนที่แสดงขอบเขตและหมุดแบ่งตาม 6 กลุ่มเขตกรุงเทพมหานคร เพื่อใช้ทดสอบสมมติฐานการกระจายตัวเชิงพื้นที่</div></li>
         <li><div class="f-icon">03</div><div class="f-text"><b>คำนวณสถิติประเมินประสิทธิภาพ (Real-time Analytics):</b> Dashboard คำนวณค่า RMSE และเปรียบเทียบค่าความผันผวน (SD) ระหว่างข้อมูลรายสถานีและกลุ่มพื้นที่แบบอัตโนมัติ</div></li>
       </ul>
       <div style="margin-top: 24px; text-align: center;">
@@ -338,16 +338,16 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <script>
 // ═══════════════════════════════════════════
-// GLOBAL STATE & CONFIGURATIONS (ZONE COLORS UPDATED)
+// GLOBAL STATE & CONFIGURATIONS
 // ═══════════════════════════════════════════
-// อัปเดตสีตามรูปแผนที่อ้างอิงของคุณเป๊ะๆ
+// อัปเดตสีให้ตรงกับภาพอ้างอิง
 const ZONE_COLORS = {
-  "กรุงเทพกลาง": "#fbc02d", // 1. เหลือง
-  "กรุงเทพใต้": "#ff9800",  // 2. ส้ม
-  "กรุงเทพเหนือ": "#4db6ac", // 3. เขียวมิ้นต์
-  "กรุงเทพตะวันออก": "#aed581", // 4. เขียวอ่อน
-  "กรุงธนเหนือ": "#f06292", // 5. ชมพู
-  "กรุงธนใต้": "#7986cb"    // 6. ฟ้า
+  "กรุงเทพกลาง": "#fbc02d", // เหลือง
+  "กรุงเทพใต้": "#ff9800",  // ส้ม
+  "กรุงเทพเหนือ": "#4db6ac", // เขียวมิ้นต์
+  "กรุงเทพตะวันออก": "#aed581", // เขียวอ่อน
+  "กรุงธนเหนือ": "#f06292", // ชมพู
+  "กรุงธนใต้": "#7986cb"    // ฟ้า/ม่วง
 };
 
 const ZONE_LABELS = [
@@ -472,6 +472,26 @@ function calcSD(arr) {
   return Math.sqrt(variance);
 }
 
+// 🎯 อัลกอริทึม Convex Hull สำหรับลากเส้นคลุมสถานีในแต่ละโซน
+function getConvexHull(points) {
+  if (points.length < 3) return points;
+  points.sort((a, b) => a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]);
+  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lower = [];
+  for (let p of points) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+    lower.push(p);
+  }
+  const upper = [];
+  for (let i = points.length - 1; i >= 0; i--) {
+    const p = points[i];
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+    upper.push(p);
+  }
+  upper.pop(); lower.pop();
+  return lower.concat(upper);
+}
+
 // ═══════════════════════════════════════════
 // DATA FETCHING & PARSING
 // ═══════════════════════════════════════════
@@ -570,22 +590,56 @@ function buildDynamicUI() {
       });
   }
 
+  // เคลียร์เลเยอร์เก่าทั้งหมดบนแผนที่ก่อนวาดใหม่
+  if (window.zoneLayers) {
+      window.zoneLayers.forEach(l => mapInstance.removeLayer(l));
+  }
+  window.zoneLayers = [];
+
   for(const k in mapMarkers) { mapInstance.removeLayer(mapMarkers[k].marker); }
   mapMarkers = {};
   
+  // 🎯 วาดรูปทรงโซน (Area Boundaries) แบบเนียนๆ แทนการวาดวงกลมธรรมดา
+  for (const zId in ZONE_COLORS) {
+      const zColor = ZONE_COLORS[zId];
+      const zKeys = STATION_KEYS.filter(k => STATION_META[k] && STATION_META[k].zone === zId);
+      
+      if (zKeys.length === 0) continue;
+
+      // 1. วาดวงกลมรอบขอบๆ เพื่อให้พื้นที่มีความโค้งมน ครอบคลุมเขตอย่างสวยงาม
+      zKeys.forEach(k => {
+          const m = STATION_META[k];
+          const circle = L.circle([m.lat, m.lng], {
+              radius: 3500, // รัศมีขยายอาณาเขต
+              color: zColor,
+              weight: 0,
+              fillColor: zColor,
+              fillOpacity: 0.18
+          }).addTo(mapInstance);
+          window.zoneLayers.push(circle);
+      });
+
+      // 2. ลากเส้น Polygon (Convex Hull) เชื่อมจุดสถานีเข้าด้วยกัน ให้เกิดเป็นก้อนพื้นที่ชัดเจน
+      const points = zKeys.map(k => [STATION_META[k].lat, STATION_META[k].lng]);
+      const hull = getConvexHull(points);
+      
+      if (hull.length >= 3) {
+          const polygon = L.polygon(hull, {
+              color: zColor,
+              weight: 3,         // เส้นขอบโซนที่ชัดเจนขึ้น
+              opacity: 0.8,
+              fillColor: zColor,
+              fillOpacity: 0.18, 
+              dashArray: '5, 8'  // เส้นประให้ดูเป็นกรอบสมมติ
+          }).addTo(mapInstance);
+          window.zoneLayers.push(polygon);
+      }
+  }
+
+  // วาดหมุดสถานี (Markers) ทับลงไป
   for(const key of STATION_KEYS) {
     if(!STATION_META[key]) continue;
     const m = STATION_META[key];
-    const zoneColor = ZONE_COLORS[m.zone];
-
-    // 🎯 สร้างเงาสีครอบคลุมพื้นที่ (Zone Clouds) โดยไม่ต้องวาดเส้นขอบเขต
-    L.circle([m.lat, m.lng], {
-      radius: 3800, // ขยายรัศมีให้สีกลืนกัน
-      color: zoneColor,
-      weight: 0, // ไม่ต้องมีเส้นขอบ
-      fillColor: zoneColor,
-      fillOpacity: 0.18 // โปร่งแสง
-    }).addTo(mapInstance);
 
     const div = document.createElement('div');
     div.className = 'pm-marker';
@@ -622,12 +676,10 @@ function updateMap() {
   }
 
   let cardsHtml = '';
-  // 🎯 จัดเรียงแถบด้านข้างตามหัวข้อ Zone 1-6 เหมือนในแผนที่ที่คุณส่งมา
   ZONE_LABELS.forEach(zn => {
       const stnsInZone = STATION_KEYS.filter(k => STATION_META[k] && STATION_META[k].zone === zn.id);
       if(stnsInZone.length === 0) return;
 
-      // เรียงลำดับจากค่าฝุ่นมากไปน้อยภายในโซนนั้นๆ
       stnsInZone.sort((a,b) => (rowData._parsed[b].nc ?? -1) - (rowData._parsed[a].nc ?? -1));
 
       cardsHtml += `<div class="zone-header" style="color:${ZONE_COLORS[zn.id]}; border-bottom-color:${ZONE_COLORS[zn.id]}55;">${zn.title}</div>`;
@@ -711,7 +763,6 @@ function selectStation(key) {
 let charts = {};
 function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
 
-// 🎯 อัปเดตฟังก์ชันเพื่อป้องกันการ Error
 function extractFlatData(keysToExtract) {
   const tlLabels = []; const tlRaw = []; const tlNC = []; const tlAvg24 = [];
   const rawCats = {}; const ncCats = {};
@@ -788,7 +839,6 @@ function updateDashboard() {
   const fd = extractFlatData(tKeys);
   const fa = extractFlatData(aKeys);
 
-  // --- ข้อมูลสถิติพื้นฐาน ---
   const elAvg = document.getElementById('kpi-avg');
   if(elAvg) elAvg.innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
   
@@ -808,12 +858,10 @@ function updateDashboard() {
   const elBadD = document.getElementById('kpi-bad-d');
   if(elBadD) elBadD.textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง (${(fd.badHours/Math.max(fd.totalHours,1)*100).toFixed(1)}%)`;
 
-  // --- หมวดประเมินวิจัย ---
   const rmseValue = calcRMSE(fd.tlNC, fd.tlAvg24);
   const elRmse = document.getElementById('kpi-rmse');
   if(elRmse) elRmse.innerHTML = rmseValue != null ? rmseValue.toFixed(3) : '—';
 
-  // SD (Volatility)
   let sdStationVal;
   const sdAreaVal = calcSD(fa.tlNC); 
   if (stationKey === 'all' || stationKey.startsWith('zone_')) {
@@ -845,7 +893,6 @@ function updateDashboard() {
       }
   }
 
-  // กราฟไทม์ไลน์ 
   destroyChart('timeline');
   if(document.getElementById('chart-timeline')) {
       charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
@@ -858,7 +905,6 @@ function updateDashboard() {
       });
   }
 
-  // กราฟ Volatility
   destroyChart('volatility');
   if(document.getElementById('chart-volatility')) {
       charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
@@ -867,7 +913,6 @@ function updateDashboard() {
       });
   }
 
-  // กราฟ Donut
   const catLabels = AQI_BREAKS.map(b=>b.label); 
   const catColors = AQI_BREAKS.map(b=>b.color);
   const rawCounts = catLabels.map(l => fd.rawCats[l]||0); 
@@ -893,7 +938,6 @@ function updateDashboard() {
       }).join('');
   }
 
-  // Table
   const stationTableCard = document.getElementById('station-table-card');
   const tableBody = document.querySelector('#station-ts-table tbody');
   
