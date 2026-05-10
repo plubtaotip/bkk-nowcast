@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bangkok Air Quality — NowCast Monitor</title>
+<title>Bangkok Air Quality — BKK NowCast Research</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -19,10 +19,9 @@
   --r: 10px; --rl: 14px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased;font-size:15px}
 
-/* HEADER & GLOBAL STATUS */
+/* HEADER & TABS */
 header { display:flex;align-items:center;justify-content:space-between; padding:16px 28px; background:var(--bg2); border-bottom:1px solid var(--border); position:sticky;top:0;z-index:1000; backdrop-filter:blur(12px); }
 .logo { display:flex;align-items:center;gap:12px; }
 .logo-icon { width:36px;height:36px; background:linear-gradient(135deg,#00d4aa,#0066ff); border-radius:10px; display:flex;align-items:center;justify-content:center; font-size:18px; }
@@ -30,89 +29,95 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .logo-sub {font-size:11px;color:var(--muted);font-family:var(--mono)}
 
 #global-status { background: var(--bg4); color: var(--accent); text-align: center; padding: 8px; font-size: 12px; font-family: var(--mono); border-bottom: 1px solid var(--border); display: none; }
-#global-status.err { color: #f44336; background: rgba(244, 67, 54, 0.1); }
-
-/* TABS */
 .tabs { display:flex;gap:4px;background:var(--bg3);border-radius:10px;padding:4px; }
 .tab { font-family:var(--font);font-size:13px;font-weight:500; padding:7px 18px;border-radius:7px;border:none; background:transparent;color:var(--muted);cursor:pointer;transition:all .2s; }
-.tab:hover{color:var(--text)}
 .tab.active{background:var(--bg);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
 .panel{display:none} .panel.active{display:block}
 
-/* MAP TAB */
+/* HOME PAGE STYLES */
+.home-container { max-width: 1000px; margin: 0 auto; padding: 40px 20px; }
+.hero-card { background: linear-gradient(145deg, var(--bg2), var(--bg3)); border: 1px solid var(--border); border-radius: 16px; padding: 40px; margin-bottom: 24px; text-align: center; position: relative; overflow: hidden; }
+.hero-card::before { content: ""; position: absolute; top: -50px; left: -50px; width: 150px; height: 150px; background: var(--accent); filter: blur(100px); opacity: 0.15; }
+.project-tag { display: inline-block; background: rgba(0, 212, 170, 0.15); color: var(--accent); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-family: var(--mono); font-weight: 600; margin-bottom: 16px; border: 1px solid rgba(0, 212, 170, 0.3); }
+.hero-title { font-size: 28px; font-weight: 700; color: #fff; line-height: 1.4; margin-bottom: 12px; }
+.hero-subtitle { font-size: 16px; color: var(--muted); margin-bottom: 32px; font-family: var(--mono); }
+.team-info { display: flex; justify-content: center; gap: 32px; flex-wrap: wrap; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+.team-member { display: flex; flex-direction: column; align-items: center; }
+.team-role { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.team-name { font-size: 15px; font-weight: 600; color: var(--text); }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media(max-width: 768px) { .info-grid { grid-template-columns: 1fr; } }
+.info-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 28px; }
+.info-icon { font-size: 24px; margin-bottom: 16px; }
+.info-title { font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 12px; }
+.info-desc { font-size: 14px; color: var(--muted); line-height: 1.7; }
+.obj-list { list-style: none; padding: 0; }
+.obj-list li { position: relative; padding-left: 28px; margin-bottom: 12px; font-size: 14px; color: var(--text); line-height: 1.6; }
+.obj-list li::before { content: "🎯"; position: absolute; left: 0; top: 0; font-size: 14px; }
+.feature-list { list-style: none; padding: 0; margin-top: 16px; }
+.feature-list li { display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: var(--bg3); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border); }
+.feature-list li .f-icon { color: var(--accent); font-family: var(--mono); font-weight: bold; }
+.feature-list li .f-text { font-size: 13px; color: var(--muted); }
+.feature-list li .f-text b { color: var(--text); }
+
+/* MAP LAYOUT & SIDEBAR */
 .map-layout{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 90px)}
 @media(max-width:900px){.map-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
 .map-sidebar{ background:var(--bg2);border-right:1px solid var(--border); overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px; }
 .time-picker{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rl);padding:16px;}
-.tp-label{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;font-family:var(--mono)}
-.tp-row{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
-.tp-row label{font-size:13px;color:var(--muted);}
-.tp-input{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;cursor:pointer;}
-.tp-input:focus{outline:none;border-color:var(--accent)}
-.btn-now{ width:100%;padding:9px;background:var(--accent-dim); border:1px solid rgba(0,212,170,.25);border-radius:7px;color:var(--accent); font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s; }
+.tp-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;margin-bottom:10px}
+.tp-input{width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:6px;padding:8px 10px;color:var(--text);font-family:var(--mono);font-size:13px;cursor:pointer;margin-bottom:10px}
+.btn-now{ width:100%;padding:9px;background:var(--accent-dim); border:1px solid rgba(0,212,170,.25);border-radius:7px;color:var(--accent); font-size:13px;font-weight:600;cursor:pointer; transition: all 0.2s; }
 .btn-now:hover{background:rgba(0,212,170,.18)}
-.station-cards{display:flex;flex-direction:column;gap:8px}
-.scard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;cursor:pointer;transition:all .2s;}
+.scard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:13px 15px;cursor:pointer;transition:all .2s;margin-bottom:8px}
 .scard:hover,.scard.selected{border-color:var(--accent);background:rgba(0,212,170,.05)}
-.scard-top{display:flex;justify-content:space-between;align-items:flex-start}
 .scard-name{font-size:14px;font-weight:600;color:#fff}
-.scard-sub{font-size:11px;color:var(--muted)}
-.aqi-badge{font-family:var(--mono);font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;}
-.scard-vals{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.sval-box{background:var(--bg4);border-radius:7px;padding:8px 10px}
-.sval-label{font-size:10px;color:var(--muted);font-family:var(--mono)}
-.sval-num{font-size:18px;font-weight:600;color:#fff;font-family:var(--mono)}
-.sval-unit{font-size:10px;color:var(--muted);margin-left:2px}
-.bar-wrap{height:3px;background:var(--dim);border-radius:2px;margin-top:6px;overflow:hidden}
-.bar-fill{height:100%;border-radius:2px;transition:width .5s}
+.scard-sub{font-size:11px;color:var(--muted);margin-bottom:8px}
+.aqi-badge{font-family:var(--mono);font-size:11px;padding:2px 8px;border-radius:20px;float:right; font-weight: 600;}
+.sval-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sval-box{background:var(--bg4);border-radius:7px;padding:6px 10px}
+.sval-num{font-size:17px;font-weight:600;font-family:var(--mono)}
 #map{height:100%;min-height:400px}
 
-/* DASHBOARD TAB */
+/* AQI Legend Table */
+.aqi-legend-container { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--rl); padding: 14px 16px; }
+.aqi-legend-title { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
+.aqi-legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; }
+.aqi-legend-row:last-child { margin-bottom: 0; }
+.aqi-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.aqi-label { flex: 1; font-weight: 500; color: var(--text); }
+.aqi-range { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+/* DASHBOARD & CHARTS */
 .dash{padding:28px;max-width:1400px;margin:0 auto}
 .dash-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
 .dash-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
-.dash-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center;}
-.dctrl{display:flex;flex-direction:column;gap:4px;}
-.dctrl label{font-size:11px;color:var(--muted);font-family:var(--mono)}
-.dselect{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;}
-.dselect:focus{outline:none;border-color:var(--accent)}
-.dash-grid{display:grid;gap:16px}
-.dash-row-2{grid-template-columns:1fr 1fr}
-.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;}
-.chart-card-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
-.chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;font-family:var(--mono)}
-.chart-wrap{position:relative;height:260px}
+.dselect{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text);font-size:13px;width:300px;cursor:pointer;margin-bottom:20px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;margin-bottom:16px}
 .chart-wrap-lg{position:relative;height:320px}
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
 @media(max-width:900px){.kpi-row{grid-template-columns:1fr 1fr}}
-.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;display:flex;flex-direction:column;}
-.kpi-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
-.kpi-val{font-size:28px;font-weight:700;color:#fff;font-family:var(--mono);line-height:1}
-.kpi-unit{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
-.kpi-delta{font-size:12px;margin-top:auto;padding-top:6px;color:var(--muted)}
-.kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}.kpi-delta.blue{color:#4a9eff}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;}
+.kpi-val{font-size:28px;font-weight:700;color:#fff;font-family:var(--mono)}
 
-/* ตารางแสดงประวัติรายสถานี */
+/* Leaflet Overrides - Marker Halo Effect */
+.pm-marker{ display:flex;align-items:center;justify-content:center; font-family:var(--mono);font-weight:700;font-size:13px; border-radius:50%; color:#fff;cursor:pointer; transition:all .3s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 2px solid rgba(255,255,255,0.8); }
+.pm-marker:hover{ transform:scale(1.2); z-index: 1000 !important; }
+.halo-central { outline: 6px solid #e91e63; }
+.halo-south   { outline: 6px solid #9c27b0; }
+.halo-north   { outline: 6px solid #2196f3; }
+.halo-east    { outline: 6px solid #4caf50; }
+.halo-thon-n  { outline: 6px solid #ff9800; }
+.halo-thon-s  { outline: 6px solid #795548; }
+
 .comp-table{width:100%;border-collapse:collapse;font-size:13px}
-.comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(255,255,255,0.02);}
+.comp-table th{text-align:left;padding:12px 14px;background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border)}
 .comp-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
 .comp-table tr:hover td{background:rgba(255,255,255,.03)}
 
-.donut-legend{display:flex;flex-direction:column;gap:6px;margin-top:12px}
-.dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
-.dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-
-/* Leaflet Overrides */
-.pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;font-size:12px;border-radius:50%;border:2px solid rgba(255,255,255,.5);color:#fff;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.5);transition:transform .2s;text-shadow: 1px 1px 2px rgba(0,0,0,0.8);}
-.pm-marker:hover{transform:scale(1.15)}
-.nowcast-note{font-size:11px;color:var(--muted);background:var(--bg4);border-radius:6px;padding:8px 12px;font-family:var(--mono);line-height:1.6;}
-.leaflet-popup-content-wrapper{background:var(--bg3) !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.6) !important;color:var(--text) !important;}
-.leaflet-popup-tip{background:var(--bg3) !important}
-.leaflet-popup-content{margin:14px 16px !important;font-family:var(--font)}
-
-.no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; gap: 16px; text-align: center; color: var(--muted); }
-.no-data-placeholder .nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
-.no-data-placeholder .nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--muted); min-height: 400px; gap: 16px; }
+.nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
+.nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 </style>
 </head>
@@ -122,738 +127,516 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
   <div class="logo">
     <div class="logo-icon">🌫</div>
     <div>
-      <div class="logo-text">Bangkok PM2.5 Monitor</div>
-      <div class="logo-sub">Flat JSON Format · EPA NowCast</div>
+      <div class="logo-text">BKK NowCast Monitor</div>
+      <div class="logo-sub">Air Quality Research Prototype</div>
     </div>
   </div>
   <div class="tabs">
-    <button class="tab" onclick="switchTab('map', event)">🗺 แผนที่</button>
-    <button class="tab active" onclick="switchTab('dash', event)">📊 Dashboard</button>
+    <button class="tab active" onclick="switchTab('home', event)">🏠 หน้าหลักโครงการ</button>
+    <button class="tab" onclick="switchTab('map', event)">🗺 แผนที่หมุดโซน</button>
+    <button class="tab" onclick="switchTab('dash', event)">📊 Dashboard สถิติ</button>
   </div>
 </header>
 
-<div id="global-status">⏳ กำลังประมวลผลข้อมูล Flat JSON และดึงพิกัดสถานี...</div>
+<div id="global-status">⏳ กำลังประมวลผลข้อมูล...</div>
+
+<div id="panel-home" class="panel active">
+  <div class="home-container">
+    
+    <div class="hero-card">
+      <div class="project-tag">Environmental Engineering Final Project</div>
+      <div class="hero-title">การพัฒนาระบบ BKK NowCast เพื่อการแจ้งเตือนคุณภาพอากาศ (PM2.5) ในกรุงเทพมหานคร</div>
+      <div class="hero-subtitle">Development of BKK NowCast System for PM2.5 Air Quality Warning in Bangkok</div>
+      
+      <div class="team-info">
+        <div class="team-member">
+          <div class="team-role">ผู้วิจัย</div>
+          <div class="team-name">นายธนกฤต เถาว์ทิพย์ (6530153021)</div>
+        </div>
+        <div class="team-member">
+          <div class="team-role">ผู้วิจัย</div>
+          <div class="team-name">นายชัยชญ โยธาพันธ์ (6530086621)</div>
+        </div>
+        <div class="team-member">
+          <div class="team-role">อาจารย์ที่ปรึกษา</div>
+          <div class="team-name">รศ.ดร. ศิริมา ปัญญาเมธีกุล</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="info-icon">💡</div>
+        <div class="info-title">ความเป็นมาของปัญหา</div>
+        <div class="info-desc">
+          การรายงานผลคุณภาพอากาศในปัจจุบันมักอ้างอิง <b>ค่าเฉลี่ย 24 ชั่วโมง</b> ซึ่งมีความล่าช้า ไม่สะท้อนสถานการณ์จริงในช่วงวิกฤตที่ค่าฝุ่นเปลี่ยนแปลงอย่างรวดเร็ว ในขณะที่ระบบ EPA NowCast ของสหรัฐฯ สามารถตอบสนองได้เร็วกว่า แต่ยังอ้างอิงมาตรฐานเดิม (35 µg/m³) ซึ่งไม่ตรงกับมาตรฐานใหม่ของไทย (37.5 µg/m³) โครงการนี้จึงพัฒนาระบบ <b>BKK NowCast</b> เพื่อลดช่องว่างนี้
+        </div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-icon">🎯</div>
+        <div class="info-title">วัตถุประสงค์การวิจัย</div>
+        <ul class="obj-list">
+          <li>ปรับปรุงอัลกอริทึม EPA NowCast ให้สอดคล้องกับมาตรฐานฝุ่นละออง PM2.5 ของประเทศไทย (37.5 µg/m³)</li>
+          <li>เปรียบเทียบความแม่นยำ (Accuracy) ด้วยดัชนีทางสถิติ Root Mean Square Error (RMSE)</li>
+          <li>เปรียบเทียบประสิทธิภาพการแจ้งเตือนแบบรายสถานี (Station-based) และแบบกลุ่มพื้นที่ (Area-based) เพื่อลดความผันผวนของข้อมูล</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="info-card" style="margin-top: 24px;">
+      <div class="info-icon">⚙️</div>
+      <div class="info-title">ระบบนี้ (Dashboard Prototype) ทำอะไรได้บ้าง?</div>
+      <div class="info-desc">
+        เว็บไซต์นี้ถูกสร้างขึ้นเพื่อเป็นเครื่องมือแสดงผลและวิเคราะห์ข้อมูลทางสถิติสำหรับโครงการวิจัย ประกอบด้วยฟีเจอร์หลักดังนี้:
+      </div>
+      <ul class="feature-list">
+        <li>
+          <div class="f-icon">01</div>
+          <div class="f-text"><b>ดึงข้อมูลดิบรายชั่วโมง (True Raw Data):</b> ระบบจะดึงข้อมูลประวัติรายชั่วโมงจากฐานข้อมูล Air4Thai แบบไม่ถูกเจือปน เพื่อนำมาคำนวณเข้าสมการสถิติใหม่ได้อย่างถูกต้อง</div>
+        </li>
+        <li>
+          <div class="f-icon">02</div>
+          <div class="f-text"><b>การแบ่งกลุ่มพื้นที่ (Area-based Clustering):</b> แผนที่แสดงหมุดแบ่งตาม 6 กลุ่มเขตกรุงเทพมหานคร เพื่อใช้ทดสอบสมมติฐานการกระจายตัวเชิงพื้นที่ (Spatial Variability)</div>
+        </li>
+        <li>
+          <div class="f-icon">03</div>
+          <div class="f-text"><b>คำนวณสถิติประเมินประสิทธิภาพ (Real-time Analytics):</b> Dashboard คำนวณค่า RMSE และเปรียบเทียบค่าความผันผวน (Standard Deviation - SD) ระหว่างข้อมูลรายสถานีและกลุ่มพื้นที่แบบอัตโนมัติ</div>
+        </li>
+      </ul>
+      <div style="margin-top: 24px; text-align: center;">
+        <button class="btn-now" onclick="document.querySelectorAll('.tab')[1].click()" style="width: auto; padding: 10px 24px; display: inline-flex; gap: 8px; align-items: center;">
+          เข้าสู่หน้าแผนที่โซน <span>→</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <div id="panel-map" class="panel">
   <div class="map-layout">
     <div class="map-sidebar">
       <div class="time-picker">
-        <div class="tp-label">⏱ เลือกข้อมูลประวัติ (Time-Series)</div>
-        <div class="tp-row">
-          <label>ช่วงเวลาที่บันทึกไว้ในระบบ:</label>
-          <select id="tp-history" class="tp-input" onchange="updateMap()"></select>
-        </div>
-        <button class="btn-now" onclick="goToLatest()">⟳ ข้อมูลล่าสุด</button>
+        <div class="tp-label">⏱ เลือกข้อมูลย้อนหลัง</div>
+        <select id="tp-history" class="tp-input" onchange="updateMap()"></select>
+        <button class="btn-now" onclick="goToLatest()">⟳ ล่าสุด</button>
+      </div>
+      
+      <div class="aqi-legend-container">
+        <div class="aqi-legend-title">เกณฑ์มาตรฐานฝุ่น PM2.5 (PCD)</div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#00bcd4"></div><span class="aqi-label">ดี</span><span class="aqi-range">0.0 - 15.0</span></div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#4caf50"></div><span class="aqi-label">ปานกลาง</span><span class="aqi-range">15.1 - 25.0</span></div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ffeb3b"></div><span class="aqi-label">เริ่มมีผลต่อสุขภาพ</span><span class="aqi-range">25.1 - 37.5</span></div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ff9800"></div><span class="aqi-label">มีผลต่อสุขภาพ</span><span class="aqi-range">37.6 - 75.0</span></div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#f44336"></div><span class="aqi-label">อันตราย</span><span class="aqi-range">75.1 ขึ้นไป</span></div>
       </div>
 
-      <div class="nowcast-note">
-        <b style="color:var(--accent)">PM2.5 Real-time Analytics</b><br>
-        แสดงข้อมูลจากโครงสร้าง Flat JSON<br>
-        ใช้เกณฑ์สีมาตรฐาน PCD 2566
-      </div>
-
-      <div class="station-cards" id="stn-cards">
-        <div class="no-data-placeholder" style="min-height:200px">
-          <div class="nd-icon">📡</div>
-          <div class="nd-title">กำลังประมวลผล...</div>
-        </div>
-      </div>
+      <div id="stn-cards"></div>
     </div>
     <div id="map"></div>
   </div>
 </div>
 
-<div id="panel-dash" class="panel active">
+<div id="panel-dash" class="panel">
   <div id="dash-no-data" class="no-data-placeholder">
     <div class="nd-icon">⏳</div>
-    <div class="nd-title">กำลังอ่านโครงสร้าง Flat JSON...</div>
+    <div class="nd-title">กำลังโหลดข้อมูลและประมวลผลสถิติ...</div>
   </div>
+  <div id="dash-content" class="dash" style="display:none">
+      <div class="dash-title">Dashboard การวิเคราะห์ประสิทธิภาพ</div>
+      <div class="dash-sub">ข้อมูลย้อนหลังตามจำนวนแถวในไฟล์ประวัติประมวลผลเชิงพื้นที่ (Area-based)</div>
+      
+      <select class="dselect" id="dash-station" onchange="updateDashboard()"></select>
 
-  <div id="dash-content" style="display:none">
-    <div class="dash">
-      <div class="dash-title">Dashboard การวิเคราะห์คุณภาพอากาศ (PM2.5)</div>
-      <div class="dash-sub">ข้อมูลย้อนหลังตามจำนวนแถวในไฟล์ประวัติ (สูงสุด 72 แถว)</div>
-
-      <div class="dash-controls">
-        <div class="dctrl">
-          <label>พื้นที่สถานี</label>
-          <select class="dselect" id="dash-station" onchange="updateDashboard()">
-            <option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>
-          </select>
-        </div>
+      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">🎯 การประเมินประสิทธิภาพ (Research Objectives)</div>
+      <div class="kpi-row" style="margin-top: 16px;">
+        <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);"><div class="tp-label" style="color:#4a9eff">ความแม่นยำ (RMSE)</div><div class="kpi-val" id="kpi-rmse">—</div><div class="kpi-delta">เทียบ NowCast กับ Avg24</div></div>
+        <div class="kpi-card" style="border-color: rgba(0,212,170,0.3);"><div class="tp-label" style="color:#00d4aa">การลดความผันผวน</div><div class="kpi-val" id="kpi-sd-diff">—</div><div class="kpi-delta">Area-based ลดสัญญาณหลอก</div></div>
+        <div class="kpi-card"><div class="tp-label">PM2.5 เฉลี่ย (Raw)</div><div class="kpi-val" id="kpi-avg">—</div><div class="kpi-delta">จากประวัติทั้งหมด</div></div>
+        <div class="kpi-card"><div class="tp-label">ค่ามลพิษสูงสุด (Peak)</div><div class="kpi-val" id="kpi-max">—</div><div class="kpi-delta">ในรอบประวัติปัจจุบัน</div></div>
       </div>
 
-      <div class="kpi-row" id="kpi-row">
-        <div class="kpi-card"><div class="kpi-label">PM2.5 เฉลี่ย (Raw)</div><div class="kpi-val" id="kpi-avg">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-avg-d">จากประวัติทั้งหมด</div></div>
-        <div class="kpi-card"><div class="kpi-label">NowCast (เฉลี่ย)</div><div class="kpi-val" id="kpi-nc">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-nc-d"></div></div>
-        <div class="kpi-card"><div class="kpi-label" id="kpi-bad-label">ชั่วโมงที่เกินมาตรฐาน (37.5)</div><div class="kpi-val" id="kpi-bad">—<span class="kpi-unit">ชม.</span></div><div class="kpi-delta" id="kpi-bad-d">จากทั้งหมด — ชั่วโมง</div></div>
-        <div class="kpi-card"><div class="kpi-label">ค่ามลพิษสูงสุดที่วัดได้</div><div class="kpi-val" id="kpi-max">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-max-d">ในประวัติรอบนี้</div></div>
+      <div class="chart-card">
+        <div class="tp-label">Time-Series Comparison (เทียบความสมูทของเส้นกราฟ)</div>
+        <div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div>
       </div>
 
-      <div class="dash-grid" style="margin-bottom:16px">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
         <div class="chart-card">
-          <div class="chart-card-title">แนวโน้ม PM2.5 Time-Series</div>
-          <div class="chart-card-sub">เปรียบเทียบค่ารายชั่วโมง (Bar), ค่าเฉลี่ย 24 ชม., และการเกลี่ย NowCast</div>
-          <div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div>
-        </div>
-      </div>
-
-      <div class="dash-grid dash-row-2" style="margin-bottom:16px">
-        <div class="chart-card">
-          <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Raw)</div>
-          <div class="chart-card-sub">คิดตามจำนวนข้อมูล จากเกณฑ์สี PCD</div>
-          <div style="height:200px;display:flex;align-items:center;gap:16px">
-            <div style="flex:1;height:180px"><canvas id="chart-donut-raw"></canvas></div>
-            <div class="donut-legend" id="legend-raw"></div>
-          </div>
+          <div class="tp-label">Volatility Comparison (Standard Deviation)</div>
+          <div style="height:200px"><canvas id="chart-volatility"></canvas></div>
         </div>
         <div class="chart-card">
-          <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (NowCast)</div>
-          <div class="chart-card-sub">คิดตาม NowCast จากเกณฑ์สี PCD</div>
-          <div style="height:200px;display:flex;align-items:center;gap:16px">
-            <div style="flex:1;height:180px"><canvas id="chart-donut-nc"></canvas></div>
+          <div class="tp-label">สัดส่วนคุณภาพอากาศ (NowCast AQI)</div>
+          <div style="height:200px; display:flex; gap: 16px; align-items:center;">
+            <div style="flex:1; height:180px"><canvas id="chart-donut-nc"></canvas></div>
             <div class="donut-legend" id="legend-nc"></div>
           </div>
         </div>
       </div>
 
-      <div class="dash-title" style="margin-top: 48px; border-top: 1px solid var(--border); padding-top: 24px;">🎯 การประเมินประสิทธิภาพ (Research Objectives)</div>
-      <div class="dash-sub">วิเคราะห์ความแม่นยำ (Accuracy) และเปรียบเทียบประสิทธิภาพในการลดความผันผวน (Volatility)</div>
-
-      <div class="dash-grid dash-row-2" style="margin-bottom: 16px;">
-        
-        <div style="display:flex; flex-direction:column; gap:16px;">
-           <div class="kpi-row" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
-              <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);">
-                <div class="kpi-label" style="color: #4a9eff;">ความแม่นยำ NowCast (RMSE)</div>
-                <div class="kpi-val" id="kpi-rmse">—</div>
-                <div class="kpi-delta">เทียบกับค่าเฉลี่ย 24 ชม. จริง (ยิ่งเข้าใกล้ 0 ยิ่งแม่นยำ)</div>
-              </div>
-              <div class="kpi-card" style="border-color: rgba(0,212,170,0.3);">
-                <div class="kpi-label" style="color: #00d4aa;">ลดความผันผวนได้ทั้งหมด</div>
-                <div class="kpi-val" id="kpi-sd-diff">—<span class="kpi-unit">%</span></div>
-                <div class="kpi-delta">Area-based ลดสัญญาณหลอกได้ดีกว่า Station-based</div>
-              </div>
-           </div>
-           <div class="kpi-row" style="grid-template-columns: 1fr 1fr; margin-bottom: 0;">
-              <div class="kpi-card">
-                <div class="kpi-label">ความผันผวน (SD) : รายสถานี</div>
-                <div class="kpi-val" id="kpi-sd-stn">—</div>
-                <div class="kpi-delta">Station-based Volatility</div>
-              </div>
-              <div class="kpi-card">
-                <div class="kpi-label">ความผันผวน (SD) : กลุ่มพื้นที่</div>
-                <div class="kpi-val" id="kpi-sd-area">—</div>
-                <div class="kpi-delta">Area-based Volatility</div>
-              </div>
-           </div>
-        </div>
-
-        <div class="chart-card">
-          <div class="chart-card-title">เปรียบเทียบระดับความผันผวนของข้อมูล (Standard Deviation)</div>
-          <div class="chart-card-sub">การวิเคราะห์ประสิทธิภาพระหว่าง Station-based กับ Area-based</div>
-          <div style="position:relative; height:180px; margin-top: 16px;"><canvas id="chart-volatility"></canvas></div>
-        </div>
-
-      </div>
-
-      <div class="chart-card" id="station-table-card" style="display:none; margin-bottom: 16px;">
-        <div class="chart-card-title">ประวัติข้อมูลรายชั่วโมงของสถานี (Time-Series)</div>
-        <div class="chart-card-sub" id="station-table-sub">แสดงข้อมูลย้อนหลัง</div>
+      <div class="chart-card" id="station-table-card" style="display:none">
+        <div class="tp-label" id="station-table-sub">ประวัติข้อมูลรายชั่วโมง (Data Log)</div>
         <div style="overflow-x: auto;">
           <table class="comp-table" id="station-ts-table">
-            <thead>
-              <tr>
-                <th>วันที่</th>
-                <th>ช่วงเวลา</th>
-                <th>PM2.5 รายชั่วโมง (Raw)</th>
-                <th>NowCast</th>
-              </tr>
-            </thead>
+            <thead><tr><th>วันที่</th><th>ช่วงเวลา</th><th>Raw (µg/m³)</th><th>NowCast</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
       </div>
-
-    </div>
   </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════
-// GLOBAL STATE & CONFIGURATIONS
+// DATA & CONFIG
 // ═══════════════════════════════════════════
-const STATION_META = {
-  "02t": { nameTH: "ม.ราชภัฏบ้านสมเด็จเจ้าพระยา", nameEN: "Bansomdejchaopraya Rajabhat University", lat: 13.732846, lng: 100.487662 },
-  "03t": { nameTH: "ริมถนนทางหลวงหมายเลข 3902", nameEN: "Highway NO.3902 km.13 +600", lat: 13.636514, lng: 100.414262 },
-  "05t": { nameTH: "กรมอุตุนิยมวิทยาบางนา", nameEN: "Thai Meteorological Department", lat: 13.666183, lng: 100.605742 },
-  "12t": { nameTH: "โรงเรียนนนทรีวิทยา", nameEN: "Nonsi Witthaya School", lat: 13.70806667, lng: 100.5473333 },
-  "50t": { nameTH: "โรงพยาบาลจุฬาลงกรณ์", nameEN: "Chulalongkorn Hospital", lat: 13.729852, lng: 100.536501 },
-  "52t": { nameTH: "การไฟฟ้าย่อยธนบุรี", nameEN: "Thonburi Power Sub-Station", lat: 13.727622, lng: 100.486568 },
-  "53t": { nameTH: "สถานีตำรวจนครบาลโชคชัย", nameEN: "Chokchai Police Station", lat: 13.7954248, lng: 100.5930298 },
-  "54t": { nameTH: "การเคหะชุมชนดินแดง", nameEN: "National Housing Authority Dindaeng", lat: 13.76251667, lng: 100.5502 },
-  "59t": { nameTH: "กรมประชาสัมพันธ์", nameEN: "The Government Public Relations Dept", lat: 13.783185, lng: 100.540489 },
-  "61t": { nameTH: "โรงเรียนบดินทรเดชา", nameEN: "Bodindecha School", lat: 13.769634, lng: 100.614567 },
-  "bkp101t": { nameTH: "สำนักงานเขตคลองสามวา", nameEN: "Khlong Sam Wa District Office", lat: 13.859911, lng: 100.704002 },
-  "bkp102t": { nameTH: "สำนักงานเขตจอมทอง", nameEN: "Chomthong District Office", lat: 13.677757, lng: 100.483861 },
-  "bkp103t": { nameTH: "สำนักงานเขตบางพลัด", nameEN: "Bang Phlat District Office", lat: 13.793965, lng: 100.504956 },
-  "bkp104t": { nameTH: "สำนักงานเขตบางแค", nameEN: "Bang Khae District Office", lat: 13.696314, lng: 100.409049 },
-  "bkp105t": { nameTH: "สำนักงานเขตบางขุนเทียน", nameEN: "Bang Khun Thian District Office", lat: 13.659908, lng: 100.435902 },
-  "bkp56t": { nameTH: "สำนักงานเขตดินแดง", nameEN: "Din Dang District Office", lat: 13.7619223, lng: 100.558606 },
-  "bkp57t": { nameTH: "สำนักงานเขตพระโขนง", nameEN: "Phra Kanong District Office", lat: 13.691511, lng: 100.61457 },
-  "bkp58t": { nameTH: "สำนักงานเขตราษฎร์บูรณะ", nameEN: "Rat Burana District Office", lat: 13.6821364, lng: 100.5060513 },
-  "bkp59t": { nameTH: "สำนักงานเขตราชเทวี", nameEN: "Ratchathewi District Office", lat: 13.7590851, lng: 100.5345788 },
-  "bkp60t": { nameTH: "ตรงข้ามสำนักงานเขตดุสิต", nameEN: "Dusit District Office", lat: 13.776664, lng: 100.520982 },
-  "bkp61t": { nameTH: "สนง.สภาพัฒนาการเศรษฐกิจฯ", nameEN: "NESDC Office", lat: 13.756281, lng: 100.514267 },
-  "bkp62t": { nameTH: "วงเวียนโอเดียน", nameEN: "Odeon Circus", lat: 13.737136, lng: 100.512734 },
-  "bkp63t": { nameTH: "แฟลตทหารบก สามเสน", nameEN: "Army Apartment Sam Sen", lat: 13.783554, lng: 100.5344645 },
-  "bkp64t": { nameTH: "สำนักงานเขตวังทองหลาง", nameEN: "Wang Thonglang District Office", lat: 13.778981, lng: 100.622294 },
-  "bkp65t": { nameTH: "สามย่านมิตรทาวน์", nameEN: "Samyan Mitrtown", lat: 13.733136, lng: 100.52829 },
-  "bkp66t": { nameTH: "ลานบางรักเลิฟลี่ พลาซ่า", nameEN: "Bangrak Lovely Plaza", lat: 13.726136, lng: 100.528055 },
-  "bkp67t": { nameTH: "สำนักงานเขตสาทร", nameEN: "Sathon District Office", lat: 13.707763, lng: 100.526787 },
-  "bkp69t": { nameTH: "ธนาคารกรุงศรีอยุธยา สำนักงานใหญ่", nameEN: "Bank of Ayuthaya Head Office", lat: 13.679226, lng: 100.54687 },
-  "bkp70t": { nameTH: "ริมถนนซอยสุขุมวิท 63", nameEN: "Soi Sukhumwit 63 Roadside", lat: 13.722096, lng: 100.584559 },
-  "bkp71t": { nameTH: "สำนักงานเขตสวนหลวง", nameEN: "Suan Luang District Office", lat: 13.731051, lng: 100.651705 },
-  "bkp72t": { nameTH: "บิ๊กซี ซุปเปอร์เซ็นเตอร์ บางนา", nameEN: "Big C Supercenter Bang Na", lat: 13.667987, lng: 100.635313 },
-  "bkp73t": { nameTH: "มหาวิทยาลัยเกษตรศาสตร์", nameEN: "Kasertsart University", lat: 13.839923, lng: 100.575632 },
-  "bkp74t": { nameTH: "สำนักงานเขตดอนเมือง", nameEN: "Don Mueng District Office", lat: 13.910986, lng: 100.594877 },
-  "bkp75t": { nameTH: "สำนักงานเขตสายไหม", nameEN: "Sai Mai District Office", lat: 13.896035, lng: 100.660628 },
-  "bkp76t": { nameTH: "สำนักงานเขตบางกะปิ", nameEN: "Bang Kapi District Office", lat: 13.766478, lng: 100.647785 },
-  "bkp77t": { nameTH: "แยกสวนสยาม-รามอินทรา", nameEN: "Suan Sayam-Ram Intra Intersection", lat: 13.813844, lng: 100.686594 },
-  "bkp78t": { nameTH: "โรงพยาบาลลาดกระบัง", nameEN: "Lat Krabang Hospital", lat: 13.72205, lng: 100.784069 },
-  "bkp79t": { nameTH: "สวนเฉลิมพระเกียรติ ร.9", nameEN: "Chaloem Phrakiat Rama 9 Park", lat: 13.813578, lng: 100.73208 },
-  "bkp80t": { nameTH: "สำนักงานเขตหนองจอก", nameEN: "Nong Chok District Office", lat: 13.855362, lng: 100.86267 },
-  "bkp81t": { nameTH: "ซีคอน สแควร์", nameEN: "Seacon Square", lat: 13.695561, lng: 100.647615 },
-  "bkp82t": { nameTH: "แยกมไหศวรรย์", nameEN: "Mahaisawan Intersection", lat: 13.70515, lng: 100.48465 },
-  "bkp83t": { nameTH: "ใต้สะพานสมเด็จพระเจ้าตากสิน", nameEN: "Under King Taksin Bridge", lat: 13.719705, lng: 100.508782 },
-  "bkp84t": { nameTH: "สี่แยกท่าพระ", nameEN: "Tha phra Intersection", lat: 13.729431, lng: 100.474373 },
-  "bkp85t": { nameTH: "สถานีตำรวจรถไฟบางกอกน้อย", nameEN: "Bangkok Noi Train Police Station", lat: 13.759619, lng: 100.481137 },
-  "bkp86t": { nameTH: "ถ.พุทธมณฑลสาย 1 ตัด ถ.บรมฯ", nameEN: "Phutthamonthon 1 Intersection", lat: 13.780778, lng: 100.426727 },
-  "bkp87t": { nameTH: "ตลาดธนบุรีสนามหลวง 2", nameEN: "Thon Buri Market Sanam Luang 2", lat: 13.746257, lng: 100.355099 },
-  "bkp88t": { nameTH: "มหาวิทยาลัยสยาม", nameEN: "Siam University", lat: 13.718689, lng: 100.45391 },
-  "bkp89t": { nameTH: "ถนนมาเจริญ เพชรเกษม 81", nameEN: "Ma Charean Roadside", lat: 13.705582, lng: 100.343164 },
-  "bkp90t": { nameTH: "ตลาดบางบอน 5", nameEN: "Bang Bon 5 Market", lat: 13.639165, lng: 100.372958 },
-  "bkp91t": { nameTH: "ม.เทคโนโลยีพระจอมเกล้าธนบุรี", nameEN: "KMUTT", lat: 13.651004, lng: 100.496673 },
-  "bkp92t": { nameTH: "สำนักงานเขตพระนคร", nameEN: "Phra Nakhon District Office", lat: 13.76415, lng: 100.499077 },
-  "bkp93t": { nameTH: "สำนักงานเขตห้วยขวาง", nameEN: "Huai Khwang District Office", lat: 13.77682, lng: 100.579543 },
-  "bkp94t": { nameTH: "สำนักงานเขตคลองเตย", nameEN: "Khlong Toei District Office", lat: 13.708488, lng: 100.583747 },
-  "bkp95t": { nameTH: "สำนักงานเขตบางซื่อ", nameEN: "Bang Sue District Office", lat: 13.809596, lng: 100.537883 },
-  "bkp96t": { nameTH: "สำนักงานเขตลาดพร้าว", nameEN: "Ladphrao District Office", lat: 13.803587, lng: 100.607535 },
-  "bkp97t": { nameTH: "สำนักงานเขตหลักสี่", nameEN: "Lak Si District Office", lat: 13.887395, lng: 100.579247 },
-  "bkp98t": { nameTH: "สำนักงานเขตบางเขน", nameEN: "Bang Khen District Office", lat: 13.873603, lng: 100.595839 },
-  "bkp99t": { nameTH: "สำนักงานเขตสะพานสูง", nameEN: "Saphan Sung District Office", lat: 13.768892, lng: 100.685743 },
-  "o10": { nameTH: "เคหะชุมชนคลองจั่น", nameEN: "NHA Klongchan", lat: 13.779873, lng: 100.646009 }
+const ZONE_COLORS = {
+  "กรุงเทพกลาง": "#e91e63", "กรุงเทพใต้": "#9c27b0", "กรุงเทพเหนือ": "#2196f3",
+  "กรุงเทพตะวันออก": "#4caf50", "กรุงธนเหนือ": "#ff9800", "กรุงธนใต้": "#795548"
 };
 
-let STATION_KEYS = [];   
-let HISTORY_RECORDS = []; 
+const STATION_META = {
+  "02t": { zone: "กรุงธนเหนือ", nameTH: "ม.ราชภัฏบ้านสมเด็จเจ้าพระยา", lat: 13.732846, lng: 100.487662 },
+  "03t": { zone: "กรุงธนใต้", nameTH: "ริมถนนทางหลวงหมายเลข 3902", lat: 13.636514, lng: 100.414262 },
+  "05t": { zone: "กรุงเทพใต้", nameTH: "กรมอุตุนิยมวิทยาบางนา", lat: 13.666183, lng: 100.605742 },
+  "12t": { zone: "กรุงเทพใต้", nameTH: "โรงเรียนนนทรีวิทยา", lat: 13.70806667, lng: 100.5473333 },
+  "50t": { zone: "กรุงเทพกลาง", nameTH: "โรงพยาบาลจุฬาลงกรณ์", lat: 13.729852, lng: 100.536501 },
+  "52t": { zone: "กรุงธนใต้", nameTH: "การไฟฟ้าย่อยธนบุรี", lat: 13.727622, lng: 100.486568 },
+  "53t": { zone: "กรุงเทพเหนือ", nameTH: "สถานีตำรวจนครบาลโชคชัย", lat: 13.7954248, lng: 100.5930298 },
+  "54t": { zone: "กรุงเทพกลาง", nameTH: "การเคหะชุมชนดินแดง", lat: 13.76251667, lng: 100.5502 },
+  "59t": { zone: "กรุงเทพกลาง", nameTH: "กรมประชาสัมพันธ์", lat: 13.783185, lng: 100.540489 },
+  "61t": { zone: "กรุงเทพเหนือ", nameTH: "โรงเรียนบดินทรเดชา", lat: 13.769634, lng: 100.614567 },
+  "bkp101t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตคลองสามวา", lat: 13.859911, lng: 100.704002 },
+  "bkp102t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตจอมทอง", lat: 13.677757, lng: 100.483861 },
+  "bkp103t": { zone: "กรุงธนเหนือ", nameTH: "สำนักงานเขตบางพลัด", lat: 13.793965, lng: 100.504956 },
+  "bkp104t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตบางแค", lat: 13.696314, lng: 100.409049 },
+  "bkp105t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตบางขุนเทียน", lat: 13.659908, lng: 100.435902 },
+  "bkp56t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตดินแดง", lat: 13.7619223, lng: 100.558606 },
+  "bkp57t": { zone: "กรุงเทพใต้", nameTH: "สำนักงานเขตพระโขนง", lat: 13.691511, lng: 100.61457 },
+  "bkp58t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตราษฎร์บูรณะ", lat: 13.6821364, lng: 100.5060513 },
+  "bkp59t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตราชเทวี", lat: 13.7590851, lng: 100.5345788 },
+  "bkp60t": { zone: "กรุงเทพกลาง", nameTH: "ตรงข้ามสำนักงานเขตดุสิต", lat: 13.776664, lng: 100.520982 },
+  "bkp61t": { zone: "กรุงเทพกลาง", nameTH: "สนง.สภาพัฒนาการเศรษฐกิจฯ", lat: 13.756281, lng: 100.514267 },
+  "bkp62t": { zone: "กรุงเทพกลาง", nameTH: "วงเวียนโอเดียน", lat: 13.737136, lng: 100.512734 },
+  "bkp63t": { zone: "กรุงเทพเหนือ", nameTH: "แฟลตทหารบก สามเสน", lat: 13.783554, lng: 100.5344645 },
+  "bkp64t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตวังทองหลาง", lat: 13.778981, lng: 100.622294 },
+  "bkp65t": { zone: "กรุงเทพกลาง", nameTH: "สามย่านมิตรทาวน์", lat: 13.733136, lng: 100.52829 },
+  "bkp66t": { zone: "กรุงเทพกลาง", nameTH: "ลานบางรักเลิฟลี่ พลาซ่า", lat: 13.726136, lng: 100.528055 },
+  "bkp67t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตสาทร", lat: 13.707763, lng: 100.526787 },
+  "bkp69t": { zone: "กรุงเทพใต้", nameTH: "ธนาคารกรุงศรีอยุธยา สำนักงานใหญ่", lat: 13.679226, lng: 100.54687 },
+  "bkp70t": { zone: "กรุงเทพใต้", nameTH: "ริมถนนซอยสุขุมวิท 63", lat: 13.722096, lng: 100.584559 },
+  "bkp71t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตสวนหลวง", lat: 13.731051, lng: 100.651705 },
+  "bkp72t": { zone: "กรุงเทพใต้", nameTH: "บิ๊กซี ซุปเปอร์เซ็นเตอร์ บางนา", lat: 13.667987, lng: 100.635313 },
+  "bkp73t": { zone: "กรุงเทพเหนือ", nameTH: "มหาวิทยาลัยเกษตรศาสตร์", lat: 13.839923, lng: 100.575632 },
+  "bkp74t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตดอนเมือง", lat: 13.910986, lng: 100.594877 },
+  "bkp75t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตสายไหม", lat: 13.896035, lng: 100.660628 },
+  "bkp76t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตบางกะปิ", lat: 13.766478, lng: 100.647785 },
+  "bkp77t": { zone: "กรุงเทพตะวันออก", nameTH: "แยกสวนสยาม-รามอินทรา", lat: 13.813844, lng: 100.686594 },
+  "bkp78t": { zone: "กรุงเทพตะวันออก", nameTH: "โรงพยาบาลลาดกระบัง", lat: 13.72205, lng: 100.784069 },
+  "bkp79t": { zone: "กรุงเทพตะวันออก", nameTH: "สวนเฉลิมพระเกียรติ ร.9", lat: 13.813578, lng: 100.73208 },
+  "bkp80t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตหนองจอก", lat: 13.855362, lng: 100.86267 },
+  "bkp81t": { zone: "กรุงเทพตะวันออก", nameTH: "ซีคอน สแควร์", lat: 13.695561, lng: 100.647615 },
+  "bkp82t": { zone: "กรุงธนใต้", nameTH: "แยกมไหศวรรย์", lat: 13.70515, lng: 100.48465 },
+  "bkp83t": { zone: "กรุงธนเหนือ", nameTH: "ใต้สะพานสมเด็จพระเจ้าตากสิน", lat: 13.719705, lng: 100.508782 },
+  "bkp84t": { zone: "กรุงธนใต้", nameTH: "สี่แยกท่าพระ", lat: 13.729431, lng: 100.474373 },
+  "bkp85t": { zone: "กรุงธนเหนือ", nameTH: "สถานีตำรวจรถไฟบางกอกน้อย", lat: 13.759619, lng: 100.481137 },
+  "bkp86t": { zone: "กรุงธนเหนือ", nameTH: "ถ.พุทธมณฑลสาย 1 ตัด ถ.บรมฯ", lat: 13.780778, lng: 100.426727 },
+  "bkp87t": { zone: "กรุงธนใต้", nameTH: "ตลาดธนบุรีสนามหลวง 2", lat: 13.746257, lng: 100.355099 },
+  "bkp88t": { zone: "กรุงธนใต้", nameTH: "มหาวิทยาลัยสยาม", lat: 13.718689, lng: 100.45391 },
+  "bkp89t": { zone: "กรุงธนใต้", nameTH: "ถนนมาเจริญ เพชรเกษม 81", lat: 13.705582, lng: 100.343164 },
+  "bkp90t": { zone: "กรุงธนใต้", nameTH: "ตลาดบางบน 5", lat: 13.639165, lng: 100.372958 },
+  "bkp91t": { zone: "กรุงธนใต้", nameTH: "ม.เทคโนโลยีพระจอมเกล้าธนบุรี", lat: 13.651004, lng: 100.496673 },
+  "bkp92t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตพระนคร", lat: 13.76415, lng: 100.499077 },
+  "bkp93t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตห้วยขวาง", lat: 13.77682, lng: 100.579543 },
+  "bkp94t": { zone: "กรุงเทพใต้", nameTH: "สำนักงานเขตคลองเตย", lat: 13.708488, lng: 100.583747 },
+  "bkp95t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตบางซื่อ", lat: 13.809596, lng: 100.537883 },
+  "bkp96t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตลาดพร้าว", lat: 13.803587, lng: 100.607535 },
+  "bkp97t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตหลักสี่", lat: 13.887395, lng: 100.579247 },
+  "bkp98t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตบางเขน", lat: 13.873603, lng: 100.595839 },
+  "bkp99t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตสะพานสูง", lat: 13.768892, lng: 100.685743 },
+  "o10": { zone: "กรุงเทพตะวันออก", nameTH: "เคหะชุมชนคลองจั่น", lat: 13.779873, lng: 100.646009 }
+};
+
+let HISTORY_RECORDS = [];
+let STATION_KEYS = [];
 
 const AQI_BREAKS = [
-  {lo:0, hi:15.0, label:'ดี', color:'#00bcd4', textColor:'#fff'},
-  {lo:15.1, hi:25.0, label:'ปานกลาง', color:'#4caf50', textColor:'#fff'},
-  {lo:25.1, hi:37.5, label:'เริ่มมีผลต่อสุขภาพ', color:'#ffeb3b', textColor:'#333'},
-  {lo:37.6, hi:75.0, label:'มีผลต่อสุขภาพ', color:'#ff9800', textColor:'#fff'},
-  {lo:75.1, hi:999999, label:'อันตราย', color:'#f44336', textColor:'#fff'}
+  {lo:0, hi:15.0, label:'ดี', color:'#00bcd4'},
+  {lo:15.1, hi:25.0, label:'ปานกลาง', color:'#4caf50'},
+  {lo:25.1, hi:37.5, label:'เริ่มมีผลต่อสุขภาพ', color:'#ffeb3b'},
+  {lo:37.6, hi:75.0, label:'มีผลต่อสุขภาพ', color:'#ff9800'},
+  {lo:75.1, hi:999, label:'อันตราย', color:'#f44336'}
 ];
 
 function getAQIBand(val) {
-  if(val == null || isNaN(val)) return null;
+  if(val == null) return null;
   for(const b of AQI_BREAKS) if(val >= b.lo && val <= b.hi) return b;
-  return AQI_BREAKS[AQI_BREAKS.length-1];
+  return AQI_BREAKS[4];
 }
 
 function nowcast(vals) {
-  const valid = vals.filter(v => v !== null && v !== undefined && !isNaN(v));
+  const valid = vals.filter(v => v !== null && !isNaN(v));
   if(valid.length < 2) return null;
-  const cmax = Math.max(...valid);
-  const cmin = Math.min(...valid);
+  const cmax = Math.max(...valid); const cmin = Math.min(...valid);
   if(cmax <= 0) return null;
-  const wRate = 1 - (cmax - cmin) / cmax;
-  const w = Math.max(wRate, 0.4);
+  const w = Math.max(1 - (cmax - cmin) / cmax, 0.4);
   let num = 0, den = 0;
   for(let i = 0; i < vals.length; i++) {
-    if(vals[i] !== null && vals[i] !== undefined && !isNaN(vals[i])) {
-      num += vals[i] * Math.pow(w, i);
-      den += Math.pow(w, i);
-    }
+    if(vals[i] != null) { num += vals[i] * Math.pow(w, i); den += Math.pow(w, i); }
   }
   return den > 0 ? Math.round(num / den * 10) / 10 : null;
 }
 
-// ฟังก์ชันทางสถิติสำหรับงานวิจัย
-function calcRMSE(arr1, arr2) {
-  let sum = 0, count = 0;
-  for(let i=0; i<arr1.length; i++) {
-    if(arr1[i] != null && arr2[i] != null) {
-      sum += Math.pow(arr1[i] - arr2[i], 2);
-      count++;
-    }
-  }
-  return count > 0 ? Math.sqrt(sum / count) : null;
-}
-
-function calcSD(arr) {
-  const valid = arr.filter(v => v != null && !isNaN(v));
-  if(valid.length < 2) return null;
-  const mean = valid.reduce((a,b)=>a+b,0) / valid.length;
-  const variance = valid.reduce((a,b)=>a+Math.pow(b-mean, 2),0) / (valid.length - 1);
-  return Math.sqrt(variance);
-}
-
 // ═══════════════════════════════════════════
-// DATA FETCHING & PARSING
+// INITIALIZE & MAP
 // ═══════════════════════════════════════════
 async function initializeData() {
-  const statusEl = document.getElementById('global-status');
-  statusEl.style.display = 'block';
-  statusEl.className = '';
-  
   try {
-    statusEl.innerHTML = '⏳ กำลังอ่านข้อมูลจากฐานข้อมูล...';
-    
-    const histRes = await fetch('history.json?t=' + new Date().getTime());
-    if (!histRes.ok) throw new Error("ไม่สามารถโหลดไฟล์ history.json ได้");
-    HISTORY_RECORDS = await histRes.json();
-
-    if (HISTORY_RECORDS.length === 0) throw new Error("ไม่มีข้อมูลประวัติให้แสดงผล");
-
-    const firstRow = HISTORY_RECORDS[0];
-    STATION_KEYS = Object.keys(firstRow).filter(k => k !== 'date' && k !== 'timeRange' && STATION_META[k]);
+    const res = await fetch('history.json?t=' + Date.now());
+    HISTORY_RECORDS = await res.json();
+    STATION_KEYS = Object.keys(HISTORY_RECORDS[0]).filter(k => STATION_META[k]);
 
     HISTORY_RECORDS.forEach((row, i) => {
       row._parsed = {};
       STATION_KEYS.forEach(key => {
-        let rawVal = row[key];
-        if (rawVal === '-' || rawVal === undefined) rawVal = null;
-        else rawVal = parseFloat(rawVal);
-
-        let lookback12 = [];
-        for(let j = i; j >= Math.max(0, i - 11); j--) {
-          let pastVal = HISTORY_RECORDS[j][key];
-          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) { lookback12.push(parseFloat(pastVal)); }
-        }
-        
-        let lookback24 = [];
-        for(let j = i; j >= Math.max(0, i - 23); j--) {
-          let pastVal = HISTORY_RECORDS[j][key];
-          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) { lookback24.push(parseFloat(pastVal)); }
-        }
-        
-        let avg24Val = lookback24.length > 0 ? (lookback24.reduce((sum, val) => sum + val, 0) / lookback24.length) : null;
-
-        row._parsed[key] = {
-          raw: rawVal,
-          nc: nowcast(lookback12),
-          avg24: avg24Val
-        };
+        let raw = row[key] === '-' ? null : parseFloat(row[key]);
+        let look12 = [], look24 = [];
+        for(let j=i; j >= Math.max(0, i-11); j--) { let v = HISTORY_RECORDS[j][key]; if(v !== '-') look12.push(parseFloat(v)); }
+        for(let j=i; j >= Math.max(0, i-23); j--) { let v = HISTORY_RECORDS[j][key]; if(v !== '-') look24.push(parseFloat(v)); }
+        let avg24 = look24.length > 0 ? (look24.reduce((a,b)=>a+b,0)/look24.length) : null;
+        row._parsed[key] = { raw, nc: nowcast(look12), avg24 };
       });
     });
 
-    statusEl.innerHTML = `✓ โหลดข้อมูลเสร็จสิ้น`;
-    setTimeout(() => { statusEl.style.display = 'none'; }, 1000);
-    
+    document.getElementById('global-status').style.display = 'none';
     document.getElementById('dash-no-data').style.display = 'none';
     document.getElementById('dash-content').style.display = 'block';
     
-    buildDynamicUI();
+    initMap();
+    buildUI();
     updateDashboard();
-    goToLatest();
-
-  } catch (err) {
-    statusEl.className = 'err';
-    statusEl.innerHTML = '❌ เกิดข้อผิดพลาด: ' + err.message;
-  }
+  } catch(e) { console.error(e); }
 }
 
-// ═══════════════════════════════════════════
-// UI & MAP CONTROLLERS
-// ═══════════════════════════════════════════
-let mapInstance = null; 
-let mapMarkers = {};
-
+let mapInstance, mapMarkers = {};
 function initMap() {
   mapInstance = L.map('map', { center: [13.75, 100.52], zoom: 11 });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-    attribution: '© OpenStreetMap contributors', 
-    maxZoom: 19 
-  }).addTo(mapInstance);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
 }
 
-function buildDynamicUI() {
-  const dashSelect = document.getElementById('dash-station');
-  dashSelect.innerHTML = '<option value="all">ทุกสถานี (เฉลี่ยกลุ่มพื้นที่ / Area-based)</option>';
-  STATION_KEYS.forEach(k => { 
-    if(STATION_META[k]) dashSelect.innerHTML += `<option value="${k}">${STATION_META[k].nameTH}</option>`; 
-  });
-
-  const timeSelect = document.getElementById('tp-history');
-  timeSelect.innerHTML = '';
-  HISTORY_RECORDS.forEach((row, idx) => {
-    timeSelect.innerHTML += `<option value="${idx}">วันที่ ${row.date} | ${row.timeRange}</option>`;
-  });
-
-  for(const k in mapMarkers) { mapInstance.removeLayer(mapMarkers[k].marker); }
-  mapMarkers = {};
-  for(const key of STATION_KEYS) {
-    if(!STATION_META[key]) continue;
-    const m = STATION_META[key];
-    const div = document.createElement('div');
-    div.className = 'pm-marker';
-    div.style.cssText = 'width:52px;height:52px;background:#333;border-color:rgba(255,255,255,.5)';
-    div.textContent = '…';
-    const icon = L.divIcon({ html: div, className: '', iconSize: [52,52], iconAnchor: [26,26] });
-    const marker = L.marker([m.lat, m.lng], { icon }).addTo(mapInstance);
-    marker.bindPopup('', { maxWidth: 280 });
-    marker.on('click', () => { selectStation(key); });
-    mapMarkers[key] = { marker, div };
+function buildUI() {
+  const sel = document.getElementById('dash-station');
+  let h = '<option value="all">ทุกสถานี (กทม. ภาพรวม)</option>';
+  for (const z in ZONE_COLORS) {
+    h += `<optgroup label="กลุ่มพื้นที่: ${z}">`;
+    h += `<option value="zone_${z}">>> ค่าเฉลี่ยพื้นที่ ${z} <<</option>`;
+    STATION_KEYS.filter(k => STATION_META[k].zone === z).forEach(k => {
+      h += `<option value="${k}">[${k}] ${STATION_META[k].nameTH}</option>`;
+    });
+    h += '</optgroup>';
   }
+  sel.innerHTML = h;
+
+  const tSel = document.getElementById('tp-history');
+  tSel.innerHTML = HISTORY_RECORDS.map((r, i) => `<option value="${i}">${r.date} | ${r.timeRange}</option>`).join('');
+  tSel.value = HISTORY_RECORDS.length - 1; // Default to latest
+
+  STATION_KEYS.forEach(key => {
+    const m = STATION_META[key];
+    const haloClass = {
+      "กรุงเทพกลาง": "halo-central", "กรุงเทพใต้": "halo-south", "กรุงเทพเหนือ": "halo-north",
+      "กรุงเทพตะวันออก": "halo-east", "กรุงธนเหนือ": "halo-thon-n", "กรุงธนใต้": "halo-thon-s"
+    }[m.zone];
+
+    const div = document.createElement('div');
+    div.className = `pm-marker ${haloClass}`;
+    div.style.cssText = 'width:34px;height:34px;background:#333;';
+    div.textContent = '…';
+    
+    const icon = L.divIcon({ html: div, className: '', iconSize: [34, 34], iconAnchor: [17, 17] });
+    mapMarkers[key] = { marker: L.marker([m.lat, m.lng], { icon }).addTo(mapInstance), div };
+    mapMarkers[key].marker.bindPopup(m.nameTH).on('click', () => selectStation(key));
+  });
+  
+  updateMap();
 }
 
-function switchTab(tab, e) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+function switchTab(t, e) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-'+tab).classList.add('active');
-  if(e && e.target) e.target.classList.add('active');
-  if(tab === 'dash' && HISTORY_RECORDS.length > 0) setTimeout(updateDashboard, 50);
-  if(tab === 'map' && HISTORY_RECORDS.length > 0) { setTimeout(() => { mapInstance.invalidateSize(); }, 100); updateMap(); }
+  document.getElementById('panel-'+t).classList.add('active');
+  if(e) e.target.classList.add('active');
+  if(t==='map' && mapInstance) setTimeout(() => { mapInstance.invalidateSize(); }, 100);
 }
 
 function updateMap() {
-  if (HISTORY_RECORDS.length === 0) return;
-  const selectedIdx = parseInt(document.getElementById('tp-history').value, 10);
-  const rowData = HISTORY_RECORDS[selectedIdx];
-  const cardsEl = document.getElementById('stn-cards');
-  
-  const sortedKeys = STATION_KEYS.filter(k => STATION_META[k]).sort((a,b) => {
-    const valA = rowData._parsed[a].nc ?? -1;
-    const valB = rowData._parsed[b].nc ?? -1;
-    return valB - valA;
-  });
-
-  cardsEl.innerHTML = sortedKeys.map(key => {
-    const m = STATION_META[key];
-    const {nc, avg24} = rowData._parsed[key];
-    const band = getAQIBand(nc);
-    const color = band?.color ?? '#666';
-    const tc = band?.textColor ?? '#fff';
-    const avg24Band = getAQIBand(avg24);
-    const ncPct = nc != null ? Math.min(nc / 75 * 100, 100) : 0;
-    const avg24Pct = avg24 != null ? Math.min(avg24 / 75 * 100, 100) : 0;
+  const idx = document.getElementById('tp-history').value;
+  if (!HISTORY_RECORDS[idx]) return;
+  const row = HISTORY_RECORDS[idx];
+  let h = '';
+  STATION_KEYS.forEach(k => {
+    const {nc} = row._parsed[k];
+    const b = getAQIBand(nc);
+    const m = STATION_META[k];
+    if(mapMarkers[k]) {
+      mapMarkers[k].div.style.background = b?.color || '#333';
+      mapMarkers[k].div.textContent = nc ? nc.toFixed(0) : '?';
+    }
     
-    return `<div class="scard" id="sc-${key}" onclick="selectStation('${key}')">
-      <div class="scard-top">
-        <div><div class="scard-name">${m.nameTH}</div><div class="scard-sub">${m.nameEN || '-'}</div></div>
-        <span class="aqi-badge" style="background:${color};color:${tc};border:none">${band?.label ?? 'ไม่มีข้อมูล'}</span>
-      </div>
-      <div class="scard-vals">
-        <div class="sval-box"><div class="sval-label">NowCast</div><div class="sval-num" style="color:${color}">${nc!=null?nc.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${ncPct}%;background:${color}"></div></div></div>
-        <div class="sval-box"><div class="sval-label">เฉลี่ย 24 ชม.</div><div class="sval-num" style="color:${avg24Band?.color??'#fff'}">${avg24!=null?avg24.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div><div class="bar-wrap"><div class="bar-fill" style="width:${avg24Pct}%;background:${avg24Band?.color??'#666'}"></div></div></div>
-      </div>
+    h += `<div class="scard" onclick="selectStation('${k}')">
+      <span class="aqi-badge" style="background:${b?.color}">${b?.label || 'N/A'}</span>
+      <div class="scard-name">${m.nameTH}</div>
+      <div class="scard-sub">${m.zone}</div>
+      <div class="sval-grid"><div class="sval-box">NowCast: <span class="sval-num">${nc||'—'}</span></div></div>
     </div>`;
-  }).join('');
-
-  for(const key of STATION_KEYS) {
-    if(!mapMarkers[key]) continue;
-    const {nc, avg24} = rowData._parsed[key];
-    const band = getAQIBand(nc);
-    const color = band?.color ?? '#555';
-    const {div, marker} = mapMarkers[key];
-    div.style.background = nc != null ? color : '#333';
-    div.style.borderColor = nc != null ? color+'88' : 'rgba(255,255,255,.2)';
-    div.style.color = nc != null ? (band?.textColor ?? '#fff') : '#fff';
-    div.textContent = nc != null ? nc.toFixed(0) : '?';
-    marker.setPopupContent(buildPopup(key, nc, avg24, rowData.date, rowData.timeRange));
-  }
+  });
+  document.getElementById('stn-cards').innerHTML = h;
 }
 
-function buildPopup(key, nc, avg24, dateStr, timeRange) {
-  const m = STATION_META[key];
-  const ncBand = getAQIBand(nc); const avg24Band = getAQIBand(avg24);
-  const diff = (nc!=null && avg24!=null) ? (nc-avg24).toFixed(1) : '—';
-  const diffSign = parseFloat(diff) > 0 ? '+' : '';
-  
-  return `<div style="font-family:'Sarabun',sans-serif">
-    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px">${m.nameTH}</div>
-    <div style="font-size:11px;color:#7a8090;margin-bottom:12px">${dateStr} | ${timeRange}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div style="background:#1f2229;border-radius:8px;padding:10px">
-        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">EPA NowCast</div>
-        <div style="font-size:22px;font-weight:700;color:${ncBand?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
-      </div>
-      <div style="background:#1f2229;border-radius:8px;padding:10px">
-        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">เฉลี่ย 24 ชม.</div>
-        <div style="font-size:22px;font-weight:700;color:${avg24Band?.color??'#444'};margin-bottom:4px">${avg24!=null?avg24.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
-      </div>
-    </div>
-    <div style="margin-top:8px;background:#1f2229;border-radius:8px;padding:8px 10px;font-family:monospace;font-size:12px">
-      NowCast − เฉลี่ย 24 ชม: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${diffSign}${diff} µg/m³</b>
-    </div>
-  </div>`;
-}
-
-function selectStation(key) {
-  document.querySelectorAll('.scard').forEach(c => c.classList.remove('selected'));
-  const sc = document.getElementById('sc-'+key);
-  if(sc) { sc.classList.add('selected'); sc.scrollIntoView({behavior:'smooth',block:'nearest'}); }
-  if(mapMarkers[key]) mapMarkers[key].marker.openPopup();
+function selectStation(k) {
+  if(!mapMarkers[k]) return;
+  const m = mapMarkers[k].marker;
+  mapInstance.flyTo(m.getLatLng(), 13);
+  m.openPopup();
 }
 
 function goToLatest() {
-  if (HISTORY_RECORDS.length === 0) return;
-  const select = document.getElementById('tp-history');
-  select.value = HISTORY_RECORDS.length - 1; 
+  document.getElementById('tp-history').value = HISTORY_RECORDS.length - 1;
   updateMap();
 }
 
 // ═══════════════════════════════════════════
-// DASHBOARD TIME-SERIES ENGINE
+// RESEARCH ANALYTICS
 // ═══════════════════════════════════════════
 let charts = {};
-function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+function extractData(keys) {
+  const labels = [], raw = [], nc = [], avg24 = [];
+  const ncCats = {};
+  for(const b of AQI_BREAKS) { ncCats[b.label] = 0; }
 
-function extractFlatData(stationKey) {
-  const keys = stationKey === 'all' ? STATION_KEYS.filter(k => STATION_META[k]) : [stationKey];
-  
-  const tlLabels = []; const tlRaw = []; const tlNC = []; const tlAvg24 = [];
-  const rawCats = {}; const ncCats = {};
-  for(const b of AQI_BREAKS) { rawCats[b.label] = 0; ncCats[b.label] = 0; }
-
-  let allRawVals = []; let allNCVals = [];
-  const badThreshold = 37.5; 
-
-  HISTORY_RECORDS.forEach(row => {
-     const timeLabel = row.timeRange.split(' - ')[1] || row.timeRange;
-     tlLabels.push(`${row.date.slice(5)} ${timeLabel}`);
-
-     let sRaw = 0, cRaw = 0, sNC = 0, cNC = 0, sAvg24 = 0, cAvg24 = 0;
-
-     keys.forEach(k => {
-        const parsed = row._parsed[k];
-        if (parsed) {
-          if(parsed.raw !== null) { sRaw += parsed.raw; cRaw++; }
-          if(parsed.nc !== null) { sNC += parsed.nc; cNC++; }
-          if(parsed.avg24 !== null) { sAvg24 += parsed.avg24; cAvg24++; }
-        }
-     });
-
-     const avgRaw = cRaw > 0 ? sRaw/cRaw : null;
-     const avgNC = cNC > 0 ? sNC/cNC : null;
-     const avgAvg24 = cAvg24 > 0 ? sAvg24/cAvg24 : null;
-     
-     tlRaw.push(avgRaw); 
-     tlNC.push(avgNC);
-     tlAvg24.push(avgAvg24);
-
-     if(avgRaw !== null) {
-       allRawVals.push(avgRaw);
-       const bandR = getAQIBand(avgRaw); if(bandR) rawCats[bandR.label]++;
-     }
-     if(avgNC !== null) {
-       allNCVals.push(avgNC);
-       const bandN = getAQIBand(avgNC); if(bandN) ncCats[bandN.label]++;
-     }
+  HISTORY_RECORDS.forEach(r => {
+    labels.push(r.timeRange.split(' - ')[1]);
+    let sR=0, cR=0, sN=0, cN=0, sA=0, cA=0;
+    keys.forEach(k => {
+      const p = r._parsed[k];
+      if(p.raw!=null){ sR+=p.raw; cR++; }
+      if(p.nc!=null){ sN+=p.nc; cN++; }
+      if(p.avg24!=null){ sA+=p.avg24; cA++; }
+    });
+    const avgR = cR?sR/cR:null;
+    const avgN = cN?sN/cN:null;
+    raw.push(avgR); nc.push(avgN); avg24.push(cA?sA/cA:null);
+    if(avgN !== null) {
+      const bandN = getAQIBand(avgN); if(bandN) ncCats[bandN.label]++;
+    }
   });
-
-  return {
-    tlLabels, tlRaw, tlNC, tlAvg24, rawCats, ncCats,
-    avgRaw: allRawVals.length ? allRawVals.reduce((a,b)=>a+b,0)/allRawVals.length : null,
-    avgNC: allNCVals.length ? allNCVals.reduce((a,b)=>a+b,0)/allNCVals.length : null,
-    maxRaw: allRawVals.length ? Math.max(...allRawVals) : null,
-    badHours: allRawVals.filter(v => v > badThreshold).length,
-    totalHours: allRawVals.length
-  };
+  return { labels, raw, nc, avg24, ncCats };
 }
 
 function updateDashboard() {
-  if (HISTORY_RECORDS.length === 0) return;
-  
-  const stationKey = document.getElementById('dash-station').value;
-  const fd = extractFlatData(stationKey);
-  const fdAll = extractFlatData('all'); // ดึงข้อมูล Area-based ไว้เสมอสำหรับเทียบสถิติ
-
-  // --- ข้อมูลสถิติพื้นฐาน ---
-  document.getElementById('kpi-avg').innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
-  document.getElementById('kpi-nc').innerHTML = fd.avgNC != null ? fd.avgNC.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
-  document.getElementById('kpi-bad').innerHTML = fd.badHours+'<span class="kpi-unit">ชม.</span>';
-  document.getElementById('kpi-max').innerHTML = fd.maxRaw != null ? fd.maxRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
-  
-  const diffVal = (fd.avgRaw != null && fd.avgNC != null) ? fd.avgNC - fd.avgRaw : null;
-  document.getElementById('kpi-nc-d').innerHTML = diffVal != null ? `<span class="${diffVal>0?'up':'down'}">${diffVal>0?'▲':'▼'} ${Math.abs(diffVal).toFixed(1)} จากค่า Raw</span>` : '';
-  document.getElementById('kpi-bad-d').textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง (${(fd.badHours/Math.max(fd.totalHours,1)*100).toFixed(1)}%)`;
-
-  // --- 🎯 หมวดการประเมินประสิทธิภาพ (วิจัย) ---
-  // 1. คำนวณ RMSE ระหว่าง NowCast กับ เฉลี่ย 24 ชม. (Objective 2)
-  const rmseValue = calcRMSE(fd.tlNC, fd.tlAvg24);
-  document.getElementById('kpi-rmse').innerHTML = rmseValue != null ? rmseValue.toFixed(3) : '—';
-
-  // 2. คำนวณความผันผวน SD (Objective 3)
-  let sdStationVal;
-  const sdAreaVal = calcSD(fdAll.tlNC); // Area-based คือ SD ของเส้นเฉลี่ยทุกสถานี
-
-  if (stationKey === 'all') {
-    // ถ้าดูภาพรวมทั้งหมด ให้คำนวณ SD ของแต่ละสถานี แล้วเอามาเฉลี่ยกัน เพื่อเป็นตัวแทน "Station-based"
-    let totalSD = 0, countSD = 0;
-    STATION_KEYS.forEach(k => {
-      let stnSD = calcSD(extractFlatData(k).tlNC);
-      if(stnSD != null) { totalSD += stnSD; countSD++; }
-    });
-    sdStationVal = countSD > 0 ? (totalSD / countSD) : null;
-  } else {
-    // ถ้าเลือกสถานีใดสถานีหนึ่ง ก็ใช้ SD ของสถานีนั้นได้เลย
-    sdStationVal = calcSD(fd.tlNC);
+  const sel = document.getElementById('dash-station').value;
+  let tKeys = [], aKeys = [];
+  let areaName = "กทม. ภาพรวม";
+  if(sel === 'all') { tKeys = aKeys = STATION_KEYS; }
+  else if(sel.startsWith('zone_')) { 
+    areaName = sel.replace('zone_','');
+    tKeys = aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === areaName); 
+  }
+  else { 
+    areaName = STATION_META[sel].zone;
+    tKeys = [sel]; 
+    aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === areaName); 
   }
 
-  document.getElementById('kpi-sd-stn').innerHTML = sdStationVal != null ? sdStationVal.toFixed(2) : '—';
-  document.getElementById('kpi-sd-area').innerHTML = sdAreaVal != null ? sdAreaVal.toFixed(2) : '—';
+  const fd = extractData(tKeys);
+  const fa = extractData(aKeys);
 
-  // 3. คำนวณเปรียบเทียบ % การลดความผันผวน
-  if (sdStationVal != null && sdAreaVal != null && sdStationVal > 0) {
-    const reduction = ((sdStationVal - sdAreaVal) / sdStationVal) * 100;
-    const isReduced = reduction >= 0;
-    document.getElementById('kpi-sd-diff').innerHTML = `${isReduced ? '▼' : '▲'} ${Math.abs(reduction).toFixed(1)}<span class="kpi-unit">%</span>`;
-    document.getElementById('kpi-sd-diff').style.color = isReduced ? '#00d4aa' : '#f44336';
+  // RMSE
+  let mse=0, cnt=0;
+  fd.nc.forEach((v,i) => { if(v&&fd.avg24[i]){ mse+=Math.pow(v-fd.avg24[i],2); cnt++; } });
+  document.getElementById('kpi-rmse').textContent = cnt ? Math.sqrt(mse/cnt).toFixed(3) : '—';
+
+  // SD (Volatility)
+  const calcSD = (arr) => {
+    const v = arr.filter(x=>x!=null); if(v.length<2) return 0;
+    const m = v.reduce((a,b)=>a+b,0)/v.length;
+    return Math.sqrt(v.reduce((a,b)=>a+Math.pow(b-m,2),0)/(v.length-1));
+  };
+  
+  let sdT;
+  if (sel === 'all' || sel.startsWith('zone_')) {
+     let totalSD = 0, countSD = 0;
+     tKeys.forEach(k => {
+       let stnSD = calcSD(extractData([k]).nc);
+       if(stnSD != null && stnSD > 0) { totalSD += stnSD; countSD++; }
+     });
+     sdT = countSD > 0 ? (totalSD / countSD) : 0;
   } else {
-    document.getElementById('kpi-sd-diff').innerHTML = '—';
+     sdT = calcSD(fd.nc);
   }
+  
+  const sdA = calcSD(fa.nc);
+  const red = (sdT && sdT > 0) ? ((sdT-sdA)/sdT*100).toFixed(1) : 0;
+  const isReduced = parseFloat(red) >= 0;
+  document.getElementById('kpi-sd-diff').innerHTML = `${isReduced ? '▼' : '▲'} ${Math.abs(red)}<span class="kpi-unit">%</span>`;
+  document.getElementById('kpi-sd-diff').style.color = isReduced ? '#00d4aa' : '#f44336';
 
-  // วาดกราฟแท่งเปรียบเทียบความผันผวน (Volatility Chart)
-  destroyChart('volatility');
-  charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
-    type: 'bar',
-    data: {
-      labels: ['รายสถานี (Station-based)', 'กลุ่มพื้นที่ (Area-based)'],
-      datasets: [{
-        label: 'Standard Deviation (SD)',
-        data: [sdStationVal, sdAreaVal],
-        backgroundColor: ['rgba(74,158,255,0.7)', 'rgba(0,212,170,0.7)'],
-        borderColor: ['#4a9eff', '#00d4aa'],
-        borderWidth: 1,
-        borderRadius: 4
-      }]
-    },
-    options: {
-      indexAxis: 'y', // ทำเป็นกราฟแท่งแนวนอนเพื่อประหยัดพื้นที่
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => ` SD: ${ctx.raw.toFixed(2)}` } } },
-      scales: { x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks:{ color:'#7a8090', font:{family:'IBM Plex Mono'} } }, y: { grid: { display: false }, ticks:{ color:'#fff', font:{family:'Sarabun'} } } }
-    }
-  });
+  // Metrics
+  const rawVals = fd.raw.filter(x=>x!=null);
+  document.getElementById('kpi-avg').textContent = rawVals.length ? (rawVals.reduce((a,b)=>a+b,0)/rawVals.length).toFixed(1) : '—';
+  document.getElementById('kpi-max').textContent = rawVals.length ? Math.max(...rawVals).toFixed(1) : '—';
 
-
-  // --- กราฟไทม์ไลน์หลัก (Bar Chart สำหรับ Raw) ---
-  destroyChart('timeline');
-  charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
-    type: 'line',
-    data: { labels: fd.tlLabels, datasets: [
-      {
-        type: 'bar',
-        label: 'รายชั่วโมง (Raw)',
-        data: fd.tlRaw,
-        backgroundColor: 'rgba(74,158,255,0.4)',
-        borderColor: '#4a9eff',
-        borderWidth: 1,
-        borderRadius: 4
-      },
-      {
-        type: 'line',
-        label: 'NowCast (w=0.4)',
-        data: fd.tlNC,
-        borderColor: '#00d4aa',
-        backgroundColor: 'rgba(0,212,170,.1)',
-        tension: .3,
-        pointRadius: 3,
-        fill: true,
-        borderWidth: 3,
-        spanGaps: true
-      },
-      {
-        type: 'line',
-        label: 'เฉลี่ย 24 ชม.',
-        data: fd.tlAvg24,
-        borderColor: '#f5a623',
-        backgroundColor: 'rgba(245,166,35,.1)',
-        tension: .3,
-        pointRadius: 2,
-        fill: false,
-        borderWidth: 2,
-        borderDash: [2, 2],
-        spanGaps: true
-      }
+  // กราฟไทม์ไลน์
+  if(charts.timeline) charts.timeline.destroy();
+  charts.timeline = new Chart(document.getElementById('chart-timeline'), {
+    data: { labels: fd.labels, datasets: [
+      { type:'line', label:'Raw (รายชั่วโมง)', data: fd.raw, borderColor:'#4a9eff', backgroundColor:'rgba(74,158,255,0.1)', borderWidth:2, tension:0.3, pointRadius:2, fill:true },
+      { type:'line', label:'NowCast', data: fd.nc, borderColor:'#00d4aa', borderWidth:3, tension:0.3, pointRadius:3 },
+      { type:'line', label:'Avg24 (เฉลี่ย 24 ชม.)', data: fd.avg24, borderColor:'#f5a623', borderDash:[5,5], borderWidth:2, tension:0.3, pointRadius:0 }
     ]},
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { labels: { color: '#7a8090', font: { family: 'Sarabun', size: 12 } } },
-        tooltip: { mode: 'index', intersect: false }
-      },
-      scales: {
-        x: { ticks: { color: '#7a8090', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,.05)' } },
-        y: { ticks: { color: '#7a8090', font: { family: 'IBM Plex Mono', size: 11 } }, grid: { color: 'rgba(255,255,255,.05)' } }
-      }
-    }
+    options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { labels: { color: '#7a8090', font: { family: 'IBM Plex Mono' } } } }, scales: { x: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
   });
 
+  // กราฟ Volatility
+  if(charts.vol) charts.volatility.destroy();
+  charts.volatility = new Chart(document.getElementById('chart-volatility'), {
+    type:'bar', data: { labels:['Station','Area ('+areaName+')'], datasets:[{data:[sdT, sdA], backgroundColor:['#4a9eff','#00d4aa']}] },
+    options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#7a8090' }, grid: { display: false } } } }
+  });
+
+  // กราฟ Donut
   const catLabels = AQI_BREAKS.map(b=>b.label); 
   const catColors = AQI_BREAKS.map(b=>b.color);
-  
-  const rawCounts = catLabels.map(l => fd.rawCats[l]||0); 
   const ncCounts = catLabels.map(l => fd.ncCats[l]||0);
-  const totalRaw = rawCounts.reduce((a,b) => a+b, 0);
   const totalNC = ncCounts.reduce((a,b) => a+b, 0);
 
-  // --- กราฟโดนัท (เปอร์เซ็นต์) ---
-  destroyChart('donut-raw');
-  charts['donut-raw'] = new Chart(document.getElementById('chart-donut-raw'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:rawCounts,backgroundColor:catColors.map(c=>c+'cc'),borderColor:'rgba(0,0,0,0)',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
-  document.getElementById('legend-raw').innerHTML = catLabels.map((l,i) => {
-    const pct = totalRaw > 0 ? ((rawCounts[i] / totalRaw) * 100).toFixed(1) : 0;
-    return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
-  }).join('');
-
-  destroyChart('donut-nc');
-  charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderColor:'rgba(0,0,0,0)',borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+  if(charts.donut) charts.donut.destroy();
+  charts.donut = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
   document.getElementById('legend-nc').innerHTML = catLabels.map((l,i) => {
     const pct = totalNC > 0 ? ((ncCounts[i] / totalNC) * 100).toFixed(1) : 0;
     return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
   }).join('');
 
-  // --- ตารางรายสถานี ---
-  const stationTableCard = document.getElementById('station-table-card');
-  const tableBody = document.querySelector('#station-ts-table tbody');
-  
-  if (stationKey === 'all') {
-    stationTableCard.style.display = 'none';
-  } else {
-    stationTableCard.style.display = 'block';
-    const stnName = STATION_META[stationKey]?.nameTH || stationKey;
-    document.getElementById('station-table-sub').textContent = `แสดงข้อมูลย้อนหลังของสถานี: ${stnName}`;
-    
-    let tableHTML = '';
-    for (let i = HISTORY_RECORDS.length - 1; i >= 0; i--) {
-      const row = HISTORY_RECORDS[i];
-      const parsed = row._parsed[stationKey];
-      if (!parsed) continue;
-      const rawVal = parsed.raw; const ncVal = parsed.nc;
-      const rawBand = getAQIBand(rawVal); const ncBand = getAQIBand(ncVal);
-      const rawStr = rawVal !== null ? `<span style="color:${rawBand.color}">${rawVal.toFixed(1)}</span>` : '—';
-      const ncStr = ncVal !== null ? `<span style="color:${ncBand.color}">${ncVal.toFixed(1)}</span>` : '—';
-      
-      tableHTML += `<tr>
-        <td>${row.date}</td>
-        <td style="font-family: var(--mono);">${row.timeRange}</td>
-        <td style="font-family: var(--mono); font-weight: bold;">${rawStr}</td>
-        <td style="font-family: var(--mono); font-weight: bold;">${ncStr}</td>
-      </tr>`;
+  // Table
+  const table = document.getElementById('station-ts-table');
+  if(sel==='all'||sel.startsWith('zone_')) { document.getElementById('station-table-card').style.display='none'; }
+  else {
+    document.getElementById('station-table-card').style.display='block';
+    document.getElementById('station-table-sub').textContent = `ประวัติข้อมูลสถานี: ${STATION_META[sel].nameTH} (${areaName})`;
+    let h = '';
+    for(let i=HISTORY_RECORDS.length-1; i>=0; i--) {
+      const p = HISTORY_RECORDS[i]._parsed[sel];
+      const bRaw = getAQIBand(p.raw); const bNC = getAQIBand(p.nc);
+      const sRaw = p.raw != null ? `<span style="color:${bRaw?.color||'#fff'}">${p.raw.toFixed(1)}</span>` : '-';
+      const sNC = p.nc != null ? `<span style="color:${bNC?.color||'#fff'}">${p.nc.toFixed(1)}</span>` : '-';
+      h += `<tr><td>${HISTORY_RECORDS[i].date}</td><td style="font-family:var(--mono)">${HISTORY_RECORDS[i].timeRange}</td><td style="font-family:var(--mono); font-weight:bold">${sRaw}</td><td style="font-family:var(--mono); font-weight:bold">${sNC}</td></tr>`;
     }
-    tableBody.innerHTML = tableHTML;
+    table.querySelector('tbody').innerHTML = h;
   }
 }
 
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
-initMap();
 initializeData();
 </script>
 </body>
