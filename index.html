@@ -136,8 +136,8 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .leaflet-popup-content{margin:14px 16px !important;font-family:var(--font)}
 
 .no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; gap: 16px; text-align: center; color: var(--muted); }
-.no-data-placeholder .nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
-.no-data-placeholder .nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
+.nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 </style>
 </head>
@@ -525,7 +525,6 @@ function buildDynamicUI() {
     dashSelect.innerHTML += `</optgroup>`;
   }
 
-  // สร้าง Zone Tags Legend
   const zTagsEl = document.getElementById('zone-tags-container');
   zTagsEl.innerHTML = '';
   for (const z in ZONE_COLORS) {
@@ -540,7 +539,6 @@ function buildDynamicUI() {
     const m = STATION_META[key];
     const zoneColor = ZONE_COLORS[m.zone];
 
-    // 🎯 วาด Zone Cloud โปร่งแสงครอบสถานี (รัศมี 2.5km)
     L.circle([m.lat, m.lng], {
       radius: 2500,
       color: zoneColor,
@@ -552,7 +550,8 @@ function buildDynamicUI() {
 
     const div = document.createElement('div');
     div.className = 'pm-marker';
-    div.style.cssText = `width:46px;height:46px;background:#333;outline: 4px solid ${zoneColor};`;
+    // เอาขอบเส้นที่เป็นสีโซนตรงนี้ออก
+    div.style.cssText = `width:46px;height:46px;background:#333;`;
     div.textContent = '…';
     
     const icon = L.divIcon({ html: div, className: '', iconSize: [46,46], iconAnchor: [23,23] });
@@ -576,11 +575,9 @@ function switchTab(tab, e) {
 
 function updateMap() {
   if (HISTORY_RECORDS.length === 0) return;
-  // ดึงข้อมูลแถวล่าสุดเสมอ (Live Monitor)
   const rowData = HISTORY_RECORDS[HISTORY_RECORDS.length - 1];
   const cardsEl = document.getElementById('stn-cards');
   
-  // อัปเดตเวลาบน Sidebar
   document.getElementById('live-time-display').textContent = `ข้อมูลวันที่: ${rowData.date} | ${rowData.timeRange}`;
 
   const sortedKeys = STATION_KEYS.filter(k => STATION_META[k]).sort((a,b) => {
@@ -597,7 +594,6 @@ function updateMap() {
     const tc = band?.textColor ?? '#fff';
     const avg24Band = getAQIBand(avg24);
     
-    // การ์ดสถานีที่มีทั้ง NowCast และ Avg24
     return `<div class="scard" id="sc-${key}" onclick="selectStation('${key}')">
       <div class="scard-top">
         <div><div class="scard-name">${m.nameTH}</div><div class="scard-sub">📍 ${m.zone}</div></div>
