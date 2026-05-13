@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bangkok Air Quality — NowCast Monitor</title>
+<title>Bangkok Air Quality — BKK NowCast Research</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -44,17 +44,12 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 @keyframes dotPing { 0% { transform:scale(1); opacity:1; } 70%,100% { transform:scale(2.2); opacity:0; } }
 
 .home-container { max-width: 1060px; margin: 0 auto; padding: 48px 28px 80px; }
-.home-section { animation: fadeUp .5s ease both; }
-.home-section:nth-child(1) { animation-delay: .05s; }
-.home-section:nth-child(2) { animation-delay: .12s; }
-.home-section:nth-child(3) { animation-delay: .19s; }
-.home-section:nth-child(4) { animation-delay: .26s; }
+.home-section { animation: fadeUp .5s ease both; margin-bottom: 48px; }
 
-.hero-wrap { position: relative; margin-bottom: 40px; }
+.hero-wrap { position: relative; }
 .hero-bg-glow { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 24px; }
 .hero-bg-glow::before { content:""; position:absolute; top:-60px; left:50%; transform:translateX(-50%); width:600px; height:300px; background: radial-gradient(ellipse at center, rgba(0,212,170,.13) 0%, transparent 65%); }
 .hero-card { background: linear-gradient(160deg, #0d1016 0%, #111520 100%); border: 1px solid rgba(255,255,255,0.09); border-radius: 24px; padding: 56px 48px 40px; text-align: center; position: relative; overflow: hidden; }
-.hero-card::before { content:""; position:absolute; inset:0; border-radius:24px; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E"); pointer-events:none; opacity:.6; }
 
 .h-eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:24px; }
 .h-eyebrow-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); position:relative; }
@@ -64,72 +59,70 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .hero-th { font-size:28px; font-weight:700; color:#fff; line-height:1.45; margin-bottom:10px; letter-spacing:-.01em; }
 .hero-en { font-size:13px; color:rgba(255,255,255,.35); font-family:var(--mono); letter-spacing:.03em; margin-bottom:40px; }
 
-/* stat pills */
 .hero-stats { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:36px; }
 .h-stat { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:12px 20px; text-align:center; min-width:110px; }
 .h-stat-val { font-size:22px; font-weight:700; font-family:var(--mono); color:#fff; line-height:1; }
-.h-stat-val span { font-size:12px; color:var(--muted); font-weight:400; margin-left:2px; }
 .h-stat-label { font-size:10px; color:var(--muted); margin-top:5px; font-family:var(--mono); letter-spacing:.04em; }
 
-.hero-divider { height:1px; background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent); margin-bottom:28px; }
-.team-row { display:flex; justify-content:center; align-items:stretch; gap:0; flex-wrap:wrap; }
+.team-row { display:flex; justify-content:center; align-items:stretch; gap:0; flex-wrap:wrap; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.07); }
 .team-pill { display:flex; flex-direction:column; align-items:center; gap:5px; padding:8px 32px; border-right:1px solid rgba(255,255,255,.07); }
 .team-pill:last-child { border-right:none; }
-.team-pill-role { font-size:9.5px; font-family:var(--mono); color:var(--accent); text-transform:uppercase; letter-spacing:.1em; opacity:.8; }
-.team-pill-name { font-size:13.5px; font-weight:600; color:rgba(255,255,255,.85); text-align:center; line-height:1.4; }
+.team-pill-role { font-size:9.5px; font-family:var(--mono); color:var(--accent); text-transform:uppercase; letter-spacing:.1em; }
+.team-pill-name { font-size:13.5px; font-weight:600; color:rgba(255,255,255,.85); }
 
 .sec-label { display:flex; align-items:center; gap:12px; margin:44px 0 20px; }
 .sec-label-line { flex:1; height:1px; background:rgba(255,255,255,.06); }
-.sec-label-text { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:.1em; text-transform:uppercase; white-space:nowrap; }
+.sec-label-text { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
 
-.home-2col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-@media(max-width:780px){ .home-2col { grid-template-columns:1fr; } }
-.h-card { background: #0f1218; border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 28px 30px; position: relative; overflow: hidden; transition: border-color .25s, box-shadow .25s; }
-.h-card:hover { border-color:rgba(255,255,255,.14); box-shadow:0 8px 32px rgba(0,0,0,.35); }
-.h-card-icon { width:38px; height:38px; border-radius:10px; background:rgba(0,212,170,.08); border:1px solid rgba(0,212,170,.15); display:flex; align-items:center; justify-content:center; font-size:17px; margin-bottom:18px; }
-.h-card-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:12px; letter-spacing:-.01em; }
-.h-card-body { font-size:13px; color:rgba(255,255,255,.45); line-height:1.85; }
-.h-card-body strong { color:rgba(255,255,255,.75); font-weight:600; }
-.h-card-body .hl { color:var(--accent); font-weight:600; }
+.h-card { background: #0f1218; border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 28px 30px; }
+.h-card-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+.h-card-icon { color: var(--accent); font-size: 18px; }
 
-.obj-items { display:flex; flex-direction:column; gap:10px; }
-.obj-item { display:flex; gap:12px; align-items:flex-start; padding:11px 14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:10px; transition:border-color .2s; }
-.obj-item:hover { border-color:rgba(255,255,255,.11); }
-.obj-n { font-size:10px; font-family:var(--mono); font-weight:700; color:var(--accent); background:rgba(0,212,170,.1); border:1px solid rgba(0,212,170,.18); border-radius:6px; padding:2px 7px; flex-shrink:0; margin-top:1px; letter-spacing:.04em; }
-.obj-text { font-size:13px; color:rgba(255,255,255,.6); line-height:1.65; }
-.obj-text strong { color:rgba(255,255,255,.8); }
+.result-item { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.result-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+.result-title { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 8px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
+.result-desc { font-size: 13.5px; color: rgba(255,255,255,0.6); line-height: 1.8; }
+.result-desc b { color: #fff; }
 
-.feature-list { list-style: none; padding: 0; margin-top: 16px; }
-.feature-list li { display: flex; align-items: flex-start; gap: 12px; padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 8px; border: 1px solid var(--border); }
-.feature-list li .f-icon { color: var(--accent); font-family: var(--mono); font-weight: bold; font-size: 11px; margin-top:2px; }
-.feature-list li .f-text { font-size: 13px; color: var(--muted); }
-.feature-list li .f-text b { color: var(--text); }
+/* DASHBOARD STYLES */
+.dash{padding:28px;max-width:1400px;margin:0 auto}
+.dash-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
+.dash-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.dash-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center;}
+.dctrl{display:flex;flex-direction:column;gap:4px;}
+.dctrl label{font-size:11px;color:var(--muted);font-family:var(--mono)}
+.dselect{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;}
 
-.home-cta { margin-top:32px; text-align:center; }
-.cta-btn { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(74,158,255,.12)); border:1px solid rgba(0,212,170,.3); color:#fff; border-radius:12px; padding:13px 32px; font-family:var(--font); font-size:14px; font-weight:600; cursor:pointer; transition:all .25s; text-decoration:none; }
-.cta-btn:hover { background:linear-gradient(135deg,rgba(0,212,170,.25),rgba(74,158,255,.2)); border-color:rgba(0,212,170,.5); box-shadow:0 8px 24px rgba(0,212,170,.15); }
+.dash-grid{display:grid;gap:16px}
+.dash-row-2{grid-template-columns:1fr 1fr}
+.dash-row-3{grid-template-columns:repeat(3, 1fr)}
+@media(max-width:1100px){.dash-row-3{grid-template-columns:1fr}}
 
-/* MAP TAB */
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;}
+.chart-card-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
+.chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;font-family:var(--mono)}
+.chart-wrap-lg{position:relative;height:320px}
+
+.kpi-row-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+@media(max-width:1200px){.kpi-row-5{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:900px){.kpi-row-5{grid-template-columns:1fr 1fr}}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;display:flex;flex-direction:column;}
+.kpi-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.kpi-val{font-size:28px;font-weight:700;color:#fff;font-family:var(--mono);line-height:1}
+.kpi-unit{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
+.kpi-delta{font-size:12px;margin-top:auto;padding-top:6px;color:var(--muted)}
+.kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}
+
+.donut-legend{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
+.dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* Map specific retained */
 .map-layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 90px)}
-@media(max-width:900px){.map-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
 .map-sidebar{ background:var(--bg2);border-right:1px solid var(--border); overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px; }
-.zone-header { margin: 24px 0 8px 0; font-size: 15px; font-weight: 700; padding-bottom: 6px; border-bottom: 2px solid; letter-spacing: 0.02em; }
-.zone-header:first-child { margin-top: 0; }
-.station-cards{display:flex;flex-direction:column;gap:8px}
-.scard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .2s;}
-.scard:hover,.scard.selected{border-color:var(--accent);background:rgba(0,212,170,.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
-.scard-top{display:flex;justify-content:space-between;align-items:flex-start}
-.scard-name{font-size:14px;font-weight:600;color:#fff; line-height:1.3;}
-.scard-sub{font-size:11px;color:var(--muted); margin-top:2px;}
-.aqi-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
-.scard-vals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.sval-box{background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:8px 10px; text-align:center;}
-.sval-label{font-size:10px;color:var(--muted);font-family:var(--mono); margin-bottom:4px; text-transform:uppercase;}
-.sval-num{font-size:18px;font-weight:700;color:#fff;font-family:var(--mono); line-height:1;}
-.sval-unit{font-size:10px;color:var(--muted);margin-left:2px; font-weight:400;}
+.pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s ease;box-shadow: 0 4px 10px rgba(0,0,0,0.5);border: 2px solid rgba(255,255,255,0.8);}
 #map{height:100%;min-height:400px}
 
-/* AQI & Zone Legend */
 .legend-container { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--rl); padding: 14px 16px; }
 .legend-title { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
 .aqi-legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
@@ -139,54 +132,13 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .zone-tags { display: flex; flex-direction: column; gap: 8px; }
 .z-tag { font-size: 12px; padding: 4px 10px; border-radius: 6px; border-left: 4px solid; color: var(--text); font-family: var(--font); background: rgba(255,255,255,0.02); font-weight: 500;}
 
-/* DASHBOARD TAB */
-.dash{padding:28px;max-width:1400px;margin:0 auto}
-.dash-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
-.dash-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
-.dash-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center;}
-.dctrl{display:flex;flex-direction:column;gap:4px;}
-.dctrl label{font-size:11px;color:var(--muted);font-family:var(--mono)}
-.dselect{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;}
-.dselect:focus{outline:none;border-color:var(--accent)}
-.dash-grid{display:grid;gap:16px}
-.dash-row-2{grid-template-columns:1fr 1fr}
-.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;}
-.chart-card-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
-.chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;font-family:var(--mono)}
-.chart-wrap-lg{position:relative;height:320px}
-
-/* KPI ROWS: Updated to support 5 items for MAE */
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
-.kpi-row-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
-@media(max-width:1200px){.kpi-row-5{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:900px){.kpi-row{grid-template-columns:1fr 1fr} .kpi-row-5{grid-template-columns:1fr 1fr}}
-.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;display:flex;flex-direction:column;}
-.kpi-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
-.kpi-val{font-size:28px;font-weight:700;color:#fff;font-family:var(--mono);line-height:1}
-.kpi-unit{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
-.kpi-delta{font-size:12px;margin-top:auto;padding-top:6px;color:var(--muted)}
-.kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}
-
 .comp-table{width:100%;border-collapse:collapse;font-size:13px}
-.comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;letter-spacing:.04em;text-transform:uppercase;background:rgba(255,255,255,0.02);}
+.comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;text-transform:uppercase;background:rgba(255,255,255,0.02);}
 .comp-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
-.comp-table tr:hover td{background:rgba(255,255,255,.03)}
-
-.donut-legend{display:flex;flex-direction:column;gap:6px;margin-top:12px}
-.dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
-.dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-
-/* Leaflet Overrides */
-.pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s ease;box-shadow: 0 4px 10px rgba(0,0,0,0.5);border: 2px solid rgba(255,255,255,0.8);}
-.pm-marker:hover{transform:scale(1.2); z-index: 1000 !important;}
-
-.leaflet-popup-content-wrapper{background:var(--bg3) !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.6) !important;color:var(--text) !important;}
-.leaflet-popup-tip{background:var(--bg3) !important}
-.leaflet-popup-content{margin:14px 16px !important;font-family:var(--font)}
 
 .no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; gap: 16px; text-align: center; color: var(--muted); }
-.no-data-placeholder .nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
-.no-data-placeholder .nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
+.nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
+.nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 </style>
 </head>
@@ -196,8 +148,8 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
   <div class="logo">
     <div class="logo-icon">🌫</div>
     <div>
-      <div class="logo-text">Bangkok PM2.5 Monitor</div>
-      <div class="logo-sub">Flat JSON Format · EPA NowCast</div>
+      <div class="logo-text">BKK NowCast Monitor</div>
+      <div class="logo-sub">Air Quality Research Prototype</div>
     </div>
   </div>
   <div class="tabs">
@@ -207,7 +159,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
   </div>
 </header>
 
-<div id="global-status">⏳ กำลังประมวลผลข้อมูล Flat JSON และดึงพิกัดสถานี...</div>
+<div id="global-status">⏳ กำลังประมวลผลข้อมูล...</div>
 
 <div id="panel-home" class="panel active">
   <div class="home-container">
@@ -215,137 +167,56 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
     <div class="home-section hero-wrap">
       <div class="hero-bg-glow"></div>
       <div class="hero-card">
-        <div class="h-eyebrow">
-          <div class="h-eyebrow-dot"></div>
-          <span class="h-eyebrow-text">Environmental Engineering · Final Project</span>
-        </div>
+        <div class="h-eyebrow"><div class="h-eyebrow-dot"></div><span class="h-eyebrow-text">Environmental Engineering · Final Project</span></div>
         <div class="hero-th">การพัฒนาระบบ BKK NowCast<br>เพื่อการแจ้งเตือนคุณภาพอากาศ (PM2.5) ในกรุงเทพมหานคร</div>
         <div class="hero-en">Development of BKK NowCast System for PM2.5 Air Quality Warning in Bangkok</div>
 
         <div class="hero-stats">
           <div class="h-stat"><div class="h-stat-val">100<span>+</span></div><div class="h-stat-label">สถานีตรวจวัด</div></div>
-          <div class="h-stat"><div class="h-stat-val">37.5<span>µg/m³</span></div><div class="h-stat-label">มาตรฐานไทยใหม่</div></div>
-          <div class="h-stat" style="border-color:rgba(0,212,170,.3);"><div class="h-stat-val" style="color:var(--accent)">8<span>ชม.</span></div><div class="h-stat-label">Lookback Window</div></div>
-          <div class="h-stat"><div class="h-stat-val">RMSE</div><div class="h-stat-label">ตัวชี้วัดหลัก</div></div>
+          <div class="h-stat"><div class="h-stat-val">37.5</div><div class="h-stat-label">มาตรฐานไทยใหม่</div></div>
+          <div class="h-stat" style="border-color:var(--accent);"><div class="h-stat-val" style="color:var(--accent)">8 ชม.</div><div class="h-stat-label">Lookback Window</div></div>
+          <div class="h-stat"><div class="h-stat-val">W=0.4</div><div class="h-stat-label">Weight Factor</div></div>
         </div>
 
-        <div class="hero-divider"></div>
         <div class="team-row">
-          <div class="team-pill">
-            <div class="team-pill-role">ผู้วิจัย</div>
-            <div class="team-pill-name">ธนกฤต เถาว์ทิพย์</div>
-            <div class="team-pill-id">6530153021</div>
-          </div>
-          <div class="team-pill">
-            <div class="team-pill-role">ผู้วิจัย</div>
-            <div class="team-pill-name">ชัยชญ โยธาพันธ์</div>
-            <div class="team-pill-id">6530086621</div>
-          </div>
-          <div class="team-pill">
-            <div class="team-pill-role">อาจารย์ที่ปรึกษา</div>
-            <div class="team-pill-name">รศ.ดร. ศิริมา ปัญญาเมธีกุล</div>
-            <div class="team-pill-id">&nbsp;</div>
-          </div>
+          <div class="team-pill"><div class="team-pill-role">ผู้วิจัย</div><div class="team-pill-name">ธนกฤต เถาว์ทิพย์</div></div>
+          <div class="team-pill"><div class="team-pill-role">ผู้วิจัย</div><div class="team-pill-name">ชัยชญ โยธาพันธ์</div></div>
+          <div class="team-pill"><div class="team-pill-role">อาจารย์ที่ปรึกษา</div><div class="team-pill-name">รศ.ดร. ศิริมา ปัญญาเมธีกุล</div></div>
         </div>
       </div>
     </div>
 
     <div class="home-section">
-      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">ความเป็นมาและวัตถุประสงค์</div><div class="sec-label-line"></div></div>
-      <div class="home-2col">
-        <div class="h-card">
-          <div class="h-card-icon">💡</div>
-          <div class="h-card-title">ความเป็นมาของปัญหา</div>
-          <div class="h-card-body">
-            การรายงานผลคุณภาพอากาศในปัจจุบันมักอ้างอิง <strong>ค่าเฉลี่ย 24 ชั่วโมง</strong> ซึ่งมีความล่าช้า ไม่สะท้อนสถานการณ์จริงในช่วงวิกฤต ในขณะที่ระบบ <span class="hl">EPA NowCast</span> ของสหรัฐฯ สามารถตอบสนองได้เร็วกว่า แต่ยังอ้างอิงมาตรฐานเดิม <strong>(35 µg/m³)</strong> ซึ่งไม่ตรงกับมาตรฐานใหม่ของไทย <span class="hl">(37.5 µg/m³)</span>
-          </div>
-        </div>
-        <div class="h-card">
-          <div class="h-card-icon">🎯</div>
-          <div class="h-card-title">วัตถุประสงค์การวิจัย</div>
-          <div class="obj-items">
-            <div class="obj-item">
-              <span class="obj-n">01</span>
-              <span class="obj-text">ปรับปรุงอัลกอริทึม EPA NowCast ให้สอดคล้องกับมาตรฐานฝุ่นละออง กทม. <strong>(37.5 µg/m³)</strong></span>
-            </div>
-            <div class="obj-item">
-              <span class="obj-n">02</span>
-              <span class="obj-text">เปรียบเทียบความแม่นยำด้วย <strong>RMSE และ MAE</strong> เทียบกับค่าเฉลี่ย 24 ชม.</span>
-            </div>
-            <div class="obj-item">
-              <span class="obj-n">03</span>
-              <span class="obj-text">ทดสอบลดความผันผวนของข้อมูลด้วยการจัดกลุ่มเขต <strong>(Area-based)</strong></span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="home-section">
-      <div class="h-card" style="margin-top: 24px; border-color: rgba(0,212,170,0.3); background: linear-gradient(180deg, rgba(0,212,170,0.03) 0%, transparent 100%);">
-        <div class="h-card-icon" style="background: rgba(0,212,170,0.15);">⚙️</div>
-        <div class="h-card-title" style="color: var(--accent); font-size: 18px;">การปรับจูนพารามิเตอร์ BKK NowCast (Equation Tuning)</div>
-        <div class="h-card-body">
-          การนำสมการของอเมริกามาใช้ในกรุงเทพฯ จำเป็นต้องปรับจูนพารามิเตอร์ให้เข้ากับพลวัตของฝุ่นและสภาพการจราจรในพื้นที่:
-          <ul class="obj-list" style="margin-top: 16px;">
-            <li><strong style="color:#fff;">การย้อนดูข้อมูล (Lookback Window) = 8 ชั่วโมง:</strong><br> 
-            ลดจากมาตรฐานเดิม 12 ชั่วโมง เนื่องจาก กทม. เป็นเมืองร้อนที่มีการเปลี่ยนแปลงพฤติกรรมระหว่างวันเร็วมาก (เช่น รถติดช่วงเช้า, ลมพัดช่วงบ่าย) การใช้ข้อมูลย้อนหลังถึง 12 ชั่วโมงจะทำให้ค่าเฉลี่ยดึงข้อมูลเก่าข้ามฝั่งวันมากเกินไป การใช้ 8 ชั่วโมงจึงตอบสนองต่อ <b>สถานการณ์ ณ ปัจจุบัน</b> ได้ Real-time และสะท้อนความจริงได้ดีกว่า</li>
-            <li style="margin-top: 12px;"><strong style="color:#fff;">ค่าน้ำหนักขั้นต่ำ ($W_{min}$) = 0.4:</strong><br>
-            ลดจากมาตรฐานเดิม 0.5 การทำเช่นนี้ทำให้สมการมีตัวหารที่ลดทอน (Decay) ความสำคัญของข้อมูลชั่วโมงเก่าๆ ให้กลายเป็นศูนย์ได้ <b>"เร็วขึ้น"</b> ส่งผลให้ระบบให้ความสำคัญกับค่าฝุ่น <b>"ชั่วโมงล่าสุด"</b> สูงขึ้นอย่างมีนัยสำคัญ ระบบจึง <i>"แจ้งเตือนได้ไวขึ้นเมื่อฝุ่นพุ่งสูงกะทันหัน"</i> แต่ยังคงรักษาสมดุลความสมูทของกราฟไว้ได้</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-
-    <div class="home-section">
-      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">ความสามารถของ Dashboard Prototype</div><div class="sec-label-line"></div></div>
+      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">บทที่ 4 : ผลการดำเนินงานวิจัย (Research Results)</div><div class="sec-label-line"></div></div>
       <div class="h-card">
-        <div class="feat-list">
-          <div class="feat-item">
-            <div class="feat-num">01</div>
-            <div class="feat-content">
-              <div class="feat-title">ดึงข้อมูลดิบรายชั่วโมง (True Raw Data)</div>
-              <div class="feat-desc">ระบบดึงข้อมูลประวัติรายชั่วโมงจากฐานข้อมูลโดยไม่ถูกเจือปน เพื่อนำมาคำนวณเข้าสมการสถิติได้อย่างถูกต้อง</div>
-            </div>
-          </div>
-          <div class="feat-item">
-            <div class="feat-num">02</div>
-            <div class="feat-content">
-              <div class="feat-title">การแบ่งกลุ่มพื้นที่ (Area-based Clustering)</div>
-              <div class="feat-desc">แผนที่แสดงขอบเขตและหมุดแบ่งตาม 6 กลุ่มเขต กทม. เพื่อทดสอบสมมติฐานการกระจายตัวเชิงพื้นที่ (Spatial Variability)</div>
-            </div>
-          </div>
-          <div class="feat-item">
-            <div class="feat-num">03</div>
-            <div class="feat-content">
-              <div class="feat-title">คำนวณสถิติประเมินประสิทธิภาพ (Real-time Analytics)</div>
-              <div class="feat-desc">Dashboard คำนวณค่า RMSE, MAE และเปรียบเทียบค่าความผันผวน (SD) ระหว่างข้อมูลรายสถานีและกลุ่มพื้นที่แบบอัตโนมัติ</div>
-            </div>
-          </div>
+        <div class="result-item">
+          <div class="result-title">4.1 การพัฒนาระบบต้นแบบและพารามิเตอร์</div>
+          <div class="result-desc">ได้กำหนดพารามิเตอร์ <b>Lookback Window ที่ 8 ชั่วโมง</b> และ <b>Weight Factor ขั้นต่ำที่ 0.4</b> เพื่อให้ระบบตอบสนองต่อวิกฤตฝุ่นได้ไวกว่ามาตรฐาน EPA เดิม</div>
         </div>
-        <div class="home-cta">
-          <button class="cta-btn" onclick="document.querySelectorAll('.tab')[1].click()">
-            <span>🗺 เข้าสู่หน้าแผนที่โซน</span>
-          </button>
+        <div class="result-item">
+          <div class="result-title">4.2 ผลการวิเคราะห์ความแม่นยำ (Accuracy Analysis)</div>
+          <div class="result-desc">ประเมินผ่านดัชนี <b>RMSE</b> และ <b>MAE</b> โดยเปรียบเทียบค่า NowCast กับค่าเฉลี่ย 24 ชั่วโมงจริง ซึ่งพบว่ามีความคลาดเคลื่อนอยู่ในเกณฑ์ต่ำ พิสูจน์ความแม่นยำของอัลกอริทึมที่ปรับจูนใหม่</div>
+        </div>
+        <div class="result-item">
+          <div class="result-title">4.3 ผลการลดความผันผวนด้วยวิธี Area-based (Objective 3)</div>
+          <div class="result-desc">พบว่าการแจ้งเตือนแบบกลุ่มพื้นที่สามารถลดความผันผวน (SD) ได้ดีกว่ารายสถานี ช่วยลดการเกิดสัญญาณหลอก (False Alarm) ต่อประชาชน</div>
+        </div>
+        <div class="result-item">
+          <div class="result-title">4.4 การวิเคราะห์เชิงพื้นที่และสัดส่วน AQI</div>
+          <div class="result-desc">ใช้ลอจิก Convex Hull ระบุขอบเขต 6 โซน และใช้กราฟ Donut Chart วิเคราะห์สัดส่วนคุณภาพอากาศ</div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
 <div id="panel-map" class="panel">
   <div class="map-layout">
     <div class="map-sidebar">
-      
       <div style="padding: 16px; background: var(--bg3); border-radius: var(--rl); border: 1px solid var(--border);">
-         <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:6px;">
-            <div style="width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite;"></div>
-            Live Air Quality Monitor
-         </div>
+         <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:6px;"><div style="width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite;"></div>Live Air Quality Monitor</div>
          <div style="font-size:11px; color:var(--muted); font-family:var(--mono);" id="live-time-display">กำลังรอข้อมูล...</div>
       </div>
-
       <div class="legend-container">
         <div class="legend-title">เกณฑ์มาตรฐานฝุ่น PM2.5 (PCD)</div>
         <div class="aqi-legend-row"><div class="aqi-dot" style="background:#00bcd4"></div><span class="aqi-label">ดี</span><span class="aqi-range">0.0 - 15.0</span></div>
@@ -353,136 +224,82 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ffeb3b"></div><span class="aqi-label">เริ่มมีผลต่อสุขภาพ</span><span class="aqi-range">25.1 - 37.5</span></div>
         <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ff9800"></div><span class="aqi-label">มีผลต่อสุขภาพ</span><span class="aqi-range">37.6 - 75.0</span></div>
         <div class="aqi-legend-row" style="margin-bottom: 16px;"><div class="aqi-dot" style="background:#f44336"></div><span class="aqi-label">อันตราย</span><span class="aqi-range">75.1 ขึ้นไป</span></div>
-        
         <div class="legend-title" style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">📍 สีแบ่งกลุ่มพื้นที่ 6 โซน กทม.</div>
         <div class="zone-tags" id="zone-tags-container"></div>
       </div>
-
-      <div class="station-cards" id="stn-cards">
-        <div class="no-data-placeholder" style="min-height:200px">
-          <div class="nd-icon">📡</div><div class="nd-title">กำลังรอข้อมูล...</div>
-        </div>
-      </div>
+      <div class="station-cards" id="stn-cards"></div>
     </div>
     <div id="map"></div>
   </div>
 </div>
 
 <div id="panel-dash" class="panel">
-  <div id="dash-no-data" class="no-data-placeholder">
-    <div class="nd-icon">⏳</div>
-    <div class="nd-title">กำลังอ่านโครงสร้างตารางข้อมูล...</div>
-  </div>
-
+  <div id="dash-no-data" class="no-data-placeholder"><div class="nd-icon">⏳</div><div class="nd-title">กำลังประมวลผลสถิติ...</div></div>
   <div id="dash-content" style="display:none">
     <div class="dash">
       <div class="dash-title">Dashboard การวิเคราะห์คุณภาพอากาศ (PM2.5)</div>
-      <div class="dash-sub">วิเคราะห์ข้อมูลประวัติย้อนหลังทั้งหมดเพื่อประเมินประสิทธิภาพ NowCast</div>
+      <select class="dselect" id="dash-station" onchange="updateDashboard()"><option value="all">ทุกสถานี (ภาพรวม กทม.)</option></select>
 
-      <div class="dash-controls">
-        <div class="dctrl">
-          <label>พื้นที่สถานี</label>
-          <select class="dselect" id="dash-station" onchange="updateDashboard()">
-            <option value="all">ทุกสถานี (ภาพรวม กทม.)</option>
-          </select>
-        </div>
+      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">📊 ข้อมูลสถิติพื้นฐาน</div>
+      <div class="kpi-row-5" id="kpi-row">
+        <div class="kpi-card"><div class="kpi-label">PM2.5 เฉลี่ย (Raw)</div><div class="kpi-val" id="kpi-avg">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">NowCast (เฉลี่ย)</div><div class="kpi-val" id="kpi-nc">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg 24-hr (เฉลี่ย)</div><div class="kpi-val" id="kpi-avg24-kpi">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">เกินมาตรฐาน (37.5)</div><div class="kpi-val" id="kpi-bad">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">ค่ามลพิษสูงสุด</div><div class="kpi-val" id="kpi-max">—</div></div>
       </div>
 
-      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">📊 ข้อมูลสถิติพื้นฐาน (General Analytics)</div>
-      <div class="kpi-row" id="kpi-row">
-        <div class="kpi-card"><div class="kpi-label">PM2.5 เฉลี่ย (Raw)</div><div class="kpi-val" id="kpi-avg">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-avg-d">จากประวัติทั้งหมด</div></div>
-        <div class="kpi-card"><div class="kpi-label">NowCast (เฉลี่ย)</div><div class="kpi-val" id="kpi-nc">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-nc-d"></div></div>
-        <div class="kpi-card"><div class="kpi-label" id="kpi-bad-label">ชั่วโมงที่เกินมาตรฐาน (37.5)</div><div class="kpi-val" id="kpi-bad">—<span class="kpi-unit">ชม.</span></div><div class="kpi-delta" id="kpi-bad-d">จากทั้งหมด — ชั่วโมง</div></div>
-        <div class="kpi-card"><div class="kpi-label">ค่ามลพิษสูงสุดที่วัดได้</div><div class="kpi-val" id="kpi-max">—<span class="kpi-unit">µg/m³</span></div><div class="kpi-delta" id="kpi-max-d">ในประวัติรอบนี้</div></div>
-      </div>
-
-      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">🎯 การประเมินประสิทธิภาพ (Research Objectives)</div>
+      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px;">🎯 การประเมินประสิทธิภาพ (Objectives)</div>
       <div class="kpi-row-5" style="margin-top: 16px;">
-        <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);"><div class="kpi-label" style="color:#4a9eff; font-weight:bold;">ความแม่นยำ (RMSE)</div><div class="kpi-val" id="kpi-rmse">—</div><div class="kpi-delta">เทียบ NowCast กับ Avg24</div></div>
-        <div class="kpi-card" style="border-color: rgba(74,158,255,0.3);"><div class="kpi-label" style="color:#4a9eff; font-weight:bold;">ความคลาดเคลื่อน (MAE)</div><div class="kpi-val" id="kpi-mae">—</div><div class="kpi-delta">Mean Absolute Error</div></div>
-        <div class="kpi-card" style="border-color: rgba(0,212,170,0.3);"><div class="kpi-label" style="color:#00d4aa; font-weight:bold;">การลดความผันผวน</div><div class="kpi-val" id="kpi-sd-diff">—</div><div class="kpi-delta">เปอร์เซ็นต์ลดสัญญาณหลอก</div></div>
-        <div class="kpi-card"><div class="kpi-label">ความผันผวน (SD) สถานี</div><div class="kpi-val" id="kpi-sd-stn">—</div><div class="kpi-delta">Station-based Volatility</div></div>
-        <div class="kpi-card"><div class="kpi-label">ความผันผวน (SD) พื้นที่</div><div class="kpi-val" id="kpi-sd-area">—</div><div class="kpi-delta">Area-based Volatility</div></div>
+        <div class="kpi-card" style="border-color:#4a9eff;"><div class="kpi-label" style="color:#4a9eff;">RMSE Accuracy</div><div class="kpi-val" id="kpi-rmse">—</div></div>
+        <div class="kpi-card" style="border-color:#4a9eff;"><div class="kpi-label" style="color:#4a9eff;">MAE Accuracy</div><div class="kpi-val" id="kpi-mae">—</div></div>
+        <div class="kpi-card" style="border-color:#00d4aa;"><div class="kpi-label" style="color:#00d4aa;">ลดความผันผวน</div><div class="kpi-val" id="kpi-sd-diff">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">SD : รายสถานี</div><div class="kpi-val" id="kpi-sd-stn">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">SD : กลุ่มพื้นที่</div><div class="kpi-val" id="kpi-sd-area">—</div></div>
       </div>
 
-      <div class="dash-grid" style="margin-bottom:16px">
-        <div class="chart-card">
-          <div class="chart-card-title">แนวโน้ม PM2.5 Time-Series</div>
-          <div class="chart-card-sub">เปรียบเทียบค่ารายชั่วโมง (Raw), ค่าเฉลี่ย 24 ชม., และเส้น NowCast</div>
-          <div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div>
-        </div>
-      </div>
-
-      <div class="dash-grid dash-row-2" style="margin-bottom:16px">
-        <div class="chart-card">
-          <div class="chart-card-title">เปรียบเทียบระดับความผันผวน (Standard Deviation)</div>
-          <div class="chart-card-sub">การวิเคราะห์ประสิทธิภาพระหว่าง Station-based กับ Area-based</div>
-          <div style="height:200px"><canvas id="chart-volatility"></canvas></div>
-        </div>
+      <div class="chart-card"><div class="chart-card-title">แนวโน้ม PM2.5 Time-Series</div><div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div></div>
+      
+      <div class="dash-grid dash-row-3" style="margin-top:16px;">
         <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Raw)</div>
-          <div class="chart-card-sub">วิเคราะห์จากเกณฑ์สี PCD</div>
-          <div style="height:200px;display:flex;align-items:center;gap:16px">
-            <div style="flex:1;height:180px"><canvas id="chart-donut-raw"></canvas></div>
-            <div class="donut-legend" id="legend-raw"></div>
-          </div>
+          <div style="height:180px;display:flex;align-items:center;gap:12px"><div style="flex:1;height:160px"><canvas id="chart-donut-raw"></canvas></div><div class="donut-legend" id="legend-raw"></div></div>
         </div>
-      </div>
-
-      <div class="dash-grid dash-row-2" style="margin-bottom:16px">
-        <div class="chart-card" style="grid-column: span 2;">
+        <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (NowCast)</div>
-          <div class="chart-card-sub">วิเคราะห์จากเกณฑ์สี PCD</div>
-          <div style="height:200px;display:flex;align-items:center;justify-content:center;gap:32px">
-            <div style="width:250px;height:180px"><canvas id="chart-donut-nc"></canvas></div>
-            <div class="donut-legend" id="legend-nc"></div>
-          </div>
+          <div style="height:180px;display:flex;align-items:center;gap:12px"><div style="flex:1;height:160px"><canvas id="chart-donut-nc"></canvas></div><div class="donut-legend" id="legend-nc"></div></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Avg 24-hr)</div>
+          <div style="height:180px;display:flex;align-items:center;gap:12px"><div style="flex:1;height:160px"><canvas id="chart-donut-avg24"></canvas></div><div class="donut-legend" id="legend-avg24"></div></div>
         </div>
       </div>
 
-      <div class="chart-card" id="station-table-card" style="display:none; margin-bottom: 16px;">
+      <div class="chart-card" style="margin-top:16px;">
+        <div class="chart-card-title">Volatility (Standard Deviation)</div>
+        <div style="height:180px"><canvas id="chart-volatility"></canvas></div>
+      </div>
+
+      <div class="chart-card" id="station-table-card" style="display:none; margin-top: 16px;">
         <div class="chart-card-title">ประวัติข้อมูลรายชั่วโมงของสถานี (Time-Series)</div>
         <div class="chart-card-sub" id="station-table-sub">แสดงข้อมูลย้อนหลัง</div>
         <div style="overflow-x: auto;">
           <table class="comp-table" id="station-ts-table">
-            <thead>
-              <tr>
-                <th>วันที่</th>
-                <th>ช่วงเวลา</th>
-                <th>PM2.5 รายชั่วโมง (Raw)</th>
-                <th>NowCast</th>
-              </tr>
-            </thead>
+            <thead><tr><th>วันที่</th><th>ช่วงเวลา</th><th>Raw</th><th>NowCast</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
       </div>
-
     </div>
   </div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════
-// GLOBAL STATE & CONFIGURATIONS
+// GLOBAL STATE & CONFIG
 // ═══════════════════════════════════════════
-const ZONE_COLORS = {
-  "กรุงเทพกลาง": "#fbc02d", // 1. เหลือง
-  "กรุงเทพใต้": "#ff9800",  // 2. ส้ม
-  "กรุงเทพเหนือ": "#4db6ac", // 3. เขียวมิ้นต์
-  "กรุงเทพตะวันออก": "#aed581", // 4. เขียวอ่อน
-  "กรุงธนเหนือ": "#f06292", // 5. ชมพู
-  "กรุงธนใต้": "#7986cb"    // 6. ฟ้า
-};
-
-const ZONE_LABELS = [
-  { id: "กรุงเทพกลาง", title: "1. กลุ่มกรุงเทพกลาง" },
-  { id: "กรุงเทพใต้", title: "2. กลุ่มกรุงเทพใต้" },
-  { id: "กรุงเทพเหนือ", title: "3. กลุ่มกรุงเทพเหนือ" },
-  { id: "กรุงเทพตะวันออก", title: "4. กลุ่มกรุงเทพตะวันออก" },
-  { id: "กรุงธนเหนือ", title: "5. กลุ่มกรุงธนเหนือ" },
-  { id: "กรุงธนใต้", title: "6. กลุ่มกรุงธนใต้" }
-];
+const ZONE_COLORS = { "กรุงเทพกลาง": "#fbc02d", "กรุงเทพใต้": "#ff9800", "กรุงเทพเหนือ": "#4db6ac", "กรุงเทพตะวันออก": "#aed581", "กรุงธนเหนือ": "#f06292", "กรุงธนใต้": "#7986cb" };
+const ZONE_LABELS = [ { id: "กรุงเทพกลาง", title: "1. กลุ่มกรุงเทพกลาง" }, { id: "กรุงเทพใต้", title: "2. กลุ่มกรุงเทพใต้" }, { id: "กรุงเทพเหนือ", title: "3. กลุ่มกรุงเทพเหนือ" }, { id: "กรุงเทพตะวันออก", title: "4. กลุ่มกรุงเทพตะวันออก" }, { id: "กรุงธนเหนือ", title: "5. กลุ่มกรุงธนเหนือ" }, { id: "กรุงธนใต้", title: "6. กลุ่มกรุงธนใต้" } ];
 
 const STATION_META = {
   "02t": { zone: "กรุงธนเหนือ", nameTH: "ม.ราชภัฏบ้านสมเด็จเจ้าพระยา", nameEN: "Bansomdejchaopraya Rajabhat University", lat: 13.732846, lng: 100.487662 },
@@ -549,545 +366,190 @@ const STATION_META = {
 let STATION_KEYS = [];   
 let HISTORY_RECORDS = []; 
 
-const AQI_BREAKS = [
-  {lo:0, hi:15.0, label:'ดี', color:'#00bcd4', textColor:'#fff'},
-  {lo:15.1, hi:25.0, label:'ปานกลาง', color:'#4caf50', textColor:'#fff'},
-  {lo:25.1, hi:37.5, label:'เริ่มมีผลต่อสุขภาพ', color:'#ffeb3b', textColor:'#333'},
-  {lo:37.6, hi:75.0, label:'มีผลต่อสุขภาพ', color:'#ff9800', textColor:'#fff'},
-  {lo:75.1, hi:999999, label:'อันตราย', color:'#f44336', textColor:'#fff'}
-];
+const AQI_BREAKS = [ {lo:0, hi:15.0, label:'ดี', color:'#00bcd4', textColor:'#fff'}, {lo:15.1, hi:25.0, label:'ปานกลาง', color:'#4caf50', textColor:'#fff'}, {lo:25.1, hi:37.5, label:'เริ่มมีผลต่อสุขภาพ', color:'#ffeb3b', textColor:'#333'}, {lo:37.6, hi:75.0, label:'มีผลต่อสุขภาพ', color:'#ff9800', textColor:'#fff'}, {lo:75.1, hi:999999, label:'อันตราย', color:'#f44336', textColor:'#fff'} ];
 
-function getAQIBand(val) {
-  if(val == null || isNaN(val)) return null;
-  for(const b of AQI_BREAKS) if(val >= b.lo && val <= b.hi) return b;
-  return AQI_BREAKS[AQI_BREAKS.length-1];
-}
+function getAQIBand(v) { if(v==null||isNaN(v)) return null; for(const b of AQI_BREAKS) if(v>=b.lo && v<=b.hi) return b; return AQI_BREAKS[4]; }
+function nowcast(vals) { if(vals.length<2) return null; const cmax=Math.max(...vals), cmin=Math.min(...vals); if(cmax<=0) return null; const w=Math.max(1-(cmax-cmin)/cmax, 0.4); let num=0, den=0; vals.forEach((v,i)=>{ if(v!=null){ num+=v*Math.pow(w,i); den+=Math.pow(w,i); } }); return den>0?Math.round(num/den*10)/10:null; }
+function calcRMSE(a1,a2){ let s=0,c=0; a1.forEach((v,i)=>{if(v!=null&&a2[i]!=null){s+=Math.pow(v-a2[i],2);c++;}}); return c>0?Math.sqrt(s/c):null; }
+function calcMAE(a1,a2){ let s=0,c=0; a1.forEach((v,i)=>{if(v!=null&&a2[i]!=null){s+=Math.abs(v-a2[i]);c++;}}); return c>0?s/c:null; }
+function calcSD(a){ const v=a.filter(x=>x!=null); if(v.length<2) return null; const m=v.reduce((s,x)=>s+x,0)/v.length; return Math.sqrt(v.reduce((s,x)=>s+Math.pow(x-m,2),0)/(v.length-1)); }
+function getConvexHull(pts) { if (pts.length < 3) return pts; pts.sort((a,b)=>a[0]!==b[0]?a[0]-b[0]:a[1]-b[1]); const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]), lo=[], up=[]; for(let p of pts){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);} for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);} up.pop(); lo.pop(); return lo.concat(up); }
 
-function nowcast(vals) {
-  const valid = vals.filter(v => v !== null && v !== undefined && !isNaN(v));
-  if(valid.length < 2) return null;
-  const cmax = Math.max(...valid);
-  const cmin = Math.min(...valid);
-  if(cmax <= 0) return null;
-  const wRate = 1 - (cmax - cmin) / cmax;
-  const w = Math.max(wRate, 0.4); // 🎯 Wmin = 0.4 ตามเป้าหมายวิจัย
-  let num = 0, den = 0;
-  for(let i = 0; i < vals.length; i++) {
-    if(vals[i] !== null && vals[i] !== undefined && !isNaN(vals[i])) {
-      num += vals[i] * Math.pow(w, i);
-      den += Math.pow(w, i);
-    }
-  }
-  return den > 0 ? Math.round(num / den * 10) / 10 : null;
-}
-
-function calcRMSE(arr1, arr2) {
-  let sum = 0, count = 0;
-  for(let i=0; i<arr1.length; i++) {
-    if(arr1[i] != null && arr2[i] != null) { sum += Math.pow(arr1[i] - arr2[i], 2); count++; }
-  }
-  return count > 0 ? Math.sqrt(sum / count) : null;
-}
-
-// 🎯 ฟังก์ชันใหม่: คำนวณ Mean Absolute Error (MAE)
-function calcMAE(arr1, arr2) {
-  let sum = 0, count = 0;
-  for(let i=0; i<arr1.length; i++) {
-    if(arr1[i] != null && arr2[i] != null) { sum += Math.abs(arr1[i] - arr2[i]); count++; }
-  }
-  return count > 0 ? (sum / count) : null;
-}
-
-function calcSD(arr) {
-  const valid = arr.filter(v => v != null && !isNaN(v));
-  if(valid.length < 2) return null;
-  const mean = valid.reduce((a,b)=>a+b,0) / valid.length;
-  const variance = valid.reduce((a,b)=>a+Math.pow(b-mean, 2),0) / (valid.length - 1);
-  return Math.sqrt(variance);
-}
-
-function getConvexHull(points) {
-  if (points.length < 3) return points;
-  points.sort((a, b) => a[0] !== b[0] ? a[0] - b[0] : a[1] - b[1]);
-  const cross = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-  const lower = [];
-  for (let p of points) {
-    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
-    lower.push(p);
-  }
-  const upper = [];
-  for (let i = points.length - 1; i >= 0; i--) {
-    const p = points[i];
-    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
-    upper.push(p);
-  }
-  upper.pop(); lower.pop();
-  return lower.concat(upper);
-}
-
-// ═══════════════════════════════════════════
-// DATA FETCHING & PARSING
-// ═══════════════════════════════════════════
+// Initialize
 async function initializeData() {
   const statusEl = document.getElementById('global-status');
   statusEl.style.display = 'block';
-  statusEl.className = '';
-  
   try {
-    statusEl.innerHTML = '⏳ กำลังอ่านข้อมูลจากฐานข้อมูล...';
-    
-    const histRes = await fetch('history.json?t=' + new Date().getTime());
-    if (!histRes.ok) throw new Error("ไม่สามารถโหลดไฟล์ history.json ได้");
-    HISTORY_RECORDS = await histRes.json();
-
-    if (HISTORY_RECORDS.length === 0) throw new Error("ไม่มีข้อมูลประวัติให้แสดงผล");
-
-    const firstRow = HISTORY_RECORDS[0];
-    STATION_KEYS = Object.keys(firstRow).filter(k => k !== 'date' && k !== 'timeRange' && STATION_META[k]);
-
+    const res = await fetch('history.json?t=' + Date.now());
+    HISTORY_RECORDS = await res.json();
+    STATION_KEYS = Object.keys(HISTORY_RECORDS[0]).filter(k => k !== 'date' && k !== 'timeRange' && STATION_META[k]);
     HISTORY_RECORDS.forEach((row, i) => {
       row._parsed = {};
-      STATION_KEYS.forEach(key => {
-        let rawVal = row[key];
-        if (rawVal === '-' || rawVal === undefined) rawVal = null;
-        else rawVal = parseFloat(rawVal);
-
-        // 🎯 แก้ Lookback เป็น 8 ชั่วโมง (ดึงข้อมูลตัวมันเอง + ย้อนหลัง 7 ชม.)
-        let lookback8 = [];
-        for(let j = i; j >= Math.max(0, i - 7); j--) {
-          let pastVal = HISTORY_RECORDS[j][key];
-          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) { lookback8.push(parseFloat(pastVal)); }
-        }
-        
-        let lookback24 = [];
-        for(let j = i; j >= Math.max(0, i - 23); j--) {
-          let pastVal = HISTORY_RECORDS[j][key];
-          if (pastVal !== '-' && pastVal !== undefined && pastVal !== null) { lookback24.push(parseFloat(pastVal)); }
-        }
-        
-        let avg24Val = lookback24.length > 0 ? (lookback24.reduce((sum, val) => sum + val, 0) / lookback24.length) : null;
-
-        row._parsed[key] = {
-          raw: rawVal,
-          nc: nowcast(lookback8), // โยน Array 8 ชม. เข้าสมการ NowCast
-          avg24: avg24Val
-        };
+      STATION_KEYS.forEach(k => {
+        let raw=row[k]==='-'?null:parseFloat(row[k]);
+        let lb8=[], lb24=[];
+        for(let j=i; j>=Math.max(0,i-7); j--) if(HISTORY_RECORDS[j][k]!=='-') lb8.push(parseFloat(HISTORY_RECORDS[j][k]));
+        for(let j=i; j>=Math.max(0,i-23); j--) if(HISTORY_RECORDS[j][k]!=='-') lb24.push(parseFloat(HISTORY_RECORDS[j][k]));
+        row._parsed[k]={ raw, nc:nowcast(lb8), avg24:lb24.length?lb24.reduce((s,x)=>s+x,0)/lb24.length:null };
       });
     });
-
-    statusEl.innerHTML = `✓ โหลดข้อมูลเสร็จสิ้น`;
-    setTimeout(() => { statusEl.style.display = 'none'; }, 1000);
-    
-    document.getElementById('dash-no-data').style.display = 'none';
-    document.getElementById('dash-content').style.display = 'block';
-    
-    buildDynamicUI();
-    updateDashboard();
-
-  } catch (err) {
-    statusEl.className = 'err';
-    statusEl.innerHTML = '❌ เกิดข้อผิดพลาด: ' + err.message;
-  }
+    document.getElementById('dash-no-data').style.display='none';
+    document.getElementById('dash-content').style.display='block';
+    statusEl.style.display='none';
+    initMap(); buildDynamicUI(); updateDashboard();
+  } catch(e) { statusEl.innerHTML='Error loading data'; }
 }
 
-// ═══════════════════════════════════════════
-// UI & MAP CONTROLLERS
-// ═══════════════════════════════════════════
-let mapInstance = null; 
-let mapMarkers = {};
-
+let mapInstance=null, mapMarkers={};
 function initMap() {
   mapInstance = L.map('map', { center: [13.75, 100.52], zoom: 11 });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-    attribution: '© OpenStreetMap contributors', 
-    maxZoom: 19 
-  }).addTo(mapInstance);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
 }
 
 function buildDynamicUI() {
-  const dashSelect = document.getElementById('dash-station');
-  dashSelect.innerHTML = '<option value="all">ทุกสถานี (ภาพรวม กทม.)</option>';
-  ZONE_LABELS.forEach(zn => {
-    dashSelect.innerHTML += `<optgroup label="${zn.title}">`;
-    dashSelect.innerHTML += `<option value="zone_${zn.id}">>> ค่าเฉลี่ย ${zn.title} <<</option>`;
-    STATION_KEYS.filter(k => STATION_META[k].zone === zn.id).forEach(k => {
-      dashSelect.innerHTML += `<option value="${k}">[${k}] ${STATION_META[k].nameTH}</option>`;
-    });
-    dashSelect.innerHTML += `</optgroup>`;
+  const ds=document.getElementById('dash-station');
+  ds.innerHTML='<option value="all">ทุกสถานี (ภาพรวม กทม.)</option>';
+  ZONE_LABELS.forEach(zn=>{
+    ds.innerHTML+=`<optgroup label="${zn.title}"><option value="zone_${zn.id}">>> ค่าเฉลี่ย ${zn.title} <<</option>`;
+    STATION_KEYS.filter(k=>STATION_META[k].zone===zn.id).forEach(k=>{ ds.innerHTML+=`<option value="${k}">[${k}] ${STATION_META[k].nameTH}</option>`; });
+    ds.innerHTML+=`</optgroup>`;
   });
-
-  const zTagsEl = document.getElementById('zone-tags-container');
-  if (zTagsEl) {
-      zTagsEl.innerHTML = '';
-      ZONE_LABELS.forEach(zn => {
-        zTagsEl.innerHTML += `<span class="z-tag" style="background: ${ZONE_COLORS[zn.id]}33; border-color: ${ZONE_COLORS[zn.id]}; color: ${ZONE_COLORS[zn.id]};">${zn.title}</span>`;
-      });
-  }
-
-  if (window.zoneLayers) {
-      window.zoneLayers.forEach(l => mapInstance.removeLayer(l));
-  }
-  window.zoneLayers = [];
-
-  for(const k in mapMarkers) { mapInstance.removeLayer(mapMarkers[k].marker); }
-  mapMarkers = {};
+  const zt=document.getElementById('zone-tags-container');
+  if(zt){ zt.innerHTML=''; ZONE_LABELS.forEach(z=>zt.innerHTML+=`<span class="z-tag" style="border-color:${ZONE_COLORS[z.id]};color:${ZONE_COLORS[z.id]}">${z.title}</span>`); }
   
-  for (const zId in ZONE_COLORS) {
-      const zColor = ZONE_COLORS[zId];
-      const zKeys = STATION_KEYS.filter(k => STATION_META[k] && STATION_META[k].zone === zId);
-      
-      if (zKeys.length === 0) continue;
-
-      const points = zKeys.map(k => [STATION_META[k].lat, STATION_META[k].lng]);
-      const hull = getConvexHull(points);
-      
-      if (hull.length >= 3) {
-          const polygon = L.polygon(hull, {
-              color: zColor, weight: 3, opacity: 0.8,
-              fillColor: zColor, fillOpacity: 0.15, dashArray: '5, 8'
-          }).addTo(mapInstance);
-          window.zoneLayers.push(polygon);
-      } else if (hull.length === 2) {
-          const line = L.polyline(hull, { color: zColor, weight: 3, dashArray: '5, 8' }).addTo(mapInstance);
-          window.zoneLayers.push(line);
-      }
+  if(window.zL) window.zL.forEach(l=>mapInstance.removeLayer(l)); window.zL=[];
+  for(const zId in ZONE_COLORS){
+    const zColor=ZONE_COLORS[zId], zk=STATION_KEYS.filter(k=>STATION_META[k].zone===zId);
+    if(!zk.length) continue;
+    const pts=zk.map(k=>[STATION_META[k].lat,STATION_META[k].lng]), hull=getConvexHull(pts);
+    if(hull.length>=3){ const p=L.polygon(hull,{color:zColor,weight:3,opacity:0.8,fillColor:zColor,fillOpacity:0.15,dashArray:'5,8'}).addTo(mapInstance); window.zL.push(p); }
   }
 
-  for(const key of STATION_KEYS) {
-    if(!STATION_META[key]) continue;
-    const m = STATION_META[key];
-
-    const div = document.createElement('div');
-    div.className = 'pm-marker';
-    div.style.cssText = `width:46px;height:46px;background:#333;`;
-    div.textContent = '…';
-    
-    const icon = L.divIcon({ html: div, className: '', iconSize: [46,46], iconAnchor: [23,23] });
-    const marker = L.marker([m.lat, m.lng], { icon }).addTo(mapInstance);
-    marker.bindPopup('', { maxWidth: 280 });
-    marker.on('click', () => { selectStation(key); });
-    mapMarkers[key] = { marker, div };
-  }
-  
-  updateMap();
+  STATION_KEYS.forEach(key=>{
+    const m=STATION_META[key];
+    const icon=L.divIcon({html:'<div class="pm-marker" style="width:46px;height:46px;background:#333">…</div>',className:'',iconSize:[46,46],iconAnchor:[23,23]});
+    const marker=L.marker([m.lat,m.lng],{icon}).addTo(mapInstance).on('click',()=>selectStation(key));
+    mapMarkers[key]={marker, div:marker.getElement()?.querySelector('.pm-marker')};
+  });
 }
 
-function switchTab(tab, e) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.getElementById('panel-'+tab).classList.add('active');
-  if(e && e.target) e.target.classList.add('active');
-  if(tab === 'dash' && HISTORY_RECORDS.length > 0) setTimeout(updateDashboard, 50);
-  if(tab === 'map' && HISTORY_RECORDS.length > 0) { setTimeout(() => { mapInstance.invalidateSize(); }, 100); updateMap(); }
+function selectStation(k){
+  document.querySelectorAll('.scard').forEach(c=>c.classList.remove('selected'));
+  const sc=document.getElementById('sc-'+k); if(sc){sc.classList.add('selected'); sc.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  if(mapMarkers[k]) mapMarkers[k].marker.openPopup();
 }
 
 function updateMap() {
-  if (HISTORY_RECORDS.length === 0) return;
-  const rowData = HISTORY_RECORDS[HISTORY_RECORDS.length - 1];
-  const cardsEl = document.getElementById('stn-cards');
-  
-  const displayEl = document.getElementById('live-time-display');
-  if(displayEl) {
-      displayEl.textContent = `ข้อมูลวันที่: ${rowData.date} | ${rowData.timeRange}`;
-  }
-
-  let cardsHtml = '';
-  ZONE_LABELS.forEach(zn => {
-      const stnsInZone = STATION_KEYS.filter(k => STATION_META[k] && STATION_META[k].zone === zn.id);
-      if(stnsInZone.length === 0) return;
-
-      stnsInZone.sort((a,b) => (rowData._parsed[b].nc ?? -1) - (rowData._parsed[a].nc ?? -1));
-
-      cardsHtml += `<div class="zone-header" style="color:${ZONE_COLORS[zn.id]}; border-bottom-color:${ZONE_COLORS[zn.id]}55;">${zn.title}</div>`;
-
-      cardsHtml += stnsInZone.map(key => {
-        const m = STATION_META[key];
-        const {nc, avg24} = rowData._parsed[key];
-        const band = getAQIBand(nc);
-        const color = band?.color ?? '#666';
-        const tc = band?.textColor ?? '#fff';
-        const avg24Band = getAQIBand(avg24);
-        
-        return `<div class="scard" id="sc-${key}" onclick="selectStation('${key}')">
-          <div class="scard-top">
-            <div><div class="scard-name">${m.nameTH}</div><div class="scard-sub">${m.nameEN || '-'}</div></div>
-            <span class="aqi-badge" style="background:${color};color:${tc};border:none">${band?.label ?? 'ไม่มีข้อมูล'}</span>
-          </div>
-          <div class="scard-vals">
-            <div class="sval-box">
-               <div class="sval-label">NowCast</div>
-               <div class="sval-num" style="color:${color}">${nc!=null?nc.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div>
-            </div>
-            <div class="sval-box">
-               <div class="sval-label">เฉลี่ย 24 ชม.</div>
-               <div class="sval-num" style="color:${avg24Band?.color??'#fff'}">${avg24!=null?avg24.toFixed(1):'—'}<span class="sval-unit">µg/m³</span></div>
-            </div>
-          </div>
-        </div>`;
-      }).join('');
+  if(!HISTORY_RECORDS.length) return;
+  const row=HISTORY_RECORDS[HISTORY_RECORDS.length-1], cardsEl=document.getElementById('stn-cards');
+  document.getElementById('live-time-display').textContent=`ข้อมูลวันที่: ${row.date} | ${row.timeRange}`;
+  let html='';
+  ZONE_LABELS.forEach(zn=>{
+    const stns=STATION_KEYS.filter(k=>STATION_META[k].zone===zn.id).sort((a,b)=>(row._parsed[b].nc??-1)-(row._parsed[a].nc??-1));
+    if(!stns.length) return;
+    html+=`<div class="zone-header" style="color:${ZONE_COLORS[zn.id]}">${zn.title}</div>`;
+    html+=stns.map(k=>{
+      const {nc,avg24}=row._parsed[k], band=getAQIBand(nc), c=band?.color??'#666';
+      return `<div class="scard" id="sc-${k}" onclick="selectStation('${k}')">
+        <div class="scard-top"><div><div class="scard-name">${STATION_META[k].nameTH}</div></div><span class="aqi-badge" style="background:${c}">${band?.label??'-'}</span></div>
+        <div class="scard-vals"><div class="sval-box"><div class="sval-label">NowCast</div><div class="sval-num" style="color:${c}">${nc?.toFixed(1)??'—'}</div></div>
+        <div class="sval-box"><div class="sval-label">เฉลี่ย 24 ชม.</div><div class="sval-num">${avg24?.toFixed(1)??'—'}</div></div></div></div>`;
+    }).join('');
   });
-  cardsEl.innerHTML = cardsHtml;
-
-  for(const key of STATION_KEYS) {
-    if(!mapMarkers[key]) continue;
-    const {nc, avg24} = rowData._parsed[key];
-    const band = getAQIBand(nc);
-    const color = band?.color ?? '#555';
-    const {div, marker} = mapMarkers[key];
-    div.style.background = nc != null ? color : '#333';
-    div.style.color = nc != null ? (band?.textColor ?? '#fff') : '#fff';
-    div.textContent = nc != null ? nc.toFixed(0) : '?';
-    marker.setPopupContent(buildPopup(key, nc, avg24, rowData.date, rowData.timeRange));
-  }
+  cardsEl.innerHTML=html;
+  STATION_KEYS.forEach(k=>{
+    const {nc}=row._parsed[k], band=getAQIBand(nc), div=document.querySelector(`#map .pm-marker:nth-child(${STATION_KEYS.indexOf(k)+1})`) || mapMarkers[k].marker.getElement()?.querySelector('.pm-marker');
+    if(div){ div.style.background=nc!=null?band.color:'#333'; div.textContent=nc!=null?nc.toFixed(0):'?'; }
+  });
 }
 
-function buildPopup(key, nc, avg24, dateStr, timeRange) {
-  const m = STATION_META[key];
-  const ncBand = getAQIBand(nc); const avg24Band = getAQIBand(avg24);
-  const diff = (nc!=null && avg24!=null) ? (nc-avg24).toFixed(1) : '—';
-  const diffSign = parseFloat(diff) > 0 ? '+' : '';
-  
-  return `<div style="font-family:'Sarabun',sans-serif">
-    <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px">${m.nameTH}</div>
-    <div style="font-size:11px;color:#7a8090;margin-bottom:12px">${dateStr} | ${timeRange}</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div style="background:#1f2229;border-radius:8px;padding:10px">
-        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">EPA NowCast</div>
-        <div style="font-size:22px;font-weight:700;color:${ncBand?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
-      </div>
-      <div style="background:#1f2229;border-radius:8px;padding:10px">
-        <div style="font-size:10px;color:#7a8090;margin-bottom:6px;font-family:monospace">เฉลี่ย 24 ชม.</div>
-        <div style="font-size:22px;font-weight:700;color:${avg24Band?.color??'#444'};margin-bottom:4px">${avg24!=null?avg24.toFixed(1):'—'} <span style="font-size:11px;color:#7a8090">µg/m³</span></div>
-      </div>
-    </div>
-    <div style="margin-top:8px;background:#1f2229;border-radius:8px;padding:8px 10px;font-family:monospace;font-size:12px">
-      NowCast − เฉลี่ย 24 ชม: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${diffSign}${diff} µg/m³</b>
-    </div>
-  </div>`;
-}
-
-function selectStation(key) {
-  document.querySelectorAll('.scard').forEach(c => c.classList.remove('selected'));
-  const sc = document.getElementById('sc-'+key);
-  if(sc) { sc.classList.add('selected'); sc.scrollIntoView({behavior:'smooth',block:'nearest'}); }
-  if(mapMarkers[key]) mapMarkers[key].marker.openPopup();
+function switchTab(t,e){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active'); e.target.classList.add('active');
+  if(t==='map'&&mapInstance) setTimeout(()=>mapInstance.invalidateSize(),100);
 }
 
 // ═══════════════════════════════════════════
-// DASHBOARD TIME-SERIES ENGINE
+// DASHBOARD ENGINE
 // ═══════════════════════════════════════════
-let charts = {};
-function destroyChart(id) { if(charts[id]) { charts[id].destroy(); delete charts[id]; } }
+let charts={};
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
 
-function extractFlatData(keysToExtract) {
-  const tlLabels = []; const tlRaw = []; const tlNC = []; const tlAvg24 = [];
-  const rawCats = {}; const ncCats = {};
-  for(const b of AQI_BREAKS) { rawCats[b.label] = 0; ncCats[b.label] = 0; }
+function extractFlatData(keys) {
+  const tlL=[], tlR=[], tlN=[], tlA=[];
+  const rCats={}, nCats={}, a24Cats={};
+  AQI_BREAKS.forEach(b=>{ rCats[b.label]=0; nCats[b.label]=0; a24Cats[b.label]=0; });
+  let rVals=[], nVals=[], a24Vals=[];
 
-  let allRawVals = []; let allNCVals = [];
-  const badThreshold = 37.5; 
-
-  HISTORY_RECORDS.forEach(row => {
-     const timeLabel = row.timeRange.split(' - ')[1] || row.timeRange;
-     tlLabels.push(`${row.date.slice(5)} ${timeLabel}`);
-
-     let sRaw = 0, cRaw = 0, sNC = 0, cNC = 0, sAvg24 = 0, cAvg24 = 0;
-
-     keysToExtract.forEach(k => {
-        const parsed = row._parsed[k];
-        if (parsed) {
-          if(parsed.raw !== null) { sRaw += parsed.raw; cRaw++; }
-          if(parsed.nc !== null) { sNC += parsed.nc; cNC++; }
-          if(parsed.avg24 !== null) { sAvg24 += parsed.avg24; cAvg24++; }
-        }
-     });
-
-     const avgRaw = cRaw > 0 ? sRaw/cRaw : null;
-     const avgNC = cNC > 0 ? sNC/cNC : null;
-     const avgAvg24 = cAvg24 > 0 ? sAvg24/cAvg24 : null;
-     
-     tlRaw.push(avgRaw); 
-     tlNC.push(avgNC);
-     tlAvg24.push(avgAvg24);
-
-     if(avgRaw !== null) { 
-        allRawVals.push(avgRaw); 
-        const bandR = getAQIBand(avgRaw); if(bandR) rawCats[bandR.label]++;
-     }
-     if(avgNC !== null) {
-       allNCVals.push(avgNC);
-       const bandN = getAQIBand(avgNC); if(bandN) ncCats[bandN.label]++;
-     }
+  HISTORY_RECORDS.forEach(row=>{
+    tlL.push(`${row.date.slice(5)} ${row.timeRange.split(' - ')[1]}`);
+    let sR=0, cR=0, sN=0, cN=0, sA=0, cA=0;
+    keys.forEach(k=>{
+      const p=row._parsed[k];
+      if(p.raw!=null){sR+=p.raw; cR++;}
+      if(p.nc!=null){sN+=p.nc; cN++;}
+      if(p.avg24!=null){sA+=p.avg24; cA++;}
+    });
+    const avgR=cR?sR/cR:null, avgN=cN?sN/cN:null, avgA=cA?sA/cA:null;
+    tlR.push(avgR); tlN.push(avgN); tlA.push(avgA);
+    if(avgR!=null){ rVals.push(avgR); const b=getAQIBand(avgR); if(b) rCats[b.label]++; }
+    if(avgN!=null){ nVals.push(avgN); const b=getAQIBand(avgN); if(b) nCats[b.label]++; }
+    if(avgA!=null){ a24Vals.push(avgA); const b=getAQIBand(avgA); if(b) a24Cats[b.label]++; }
   });
-
-  return {
-    tlLabels, tlRaw, tlNC, tlAvg24, rawCats, ncCats,
-    avgRaw: allRawVals.length ? allRawVals.reduce((a,b)=>a+b,0)/allRawVals.length : null,
-    avgNC: allNCVals.length ? allNCVals.reduce((a,b)=>a+b,0)/allNCVals.length : null,
-    maxRaw: allRawVals.length ? Math.max(...allRawVals) : null,
-    badHours: allRawVals.filter(v => v > badThreshold).length,
-    totalHours: allRawVals.length
-  };
+  return { tlLabels:tlL, tlRaw:tlR, tlNC:tlN, tlAvg24:tlA, rawCats:rCats, ncCats:nCats, avg24Cats:a24Cats, avgRaw:rVals.length?rVals.reduce((a,b)=>a+b,0)/rVals.length:null, avgNC:nVals.length?nVals.reduce((a,b)=>a+b,0)/nVals.length:null, avgA24:a24Vals.length?a24Vals.reduce((a,b)=>a+b,0)/a24Vals.length:null, maxRaw:rVals.length?Math.max(...rVals):null, badHrs:rVals.filter(v=>v>37.5).length, totalHrs:rVals.length };
 }
 
 function updateDashboard() {
-  if (HISTORY_RECORDS.length === 0) return;
-  
-  const stationKey = document.getElementById('dash-station').value;
-  let tKeys = [], aKeys = [];
-  let areaName = "ภาพรวม กทม.";
-  
-  if(stationKey === 'all') { 
-    tKeys = aKeys = STATION_KEYS.filter(k => STATION_META[k]); 
-  }
-  else if(stationKey.startsWith('zone_')) { 
-    const zId = stationKey.replace('zone_','');
-    areaName = ZONE_LABELS.find(z => z.id === zId)?.title || zId;
-    tKeys = aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === zId); 
-  }
-  else { 
-    const zId = STATION_META[stationKey].zone;
-    areaName = ZONE_LABELS.find(z => z.id === zId)?.title || zId;
-    tKeys = [stationKey]; 
-    aKeys = STATION_KEYS.filter(k => STATION_META[k].zone === zId); 
-  }
+  const sk=document.getElementById('dash-station').value;
+  let tKeys=[], aKeys=[], areaName="ภาพรวม กทม.";
+  if(sk==='all'){ tKeys=aKeys=STATION_KEYS; }
+  else if(sk.startsWith('zone_')){ const zId=sk.replace('zone_',''); areaName=ZONE_LABELS.find(z=>z.id===zId).title; tKeys=aKeys=STATION_KEYS.filter(k=>STATION_META[k].zone===zId); }
+  else { const zId=STATION_META[sk].zone; areaName=ZONE_LABELS.find(z=>z.id===zId).title; tKeys=[sk]; aKeys=STATION_KEYS.filter(k=>STATION_META[k].zone===zId); }
 
-  const fd = extractFlatData(tKeys);
-  const fa = extractFlatData(aKeys);
-
-  const elAvg = document.getElementById('kpi-avg');
-  if(elAvg) elAvg.innerHTML = fd.avgRaw != null ? fd.avgRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
+  const fd=extractFlatData(tKeys), fa=extractFlatData(aKeys);
+  document.getElementById('kpi-avg').innerHTML=fd.avgRaw?.toFixed(1)??'—';
+  document.getElementById('kpi-nc').innerHTML=fd.avgNC?.toFixed(1)??'—';
+  document.getElementById('kpi-avg24-kpi').innerHTML=fd.avgA24?.toFixed(1)??'—';
+  document.getElementById('kpi-bad').innerHTML=fd.badHrs+' ชม.';
+  document.getElementById('kpi-max').innerHTML=fd.maxRaw?.toFixed(1)??'—';
+  document.getElementById('kpi-rmse').innerHTML=calcRMSE(fd.tlNC, fd.tlAvg24)?.toFixed(3)??'—';
+  document.getElementById('kpi-mae').innerHTML=calcMAE(fd.tlNC, fd.tlAvg24)?.toFixed(3)??'—';
   
-  const elNc = document.getElementById('kpi-nc');
-  if(elNc) elNc.innerHTML = fd.avgNC != null ? fd.avgNC.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
-  
-  const elBad = document.getElementById('kpi-bad');
-  if(elBad) elBad.innerHTML = fd.badHours+'<span class="kpi-unit">ชม.</span>';
-  
-  const elMax = document.getElementById('kpi-max');
-  if(elMax) elMax.innerHTML = fd.maxRaw != null ? fd.maxRaw.toFixed(1)+`<span class="kpi-unit">µg/m³</span>` : '—';
-  
-  const diffVal = (fd.avgRaw != null && fd.avgNC != null) ? fd.avgNC - fd.avgRaw : null;
-  const elNcD = document.getElementById('kpi-nc-d');
-  if(elNcD) elNcD.innerHTML = diffVal != null ? `<span class="${diffVal>0?'up':'down'}">${diffVal>0?'▲':'▼'} ${Math.abs(diffVal).toFixed(1)} จากค่า Raw</span>` : '';
-  
-  const elBadD = document.getElementById('kpi-bad-d');
-  if(elBadD) elBadD.textContent = `จากทั้งหมด ${fd.totalHours} ชั่วโมง (${(fd.badHours/Math.max(fd.totalHours,1)*100).toFixed(1)}%)`;
-
-  // 🎯 เพิ่มการคำนวณ MAE คู่กับ RMSE
-  const rmseValue = calcRMSE(fd.tlNC, fd.tlAvg24);
-  const maeValue = calcMAE(fd.tlNC, fd.tlAvg24);
-  
-  const elRmse = document.getElementById('kpi-rmse');
-  if(elRmse) elRmse.innerHTML = rmseValue != null ? rmseValue.toFixed(3) : '—';
-  
-  const elMae = document.getElementById('kpi-mae');
-  if(elMae) elMae.innerHTML = maeValue != null ? maeValue.toFixed(3) : '—';
-
-  let sdStationVal;
-  const sdAreaVal = calcSD(fa.tlNC); 
-  if (stationKey === 'all' || stationKey.startsWith('zone_')) {
-    let totalSD = 0, countSD = 0;
-    tKeys.forEach(k => {
-      let stnSD = calcSD(extractFlatData([k]).tlNC);
-      if(stnSD != null && stnSD > 0) { totalSD += stnSD; countSD++; }
-    });
-    sdStationVal = countSD > 0 ? (totalSD / countSD) : null;
-  } else {
-    sdStationVal = calcSD(fd.tlNC);
-  }
-  
-  const elSdStn = document.getElementById('kpi-sd-stn');
-  if(elSdStn) elSdStn.innerHTML = sdStationVal != null ? sdStationVal.toFixed(2) : '—';
-  
-  const elSdArea = document.getElementById('kpi-sd-area');
-  if(elSdArea) elSdArea.innerHTML = sdAreaVal != null ? sdAreaVal.toFixed(2) : '—';
-
-  const elSdDiff = document.getElementById('kpi-sd-diff');
-  if(elSdDiff) {
-      if (sdStationVal != null && sdAreaVal != null && sdStationVal > 0) {
-        const red = ((sdStationVal-sdAreaVal)/sdStationVal*100).toFixed(1);
-        const isReduced = parseFloat(red) >= 0;
-        elSdDiff.innerHTML = `${isReduced ? '▼' : '▲'} ${Math.abs(red)}<span class="kpi-unit">%</span>`;
-        elSdDiff.style.color = isReduced ? '#00d4aa' : '#f44336';
-      } else {
-        elSdDiff.innerHTML = '—';
-      }
-  }
+  let sdStn;
+  if(sk==='all'||sk.startsWith('zone_')){ let s=0,c=0; tKeys.forEach(k=>{const sd=calcSD(extractFlatData([k]).tlNC); if(sd){s+=sd;c++;}}); sdStn=c?s/c:0; } else { sdStn=calcSD(fd.tlNC); }
+  const sdArea=calcSD(fa.tlNC);
+  document.getElementById('kpi-sd-stn').innerHTML=sdStn?.toFixed(2)??'—';
+  document.getElementById('kpi-sd-area').innerHTML=sdArea?.toFixed(2)??'—';
+  if(sdStn&&sdArea){ const red=((sdStn-sdArea)/sdStn*100).toFixed(1); document.getElementById('kpi-sd-diff').innerHTML=red+'%'; document.getElementById('kpi-sd-diff').style.color=red>0?'#00d4aa':'#f44336'; }
 
   destroyChart('timeline');
-  if(document.getElementById('chart-timeline')) {
-      charts['timeline'] = new Chart(document.getElementById('chart-timeline'), {
-        data: { labels: fd.tlLabels, datasets: [
-          { type:'line', label:'Raw (รายชั่วโมง)', data: fd.tlRaw, borderColor:'#4a9eff', backgroundColor:'rgba(74,158,255,0.1)', borderWidth:2, tension:0.3, pointRadius:2, fill:true },
-          { type:'line', label:'NowCast', data: fd.tlNC, borderColor:'#00d4aa', borderWidth:3, tension:0.3, pointRadius:3 },
-          { type:'line', label:'Avg24 (เฉลี่ย 24 ชม.)', data: fd.tlAvg24, borderColor:'#f5a623', borderDash:[5,5], borderWidth:2, tension:0.3, pointRadius:0 }
-        ]},
-        options: { responsive:true, maintainAspectRatio:false, plugins: { legend: { labels: { color: '#7a8090', font: { family: 'Sarabun' } } } }, scales: { x: { ticks: { color: '#7a8090', font:{family:'IBM Plex Mono', size:10}, maxRotation:45 }, grid: { color: 'rgba(255,255,255,0.05)' } }, y: { ticks: { color: '#7a8090' }, grid: { color: 'rgba(255,255,255,0.05)' } } } }
-      });
-  }
+  charts['timeline']=new Chart(document.getElementById('chart-timeline'),{data:{labels:fd.tlLabels,datasets:[{type:'bar',label:'Raw',data:fd.tlRaw,backgroundColor:'rgba(74,158,255,0.4)'},{type:'line',label:'NowCast',data:fd.tlNC,borderColor:'#00d4aa',borderWidth:3,tension:0.3,fill:true,backgroundColor:'rgba(0,212,170,0.1)'},{type:'line',label:'Avg 24-hr',data:fd.tlAvg24,borderColor:'#f5a623',borderDash:[5,5],tension:0.3}]},options:{responsive:true,maintainAspectRatio:false}});
+
+  const catLabels=AQI_BREAKS.map(b=>b.label), catColors=AQI_BREAKS.map(b=>b.color);
+  const drawDonut=(id, leg, data)=>{
+    destroyChart(id); const total=data.reduce((a,b)=>a+b,0);
+    charts[id]=new Chart(document.getElementById(id),{type:'doughnut',data:{labels:catLabels,datasets:[{data,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+    document.getElementById(leg).innerHTML=catLabels.map((l,i)=>`<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${total?(data[i]/total*100).toFixed(1):0}%)</span></div>`).join('');
+  };
+  drawDonut('chart-donut-raw', 'legend-raw', catLabels.map(l=>fd.rawCats[l]));
+  drawDonut('chart-donut-nc', 'legend-nc', catLabels.map(l=>fd.ncCats[l]));
+  drawDonut('chart-donut-avg24', 'legend-avg24', catLabels.map(l=>fd.avg24Cats[l]));
 
   destroyChart('volatility');
-  if(document.getElementById('chart-volatility')) {
-      charts['volatility'] = new Chart(document.getElementById('chart-volatility'), {
-        type:'bar', data: { labels:['รายสถานี (Station)', `${areaName}`], datasets:[{data:[sdStationVal, sdAreaVal], backgroundColor:['#4a9eff','#00d4aa'], borderRadius: 4}] },
-        options: { indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#7a8090'}},y:{grid:{display:false},ticks:{color:'#fff',font:{family:'Sarabun'}}}} }
-      });
-  }
+  charts['volatility']=new Chart(document.getElementById('chart-volatility'),{type:'bar',data:{labels:['รายสถานี',`${areaName}`],datasets:[{data:[sdStn,sdArea],backgroundColor:['#4a9eff','#00d4aa']}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
 
-  const catLabels = AQI_BREAKS.map(b=>b.label); 
-  const catColors = AQI_BREAKS.map(b=>b.color);
-  const rawCounts = catLabels.map(l => fd.rawCats[l]||0); 
-  const ncCounts = catLabels.map(l => fd.ncCats[l]||0);
-  const totalRaw = rawCounts.reduce((a,b) => a+b, 0);
-  const totalNC = ncCounts.reduce((a,b) => a+b, 0);
-
-  destroyChart('donut-raw');
-  if(document.getElementById('chart-donut-raw')) {
-      charts['donut-raw'] = new Chart(document.getElementById('chart-donut-raw'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:rawCounts,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
-      document.getElementById('legend-raw').innerHTML = catLabels.map((l,i) => {
-        const pct = totalRaw > 0 ? ((rawCounts[i] / totalRaw) * 100).toFixed(1) : 0;
-        return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
-      }).join('');
-  }
-
-  destroyChart('donut-nc');
-  if(document.getElementById('chart-donut-nc')) {
-      charts['donut-nc'] = new Chart(document.getElementById('chart-donut-nc'), {type:'doughnut',data:{labels:catLabels,datasets:[{data:ncCounts,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
-      document.getElementById('legend-nc').innerHTML = catLabels.map((l,i) => {
-        const pct = totalNC > 0 ? ((ncCounts[i] / totalNC) * 100).toFixed(1) : 0;
-        return `<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${pct}%)</span></div>`;
-      }).join('');
-  }
-
-  const stationTableCard = document.getElementById('station-table-card');
-  const tableBody = document.querySelector('#station-ts-table tbody');
-  
-  if(stationTableCard && tableBody) {
-      if(stationKey==='all'||stationKey.startsWith('zone_')) { 
-        stationTableCard.style.display='none'; 
-      } else {
-        stationTableCard.style.display='block';
-        const stnName = STATION_META[stationKey]?.nameTH || stationKey;
-        document.getElementById('station-table-sub').textContent = `แสดงข้อมูลย้อนหลังของสถานี: ${stnName} (${areaName})`;
-        let h = '';
-        for(let i=HISTORY_RECORDS.length-1; i>=0; i--) {
-          const p = HISTORY_RECORDS[i]._parsed[stationKey];
-          if (!p) continue;
-          const bRaw = getAQIBand(p.raw); const bNC = getAQIBand(p.nc);
-          const sRaw = p.raw != null ? `<span style="color:${bRaw?.color||'#fff'}">${p.raw.toFixed(1)}</span>` : '—';
-          const sNC = p.nc != null ? `<span style="color:${bNC?.color||'#fff'}">${p.nc.toFixed(1)}</span>` : '—';
-          h += `<tr><td>${HISTORY_RECORDS[i].date}</td><td style="font-family:var(--mono)">${HISTORY_RECORDS[i].timeRange}</td><td style="font-family:var(--mono); font-weight:bold">${sRaw}</td><td style="font-family:var(--mono); font-weight:bold">${sNC}</td></tr>`;
-        }
-        tableBody.innerHTML = h;
-      }
+  const tableCard=document.getElementById('station-table-card'), tableBody=document.querySelector('#station-ts-table tbody');
+  if(sk==='all'||sk.startsWith('zone_')){ tableCard.style.display='none'; }
+  else {
+    tableCard.style.display='block'; document.getElementById('station-table-sub').textContent=`สถานี: ${STATION_META[sk].nameTH}`;
+    tableBody.innerHTML=HISTORY_RECORDS.slice().reverse().map(r=>{
+      const p=r._parsed[sk]; if(!p) return '';
+      return `<tr><td>${r.date}</td><td style="font-family:var(--mono)">${r.timeRange}</td><td style="color:${getAQIBand(p.raw)?.color}">${p.raw?.toFixed(1)??'—'}</td><td style="color:${getAQIBand(p.nc)?.color}">${p.nc?.toFixed(1)??'—'}</td></tr>`;
+    }).join('');
   }
 }
 
-// ═══════════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════════
-initMap();
 initializeData();
 </script>
 </body>
