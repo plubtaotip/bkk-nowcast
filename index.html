@@ -74,9 +74,12 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .sec-label-line { flex:1; height:1px; background:rgba(255,255,255,.06); }
 .sec-label-text { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
 
+.home-2col { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:780px){ .home-2col { grid-template-columns:1fr; } }
 .h-card { background: #0f1218; border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 28px 30px; }
 .h-card-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
 .h-card-icon { color: var(--accent); font-size: 18px; }
+.h-card-body { font-size:13px; color:rgba(255,255,255,.5); line-height:1.8; }
 
 .result-item { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .result-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
@@ -84,7 +87,39 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .result-desc { font-size: 13.5px; color: rgba(255,255,255,0.6); line-height: 1.8; }
 .result-desc b { color: #fff; }
 
-/* DASHBOARD STYLES */
+.cta-btn { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(74,158,255,.12)); border:1px solid rgba(0,212,170,.3); color:#fff; border-radius:12px; padding:14px 32px; font-family:var(--font); font-size:14px; font-weight:600; cursor:pointer; margin-top: 24px;}
+.cta-btn:hover { background:rgba(0,212,170,.2); border-color:var(--accent); }
+
+/* MAP TAB */
+.map-layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 90px)}
+@media(max-width:900px){.map-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.map-sidebar{ background:var(--bg2);border-right:1px solid var(--border); overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px; }
+.zone-header { margin: 24px 0 8px 0; font-size: 15px; font-weight: 700; padding-bottom: 6px; border-bottom: 2px solid; letter-spacing: 0.02em; }
+.zone-header:first-child { margin-top: 0; }
+.station-cards{display:flex;flex-direction:column;gap:8px}
+.scard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .2s;}
+.scard:hover,.scard.selected{border-color:var(--accent);background:rgba(0,212,170,.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
+.scard-top{display:flex;justify-content:space-between;align-items:flex-start}
+.scard-name{font-size:14px;font-weight:600;color:#fff; line-height:1.3;}
+.scard-sub{font-size:11px;color:var(--muted); margin-top:2px;}
+.aqi-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
+.scard-vals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.sval-box{background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:8px 10px; text-align:center;}
+.sval-label{font-size:10px;color:var(--muted);font-family:var(--mono); margin-bottom:4px; text-transform:uppercase;}
+.sval-num{font-size:18px;font-weight:700;color:#fff;font-family:var(--mono); line-height:1;}
+.sval-unit{font-size:10px;color:var(--muted);margin-left:2px; font-weight:400;}
+#map{height:100%;min-height:400px}
+
+.legend-container { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--rl); padding: 14px 16px; }
+.legend-title { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
+.aqi-legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+.aqi-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.aqi-label { flex: 1; font-weight: 500; color: var(--text); }
+.aqi-range { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.zone-tags { display: flex; flex-direction: column; gap: 8px; }
+.z-tag { font-size: 12px; padding: 4px 10px; border-radius: 6px; border-left: 4px solid; color: var(--text); font-family: var(--font); background: rgba(255,255,255,0.02); font-weight: 500;}
+
+/* DASHBOARD TAB */
 .dash{padding:28px;max-width:1400px;margin:0 auto}
 .dash-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
 .dash-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
@@ -92,6 +127,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .dctrl{display:flex;flex-direction:column;gap:4px;}
 .dctrl label{font-size:11px;color:var(--muted);font-family:var(--mono)}
 .dselect{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;}
+.dselect:focus{outline:none;border-color:var(--accent)}
 
 .dash-grid{display:grid;gap:16px}
 .dash-row-2{grid-template-columns:1fr 1fr}
@@ -113,28 +149,17 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .kpi-delta{font-size:12px;margin-top:auto;padding-top:6px;color:var(--muted)}
 .kpi-delta.up{color:#e74c3c}.kpi-delta.down{color:#2ecc71}
 
-.donut-legend{display:flex;flex-direction:column;gap:6px;margin-top:12px}
+.donut-legend{display:flex;flex-direction:column;gap:6px;}
 .dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
 .dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
-/* Map specific retained */
-.map-layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 90px)}
-.map-sidebar{ background:var(--bg2);border-right:1px solid var(--border); overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px; }
+/* Leaflet Overrides */
 .pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s ease;box-shadow: 0 4px 10px rgba(0,0,0,0.5);border: 2px solid rgba(255,255,255,0.8);}
-#map{height:100%;min-height:400px}
+.pm-marker:hover{transform:scale(1.2); z-index: 1000 !important;}
 
-.legend-container { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--rl); padding: 14px 16px; }
-.legend-title { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
-.aqi-legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
-.aqi-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-.aqi-label { flex: 1; font-weight: 500; color: var(--text); }
-.aqi-range { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.zone-tags { display: flex; flex-direction: column; gap: 8px; }
-.z-tag { font-size: 12px; padding: 4px 10px; border-radius: 6px; border-left: 4px solid; color: var(--text); font-family: var(--font); background: rgba(255,255,255,0.02); font-weight: 500;}
-
-.comp-table{width:100%;border-collapse:collapse;font-size:13px}
-.comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;text-transform:uppercase;background:rgba(255,255,255,0.02);}
-.comp-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
+.leaflet-popup-content-wrapper{background:var(--bg3) !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.6) !important;color:var(--text) !important;}
+.leaflet-popup-tip{background:var(--bg3) !important}
+.leaflet-popup-content{margin:14px 16px !important;font-family:var(--font)}
 
 .no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; gap: 16px; text-align: center; color: var(--muted); }
 .nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
@@ -163,7 +188,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <div id="panel-home" class="panel active">
   <div class="home-container">
-    
     <div class="home-section hero-wrap">
       <div class="hero-bg-glow"></div>
       <div class="hero-card">
@@ -263,15 +287,24 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       <div class="dash-grid dash-row-3" style="margin-top:16px;">
         <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Raw)</div>
-          <div style="height:180px;display:flex;align-items:center;gap:12px"><div style="flex:1;height:160px"><canvas id="chart-donut-raw"></canvas></div><div class="donut-legend" id="legend-raw"></div></div>
+          <div style="height:180px; display:flex; align-items:center; justify-content:center; gap:20px;">
+            <div style="width:140px; height:140px; flex-shrink:0; position:relative;"><canvas id="chart-donut-raw"></canvas></div>
+            <div class="donut-legend" id="legend-raw" style="flex:1;"></div>
+          </div>
         </div>
         <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (NowCast)</div>
-          <div style="height:180px;display:flex;align-items:center;gap:12px"><div style="flex:1;height:160px"><canvas id="chart-donut-nc"></canvas></div><div class="donut-legend" id="legend-nc"></div></div>
+          <div style="height:180px; display:flex; align-items:center; justify-content:center; gap:20px;">
+            <div style="width:140px; height:140px; flex-shrink:0; position:relative;"><canvas id="chart-donut-nc"></canvas></div>
+            <div class="donut-legend" id="legend-nc" style="flex:1;"></div>
+          </div>
         </div>
         <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Avg 24-hr)</div>
-          <div style="height:180px;display:flex;align-items:center;gap:12px"><div style="flex:1;height:160px"><canvas id="chart-donut-avg24"></canvas></div><div class="donut-legend" id="legend-avg24"></div></div>
+          <div style="height:180px; display:flex; align-items:center; justify-content:center; gap:20px;">
+            <div style="width:140px; height:140px; flex-shrink:0; position:relative;"><canvas id="chart-donut-avg24"></canvas></div>
+            <div class="donut-legend" id="legend-avg24" style="flex:1;"></div>
+          </div>
         </div>
       </div>
 
@@ -296,7 +329,7 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 
 <script>
 // ═══════════════════════════════════════════
-// GLOBAL STATE & CONFIG
+// GLOBAL LOGIC & CALCULATIONS 
 // ═══════════════════════════════════════════
 const ZONE_COLORS = { "กรุงเทพกลาง": "#fbc02d", "กรุงเทพใต้": "#ff9800", "กรุงเทพเหนือ": "#4db6ac", "กรุงเทพตะวันออก": "#aed581", "กรุงธนเหนือ": "#f06292", "กรุงธนใต้": "#7986cb" };
 const ZONE_LABELS = [ { id: "กรุงเทพกลาง", title: "1. กลุ่มกรุงเทพกลาง" }, { id: "กรุงเทพใต้", title: "2. กลุ่มกรุงเทพใต้" }, { id: "กรุงเทพเหนือ", title: "3. กลุ่มกรุงเทพเหนือ" }, { id: "กรุงเทพตะวันออก", title: "4. กลุ่มกรุงเทพตะวันออก" }, { id: "กรุงธนเหนือ", title: "5. กลุ่มกรุงธนเหนือ" }, { id: "กรุงธนใต้", title: "6. กลุ่มกรุงธนใต้" } ];
@@ -375,29 +408,28 @@ function calcMAE(a1,a2){ let s=0,c=0; a1.forEach((v,i)=>{if(v!=null&&a2[i]!=null
 function calcSD(a){ const v=a.filter(x=>x!=null); if(v.length<2) return null; const m=v.reduce((s,x)=>s+x,0)/v.length; return Math.sqrt(v.reduce((s,x)=>s+Math.pow(x-m,2),0)/(v.length-1)); }
 function getConvexHull(pts) { if (pts.length < 3) return pts; pts.sort((a,b)=>a[0]!==b[0]?a[0]-b[0]:a[1]-b[1]); const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]), lo=[], up=[]; for(let p of pts){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0)lo.pop();lo.push(p);} for(let i=pts.length-1;i>=0;i--){const p=pts[i];while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0)up.pop();up.push(p);} up.pop(); lo.pop(); return lo.concat(up); }
 
-// Initialize
 async function initializeData() {
-  const statusEl = document.getElementById('global-status');
-  statusEl.style.display = 'block';
   try {
     const res = await fetch('history.json?t=' + Date.now());
     HISTORY_RECORDS = await res.json();
-    STATION_KEYS = Object.keys(HISTORY_RECORDS[0]).filter(k => k !== 'date' && k !== 'timeRange' && STATION_META[k]);
+    STATION_KEYS = Object.keys(HISTORY_RECORDS[0]).filter(k => k !== 'date' && k !== 'timeRange');
+    
     HISTORY_RECORDS.forEach((row, i) => {
       row._parsed = {};
       STATION_KEYS.forEach(k => {
-        let raw=row[k]==='-'?null:parseFloat(row[k]);
+        let raw = row[k]==='-'?null:parseFloat(row[k]);
         let lb8=[], lb24=[];
         for(let j=i; j>=Math.max(0,i-7); j--) if(HISTORY_RECORDS[j][k]!=='-') lb8.push(parseFloat(HISTORY_RECORDS[j][k]));
         for(let j=i; j>=Math.max(0,i-23); j--) if(HISTORY_RECORDS[j][k]!=='-') lb24.push(parseFloat(HISTORY_RECORDS[j][k]));
-        row._parsed[k]={ raw, nc:nowcast(lb8), avg24:lb24.length?lb24.reduce((s,x)=>s+x,0)/lb24.length:null };
+        row._parsed[k] = { raw, nc: nowcast(lb8), avg24: lb24.length?lb24.reduce((s,x)=>s+x,0)/lb24.length:null };
       });
     });
-    document.getElementById('dash-no-data').style.display='none';
-    document.getElementById('dash-content').style.display='block';
-    statusEl.style.display='none';
+    
+    document.getElementById('global-status').style.display = 'none';
+    document.getElementById('dash-no-data').style.display = 'none';
+    document.getElementById('dash-content').style.display = 'block';
     initMap(); buildDynamicUI(); updateDashboard();
-  } catch(e) { statusEl.innerHTML='Error loading data'; }
+  } catch(e) { console.error(e); }
 }
 
 let mapInstance=null, mapMarkers={};
@@ -470,9 +502,6 @@ function switchTab(t,e){
   if(t==='map'&&mapInstance) setTimeout(()=>mapInstance.invalidateSize(),100);
 }
 
-// ═══════════════════════════════════════════
-// DASHBOARD ENGINE
-// ═══════════════════════════════════════════
 let charts={};
 function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
 
