@@ -84,9 +84,6 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .result-desc { font-size: 13.5px; color: rgba(255,255,255,0.6); line-height: 1.8; }
 .result-desc b { color: #fff; }
 
-.cta-btn { display:inline-flex; align-items:center; gap:10px; background:linear-gradient(135deg,rgba(0,212,170,.15),rgba(74,158,255,.12)); border:1px solid rgba(0,212,170,.3); color:#fff; border-radius:12px; padding:14px 32px; font-family:var(--font); font-size:14px; font-weight:600; cursor:pointer; margin-top: 24px;}
-.cta-btn:hover { background:rgba(0,212,170,.2); border-color:var(--accent); }
-
 /* MAP TAB */
 .map-layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 90px)}
 @media(max-width:900px){.map-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
@@ -148,9 +145,12 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 .comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;text-transform:uppercase;background:rgba(255,255,255,0.02);}
 .comp-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
 
-.donut-legend{display:flex;flex-direction:column;gap:6px;}
-.dl-item{display:flex;align-items:center;gap:8px;font-size:12px}
-.dl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.donut-wrapper { display: flex; align-items: center; justify-content: center; gap: 24px; padding-top: 16px; }
+.donut-canvas-wrap { width: 140px; height: 140px; flex-shrink: 0; position: relative; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.dl-item { display:flex; align-items:center; gap:8px; font-size:12px; }
+.dl-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+@media (max-width: 600px) { .donut-wrapper { flex-direction: column; } .donut-legend { display: grid; grid-template-columns: 1fr 1fr; width: 100%; } }
 
 /* Leaflet Overrides */
 .pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s ease;box-shadow: 0 4px 10px rgba(0,0,0,0.5);border: 2px solid rgba(255,255,255,0.8);}
@@ -286,16 +286,16 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       <div class="dash-grid dash-row-2" style="margin-top:16px;">
         <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Avg 24-hr)</div>
-          <div style="height:180px; display:flex; align-items:center; justify-content:center; gap:20px;">
-            <div style="width:140px; height:140px; flex-shrink:0; position:relative;"><canvas id="chart-donut-avg24"></canvas></div>
-            <div class="donut-legend" id="legend-avg24" style="flex:1;"></div>
+          <div class="donut-wrapper">
+            <div class="donut-canvas-wrap"><canvas id="chart-donut-avg24"></canvas></div>
+            <div class="donut-legend" id="legend-avg24"></div>
           </div>
         </div>
         <div class="chart-card">
           <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (NowCast)</div>
-          <div style="height:180px; display:flex; align-items:center; justify-content:center; gap:20px;">
-            <div style="width:140px; height:140px; flex-shrink:0; position:relative;"><canvas id="chart-donut-nc"></canvas></div>
-            <div class="donut-legend" id="legend-nc" style="flex:1;"></div>
+          <div class="donut-wrapper">
+            <div class="donut-canvas-wrap"><canvas id="chart-donut-nc"></canvas></div>
+            <div class="donut-legend" id="legend-nc"></div>
           </div>
         </div>
       </div>
@@ -407,7 +407,6 @@ async function initializeData() {
     const res = await fetch('history.json?t=' + Date.now());
     HISTORY_RECORDS = await res.json();
     
-    // สำคัญ: ป้องกันการพัง ถ้าข้อมูลสถานีไหนไม่ได้อยู่ใน STATION_META
     STATION_KEYS = Object.keys(HISTORY_RECORDS[0]).filter(k => k !== 'date' && k !== 'timeRange' && STATION_META[k]);
     
     HISTORY_RECORDS.forEach((row, i) => {
@@ -429,8 +428,8 @@ async function initializeData() {
     buildDynamicUI(); 
     updateDashboard();
   } catch(e) { 
-    document.getElementById('global-status').innerHTML = '❌ การโหลดข้อมูลล้มเหลว กรุณาตรวจสอบไฟล์ history.json';
-    document.getElementById('global-status').className = 'err';
+    statusEl.innerHTML = '❌ การโหลดข้อมูลล้มเหลว กรุณาตรวจสอบไฟล์ history.json';
+    statusEl.className = 'err';
     console.error(e); 
   }
 }
@@ -459,12 +458,23 @@ function buildDynamicUI() {
       }); 
     }
 
+    if(window.zL) window.zL.forEach(l=>mapInstance.removeLayer(l)); window.zL=[];
+    for(const zId in ZONE_COLORS){
+      const zColor=ZONE_COLORS[zId], zk=STATION_KEYS.filter(k=>STATION_META[k].zone===zId);
+      if(!zk.length) continue;
+      const pts=zk.map(k=>[STATION_META[k].lat,STATION_META[k].lng]), hull=getConvexHull(pts);
+      if(hull.length>=3){ const p=L.polygon(hull,{color:zColor,weight:3,opacity:0.8,fillColor:zColor,fillOpacity:0.15,dashArray:'5,8'}).addTo(mapInstance); window.zL.push(p); }
+      else if(hull.length===2){ const l=L.polyline(hull,{color:zColor,weight:3,dashArray:'5,8'}).addTo(mapInstance); window.zL.push(l); }
+    }
+
     STATION_KEYS.forEach(key=>{
       const m=STATION_META[key];
       const icon=L.divIcon({html:'<div class="pm-marker" style="width:46px;height:46px;background:#333">…</div>',className:'',iconSize:[46,46],iconAnchor:[23,23]});
       const marker=L.marker([m.lat,m.lng],{icon}).addTo(mapInstance).on('click',()=>selectStation(key));
       mapMarkers[key]={marker};
     });
+    
+    updateMap();
   } catch(e) { console.error("Error in buildDynamicUI: ", e); }
 }
 
@@ -503,15 +513,18 @@ function updateMap() {
       const {nc, avg24}=row._parsed[k], band=getAQIBand(nc);
       const markerObj = mapMarkers[k];
       if (markerObj && markerObj.marker) {
-          const domEl = markerObj.marker.getElement();
-          if(domEl) {
-              const div = domEl.querySelector('.pm-marker');
-              if(div){ 
-                 div.style.background=nc!=null?band.color:'#333'; 
-                 div.textContent=nc!=null?nc.toFixed(0):'?'; 
-              }
-          }
           const m=STATION_META[k], diff=(nc!=null&&avg24!=null)?(nc-avg24).toFixed(1):'—', ds=parseFloat(diff)>0?'+':'';
+          
+          // ปรับปรุงไอคอนผ่าน setIcon แทนการยุ่งกับ DOM โดยตรง เพื่อแก้ปัญหาหน้าเว็บค้างเมื่อสลับ Tab
+          const bg = nc != null ? band.color : '#333';
+          const tc = nc != null ? (band.textColor || '#fff') : '#fff';
+          const val = nc != null ? nc.toFixed(0) : '?';
+          const newIcon = L.divIcon({
+              html: `<div class="pm-marker" style="width:46px;height:46px;background:${bg};color:${tc}">${val}</div>`,
+              className: '', iconSize: [46,46], iconAnchor: [23,23]
+          });
+          markerObj.marker.setIcon(newIcon);
+
           markerObj.marker.setPopupContent(`<div style="font-family:'Sarabun',sans-serif"><div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px">${m.nameTH}</div><div style="font-size:11px;color:#7a8090;margin-bottom:12px">${row.date} | ${row.timeRange}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="background:#1f2229;border-radius:8px;padding:10px"><div style="font-size:10px;color:#7a8090;margin-bottom:6px">EPA NowCast</div><div style="font-size:22px;font-weight:700;color:${band?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'}</div></div><div style="background:#1f2229;border-radius:8px;padding:10px"><div style="font-size:10px;color:#7a8090;margin-bottom:6px">เฉลี่ย 24 ชม.</div><div style="font-size:22px;font-weight:700;color:${getAQIBand(avg24)?.color??'#444'};margin-bottom:4px">${avg24!=null?avg24.toFixed(1):'—'}</div></div></div><div style="margin-top:8px;background:#1f2229;border-radius:8px;padding:8px 10px;font-size:12px">NowCast − เฉลี่ย 24 ชม: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${ds}${diff} µg/m³</b></div></div>`);
       }
     });
@@ -521,8 +534,16 @@ function updateMap() {
 function switchTab(t,e){
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel-'+t).classList.add('active'); e.target.classList.add('active');
-  if(t==='map'&&mapInstance) setTimeout(()=>mapInstance.invalidateSize(),100);
+  document.getElementById('panel-'+t).classList.add('active'); 
+  if(e && e.target) e.target.classList.add('active');
+  
+  if(t==='map'&&mapInstance) {
+    setTimeout(()=>mapInstance.invalidateSize(),100);
+    updateMap();
+  }
+  if(t==='dash') {
+    updateDashboard();
+  }
 }
 
 let charts={};
@@ -563,6 +584,7 @@ function extractFlatData(keys) {
 
 function updateDashboard() {
   try {
+      if(!HISTORY_RECORDS.length) return;
       const sk=document.getElementById('dash-station').value;
       let tKeys=[], aKeys=[], areaName="ภาพรวม กทม.";
       if(sk==='all'){ tKeys=aKeys=STATION_KEYS; }
