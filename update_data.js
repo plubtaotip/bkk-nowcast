@@ -22,13 +22,26 @@ async function updateRealtimeHistory() {
     console.log("🚀 กำลังดึงข้อมูล PM2.5 ล่าสุดจาก Air4Thai API...");
     const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
     
-    const response = await fetch(targetUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
-    });
+    let stationsList = [];
+    try {
+      const response = await fetch(targetUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+      });
 
-    if (!response.ok) throw new Error("Fetch failed from Air4Thai API");
-    const apiData = await response.json();
-    const stationsList = apiData.result || apiData.stations || [];
+      if (response.ok) {
+        const apiData = await response.json();
+        stationsList = apiData.result || apiData.stations || [];
+      }
+    } catch (fetchErr) {
+      console.log("⚠️ แจ้งเตือน: ไม่สามารถเชื่อมต่อ Air4Thai ได้ (ถูกบล็อก IP ต่างประเทศ):", fetchErr.message);
+      console.log("✅ ข้ามการอัปเดตในรอบนี้โดยไม่ทำให้ Workflow พัง (Exit Code 0)");
+      return; // จบการทำงานอย่างปลอดภัย
+    }
+
+    if (stationsList.length === 0) {
+      console.log("⚠️ ไม่พบข้อมูลสถานีจาก API ข้ามการอัปเดตในรอบนี้");
+      return;
+    }
 
     // คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
     const utcNow = new Date();
@@ -57,7 +70,6 @@ async function updateRealtimeHistory() {
       if (BKK_STATIONS.includes(stnID)) {
         const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
         if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
-          // ถ้าช่องเดิมเป็น "-" หรือยังไม่มีค่า ให้นำค่าสดไปใส่
           if (targetRow[stnID] === "-" || targetRow[stnID] === undefined || targetRow[stnID] === null) {
             targetRow[stnID] = parseFloat(pm25Val);
             successCount++;
@@ -75,7 +87,6 @@ async function updateRealtimeHistory() {
       return timeA - timeB;
     });
 
-    // ตัดประวัติส่วนที่เก่าเกินไปออก ให้เหลือ 200 ชั่วโมงล่าสุดพอดิบพอดีสำหรับการคำนวณ NowCast
     if (history.length > 200) {
       history = history.slice(history.length - 200); 
     }
@@ -84,7 +95,7 @@ async function updateRealtimeHistory() {
     console.log("✅ บันทึกไฟล์ history.json สำเร็จเรียบร้อย!");
 
   } catch (error) {
-    console.error('❌ เกิดข้อผิดพลาด:', error.message);
+    console.error('❌ เกิดข้อผิดพลาดร้ายแรง:', error.message);
     process.exit(1); 
   }
 }
