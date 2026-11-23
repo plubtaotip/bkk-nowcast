@@ -1,167 +1,159 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bangkok Air Quality — BKK NowCast Research</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root {
-  --bg: #0a0c10; --bg2: #111318; --bg3: #181b21; --bg4: #1f2229;
-  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.13);
-  --text: #dde1e8; --muted: #7a8090; --dim: #2e3240;
-  --accent: #00d4aa; --accent-dim: rgba(0,212,170,0.1);
-  --font: 'Sarabun', sans-serif; --mono: 'IBM Plex Mono', monospace;
-  --r: 10px; --rl: 14px;
+  --bg: #07090e; --bg2: #0d1117; --bg3: #161b22; --bg4: #21262d;
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.15);
+  --text: #e6edf3; --muted: #8b949e; --dim: #30363d;
+  --accent: #00eaaf; --accent-dim: rgba(0,234,175,0.1);
+  --font: 'Plus Jakarta Sans', sans-serif; --mono: 'IBM Plex Mono', monospace;
+  --r: 12px; --rl: 18px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased;font-size:15px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;-webkit-font-smoothing:antialiased;font-size:14.5px}
 
 /* HEADER & GLOBAL STATUS */
-header { display:flex;align-items:center;justify-content:space-between; padding:16px 28px; background:var(--bg2); border-bottom:1px solid var(--border); position:sticky;top:0;z-index:1000; backdrop-filter:blur(12px); }
-.logo { display:flex;align-items:center;gap:12px; }
-.logo-icon { width:36px;height:36px; background:linear-gradient(135deg,#00d4aa,#0066ff); border-radius:10px; display:flex;align-items:center;justify-content:center; font-size:18px; }
-.logo-text {font-size:16px;font-weight:700;color:#fff;letter-spacing:-.01em}
+header { display:flex;align-items:center;justify-content:space-between; padding:18px 32px; background:rgba(13, 17, 23, 0.85); border-bottom:1px solid var(--border); position:sticky;top:0;z-index:1000; backdrop-filter:blur(16px); }
+.logo { display:flex;align-items:center;gap:14px; }
+.logo-icon { width:40px;height:40px; background:linear-gradient(135deg,#00eaaf,#0062ff); border-radius:12px; display:flex;align-items:center;justify-content:center; font-size:20px; box-shadow: 0 4px 16px rgba(0,234,175,0.25); }
+.logo-text {font-size:17px;font-weight:700;color:#fff;letter-spacing:-.01em}
 .logo-sub {font-size:11px;color:var(--muted);font-family:var(--mono)}
 
-#global-status { background: var(--bg4); color: var(--accent); text-align: center; padding: 8px; font-size: 12px; font-family: var(--mono); border-bottom: 1px solid var(--border); display: none; }
-#global-status.err { color: #f44336; background: rgba(244, 67, 54, 0.1); }
+#global-status { background: var(--bg4); color: var(--accent); text-align: center; padding: 10px; font-size: 12px; font-family: var(--mono); border-bottom: 1px solid var(--border); display: none; }
+#global-status.err { color: #f85149; background: rgba(248, 81, 73, 0.1); }
 
 /* TABS */
-.tabs { display:flex;gap:4px;background:var(--bg3);border-radius:10px;padding:4px; }
-.tab { font-family:var(--font);font-size:13px;font-weight:500; padding:7px 18px;border-radius:7px;border:none; background:transparent;color:var(--muted);cursor:pointer;transition:all .2s; }
+.tabs { display:flex;gap:6px;background:var(--bg3);border-radius:12px;padding:5px;border:1px solid var(--border); }
+.tab { font-family:var(--font);font-size:13px;font-weight:600; padding:8px 20px;border-radius:8px;border:none; background:transparent;color:var(--muted);cursor:pointer;transition:all .25s ease; }
 .tab:hover{color:var(--text)}
-.tab.active{background:var(--bg);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.tab.active{background:var(--bg);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,.5);border:1px solid var(--border2)}
 .panel{display:none} .panel.active{display:block}
 
-/* HOME PAGE STYLES */
-@keyframes fadeUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
-@keyframes dotPing { 0% { transform:scale(1); opacity:1; } 70%,100% { transform:scale(2.2); opacity:0; } }
+/* HOME PAGE MODERN STYLES */
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes dotPing { 0% { transform:scale(1); opacity:1; } 70%,100% { transform:scale(2.4); opacity:0; } }
 
-.home-container { max-width: 1060px; margin: 0 auto; padding: 48px 28px 80px; }
-.home-section { animation: fadeUp .5s ease both; margin-bottom: 48px; }
+.home-container { max-width: 1100px; margin: 0 auto; padding: 56px 28px 80px; }
+.home-section { animation: fadeUp .6s cubic-bezier(0.16, 1, 0.3, 1) both; margin-bottom: 52px; }
 
 .hero-wrap { position: relative; }
-.hero-bg-glow { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 24px; }
-.hero-bg-glow::before { content:""; position:absolute; top:-60px; left:50%; transform:translateX(-50%); width:600px; height:300px; background: radial-gradient(ellipse at center, rgba(0,212,170,.13) 0%, transparent 65%); }
-.hero-card { background: linear-gradient(160deg, #0d1016 0%, #111520 100%); border: 1px solid rgba(255,255,255,0.09); border-radius: 24px; padding: 56px 48px 40px; text-align: center; position: relative; overflow: hidden; }
+.hero-bg-glow { position: absolute; inset: 0; pointer-events: none; overflow: hidden; border-radius: 28px; }
+.hero-bg-glow::before { content:""; position:absolute; top:-80px; left:50%; transform:translateX(-50%); width:700px; height:350px; background: radial-gradient(ellipse at center, rgba(0,234,175,.15) 0%, transparent 70%); }
+.hero-card { background: linear-gradient(160deg, rgba(13,17,23,0.9) 0%, rgba(22,27,34,0.8) 100%); backdrop-filter: blur(20px); border: 1px solid var(--border2); border-radius: 28px; padding: 64px 48px 48px; text-align: center; position: relative; overflow: hidden; box-shadow: 0 24px 48px rgba(0,0,0,0.4); }
 
-.h-eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:24px; }
+.h-eyebrow { display:inline-flex; align-items:center; gap:8px; margin-bottom:28px; background:rgba(0,234,175,0.08); padding:6px 14px; border-radius:20px; border:1px solid rgba(0,234,175,0.2); }
 .h-eyebrow-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); position:relative; }
-.h-eyebrow-dot::after { content:""; position:absolute; inset:0; border-radius:50%; background:var(--accent); animation:dotPing 2s ease infinite; }
-.h-eyebrow-text { font-size:11px; font-family:var(--mono); color:var(--accent); letter-spacing:.1em; text-transform:uppercase; font-weight:600; }
+.h-eyebrow-dot::after { content:""; position:absolute; inset:0; border-radius:50%; background:var(--accent); animation:dotPing 2s cubic-bezier(0,0,0.2,1) infinite; }
+.h-eyebrow-text { font-size:11px; font-family:var(--mono); color:var(--accent); letter-spacing:.12em; text-transform:uppercase; font-weight:700; }
 
-.hero-th { font-size:28px; font-weight:700; color:#fff; line-height:1.45; margin-bottom:10px; letter-spacing:-.01em; }
-.hero-en { font-size:13px; color:rgba(255,255,255,.35); font-family:var(--mono); letter-spacing:.03em; margin-bottom:40px; }
+.hero-title { font-size:32px; font-weight:700; color:#fff; line-height:1.4; margin-bottom:14px; letter-spacing:-.02em; }
+.hero-subtitle { font-size:14px; color:var(--muted); font-family:var(--mono); letter-spacing:.02em; margin-bottom:44px; }
 
-.hero-stats { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-bottom:36px; }
-.h-stat { background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:10px; padding:12px 20px; text-align:center; min-width:110px; }
-.h-stat-val { font-size:22px; font-weight:700; font-family:var(--mono); color:#fff; line-height:1; }
-.h-stat-label { font-size:10px; color:var(--muted); margin-top:5px; font-family:var(--mono); letter-spacing:.04em; }
+.hero-stats { display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin-bottom:40px; }
+.h-stat { background:rgba(255,255,255,.03); border:1px solid var(--border); border-radius:14px; padding:16px 24px; text-align:center; min-width:130px; backdrop-filter:blur(8px); transition:all .3s; }
+.h-stat:hover { border-color:var(--border2); transform:translateY(-2px); background:rgba(255,255,255,.05); }
+.h-stat-val { font-size:26px; font-weight:700; font-family:var(--mono); color:#fff; line-height:1; }
+.h-stat-label { font-size:11px; color:var(--muted); margin-top:6px; font-family:var(--mono); letter-spacing:.04em; }
 
-.team-row { display:flex; justify-content:center; align-items:stretch; gap:0; flex-wrap:wrap; padding-top: 24px; border-top: 1px solid rgba(255,255,255,.07); }
-.team-pill { display:flex; flex-direction:column; align-items:center; gap:5px; padding:8px 32px; border-right:1px solid rgba(255,255,255,.07); }
-.team-pill:last-child { border-right:none; }
-.team-pill-role { font-size:9.5px; font-family:var(--mono); color:var(--accent); text-transform:uppercase; letter-spacing:.1em; }
-.team-pill-name { font-size:13.5px; font-weight:600; color:rgba(255,255,255,.85); }
+.team-row { display:flex; justify-content:center; align-items:stretch; gap:12px; flex-wrap:wrap; padding-top: 28px; border-top: 1px solid var(--border); }
+.team-pill { background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:12px 28px; }
+.team-pill-role { font-size:10px; font-family:var(--mono); color:var(--accent); text-transform:uppercase; letter-spacing:.1em; font-weight:600; }
+.team-pill-name { font-size:14px; font-weight:600; color:#fff; }
 
-.sec-label { display:flex; align-items:center; gap:12px; margin:44px 0 20px; }
-.sec-label-line { flex:1; height:1px; background:rgba(255,255,255,.06); }
-.sec-label-text { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+.sec-label { display:flex; align-items:center; gap:16px; margin:52px 0 24px; }
+.sec-label-line { flex:1; height:1px; background:var(--border); }
+.sec-label-text { font-size:11px; font-family:var(--mono); color:var(--muted); letter-spacing:.12em; text-transform:uppercase; font-weight:600; }
 
-.h-card { background: #0f1218; border: 1px solid rgba(255,255,255,.07); border-radius: 18px; padding: 28px 30px; }
-.h-card-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
-.h-card-icon { color: var(--accent); font-size: 18px; }
-
-.result-item { margin-bottom: 24px; padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.h-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--rl); padding: 32px 36px; box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+.result-item { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
 .result-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-.result-title { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 8px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.05em; }
-.result-desc { font-size: 13.5px; color: rgba(255,255,255,0.6); line-height: 1.8; }
-.result-desc b { color: #fff; }
+.result-title { font-size: 14.5px; font-weight: 700; color: var(--accent); margin-bottom: 8px; font-family: var(--mono); letter-spacing: 0.03em; }
+.result-desc { font-size: 14px; color: rgba(230,237,243,0.75); line-height: 1.8; }
+.result-desc b { color: #fff; font-weight: 600; }
 
-/* MAP TAB */
-.map-layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 90px)}
-@media(max-width:900px){.map-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
-.map-sidebar{ background:var(--bg2);border-right:1px solid var(--border); overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px; }
-.zone-header { margin: 24px 0 8px 0; font-size: 15px; font-weight: 700; padding-bottom: 6px; border-bottom: 2px solid; letter-spacing: 0.02em; }
+/* MAP TAB & MODERN SIDEBAR */
+.map-layout{display:grid;grid-template-columns:380px 1fr;height:calc(100vh - 77px)}
+@media(max-width:960px){.map-layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.map-sidebar{ background:var(--bg2);border-right:1px solid var(--border); overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px; }
+.zone-header { margin: 20px 0 10px 0; font-size: 13px; font-family:var(--mono); font-weight: 700; padding-bottom: 6px; border-bottom: 2px solid; letter-spacing: 0.05em; text-transform: uppercase; }
 .zone-header:first-child { margin-top: 0; }
-.station-cards{display:flex;flex-direction:column;gap:8px}
-.scard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .2s;}
-.scard:hover,.scard.selected{border-color:var(--accent);background:rgba(0,212,170,.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2);}
+.station-cards{display:flex;flex-direction:column;gap:10px}
+.scard{background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .25s ease;}
+.scard:hover,.scard.selected{border-color:var(--accent);background:rgba(0,234,175,.04); box-shadow: 0 8px 24px rgba(0,0,0,0.3); transform: translateY(-1px);}
 .scard-top{display:flex;justify-content:space-between;align-items:flex-start}
-.scard-name{font-size:14px;font-weight:600;color:#fff; line-height:1.3;}
-.scard-sub{font-size:11px;color:var(--muted); margin-top:2px;}
-.aqi-badge{font-family:var(--mono);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
-.scard-vals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-.sval-box{background:var(--bg4);border:1px solid var(--border2);border-radius:8px;padding:8px 10px; text-align:center;}
-.sval-label{font-size:10px;color:var(--muted);font-family:var(--mono); margin-bottom:4px; text-transform:uppercase;}
+.scard-name{font-size:14px;font-weight:600;color:#fff; line-height:1.4;}
+.aqi-badge{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;letter-spacing:0.02em;}
+.scard-vals{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.sval-box{background:var(--bg4);border:1px solid var(--border);border-radius:10px;padding:10px 12px; text-align:center;}
+.sval-label{font-size:10px;color:var(--muted);font-family:var(--mono); margin-bottom:4px; text-transform:uppercase; letter-spacing:0.04em;}
 .sval-num{font-size:18px;font-weight:700;color:#fff;font-family:var(--mono); line-height:1;}
-.sval-unit{font-size:10px;color:var(--muted);margin-left:2px; font-weight:400;}
-#map{height:100%;min-height:400px}
+#map{height:100%;min-height:450px}
 
-.legend-container { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--rl); padding: 14px 16px; }
-.legend-title { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.05em; }
-.aqi-legend-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
-.aqi-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.legend-container { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--rl); padding: 18px 20px; }
+.legend-title { font-size: 11px; color: var(--muted); font-family: var(--mono); text-transform: uppercase; margin-bottom: 14px; letter-spacing: 0.08em; font-weight: 600; }
+.aqi-legend-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; font-size: 12.5px; }
+.aqi-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 .aqi-label { flex: 1; font-weight: 500; color: var(--text); }
 .aqi-range { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .zone-tags { display: flex; flex-direction: column; gap: 8px; }
-.z-tag { font-size: 12px; padding: 4px 10px; border-radius: 6px; border-left: 4px solid; color: var(--text); font-family: var(--font); background: rgba(255,255,255,0.02); font-weight: 500;}
+.z-tag { font-size: 12px; padding: 6px 12px; border-radius: 8px; border-left: 3px solid; color: var(--text); font-family: var(--font); background: rgba(255,255,255,0.02); font-weight: 600;}
 
 /* DASHBOARD TAB */
-.dash{padding:28px;max-width:1400px;margin:0 auto}
-.dash-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:4px}
-.dash-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
-.dash-controls{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;align-items:center;}
-.dctrl{display:flex;flex-direction:column;gap:4px;}
-.dctrl label{font-size:11px;color:var(--muted);font-family:var(--mono)}
-.dselect{background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:8px 14px;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;}
-.dselect:focus{outline:none;border-color:var(--accent)}
+.dash{padding:32px;max-width:1400px;margin:0 auto}
+.dash-title{font-size:22px;font-weight:700;color:#fff;margin-bottom:6px; letter-spacing:-.01em;}
+.dash-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+.dselect{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:10px 16px;color:var(--text);font-family:var(--font);font-size:13.5px;cursor:pointer; transition:all .2s;}
+.dselect:focus{outline:none;border-color:var(--accent); box-shadow: 0 0 0 3px rgba(0,234,175,0.15);}
 
-.dash-grid{display:grid;gap:16px}
+.dash-grid{display:grid;gap:20px}
 .dash-row-2{grid-template-columns:1fr 1fr}
-@media(max-width:900px){.dash-row-2{grid-template-columns:1fr}}
+@media(max-width:960px){.dash-row-2{grid-template-columns:1fr}}
 
-.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px;}
-.chart-card-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:4px}
-.chart-card-sub{font-size:11px;color:var(--muted);margin-bottom:16px;font-family:var(--mono)}
-.chart-wrap-lg{position:relative;height:320px}
+.chart-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:24px; box-shadow: 0 8px 24px rgba(0,0,0,0.25);}
+.chart-card-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px}
+.chart-card-sub{font-size:11.5px;color:var(--muted);margin-bottom:20px;font-family:var(--mono)}
+.chart-wrap-lg{position:relative;height:340px}
 
-.kpi-row-5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.kpi-row-5{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:32px}
 @media(max-width:1200px){.kpi-row-5{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:900px){.kpi-row-5{grid-template-columns:1fr 1fr}}
-.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:18px 20px;display:flex;flex-direction:column;}
-.kpi-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px}
+.kpi-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:20px 24px;display:flex;flex-direction:column; box-shadow: 0 8px 24px rgba(0,0,0,0.25); transition:transform .2s;}
+.kpi-card:hover{transform:translateY(-2px); border-color:var(--border2);}
+.kpi-label{font-size:11px;color:var(--muted);font-family:var(--mono);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px; font-weight:600;}
 .kpi-val{font-size:28px;font-weight:700;color:#fff;font-family:var(--mono);line-height:1}
-.kpi-unit{font-size:12px;color:var(--muted);margin-left:4px;font-weight:400}
-.kpi-delta{font-size:12px;margin-top:auto;padding-top:6px;color:var(--muted)}
+.kpi-delta{font-size:12px;margin-top:auto;padding-top:8px;color:var(--muted); font-family:var(--mono);}
 
-.comp-table{width:100%;border-collapse:collapse;font-size:13px}
-.comp-table th{text-align:left;padding:12px 14px;font-size:12px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;text-transform:uppercase;background:rgba(255,255,255,0.02);}
-.comp-table td{padding:12px 14px;border-bottom:1px solid var(--border)}
+.comp-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.comp-table th{text-align:left;padding:14px 16px;font-size:11.5px;font-family:var(--mono);color:var(--muted);border-bottom:1px solid var(--border);font-weight:700;text-transform:uppercase;background:rgba(255,255,255,0.02); letter-spacing:0.04em;}
+.comp-table td{padding:14px 16px;border-bottom:1px solid var(--border)}
 
-.donut-wrapper { display: flex; align-items: center; justify-content: center; gap: 24px; padding-top: 16px; }
-.donut-canvas-wrap { width: 140px; height: 140px; flex-shrink: 0; position: relative; }
-.donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.dl-item { display:flex; align-items:center; gap:8px; font-size:12px; }
+.donut-wrapper { display: flex; align-items: center; justify-content: center; gap: 28px; padding-top: 16px; }
+.donut-canvas-wrap { width: 150px; height: 150px; flex-shrink: 0; position: relative; }
+.donut-legend { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+.dl-item { display:flex; align-items:center; gap:10px; font-size:12.5px; }
 .dl-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
 @media (max-width: 600px) { .donut-wrapper { flex-direction: column; } .donut-legend { display: grid; grid-template-columns: 1fr 1fr; width: 100%; } }
 
 /* Leaflet Overrides */
-.pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s ease;box-shadow: 0 4px 10px rgba(0,0,0,0.5);border: 2px solid rgba(255,255,255,0.8);}
-.pm-marker:hover{transform:scale(1.2); z-index: 1000 !important;}
+.pm-marker{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:13px;border-radius:50%;color:#fff;cursor:pointer;transition:all .3s cubic-bezier(0.16, 1, 0.3, 1);box-shadow: 0 6px 20px rgba(0,0,0,0.6);border: 2.5px solid rgba(255,255,255,0.9);}
+.pm-marker:hover{transform:scale(1.25); z-index: 1000 !important;}
 
-.leaflet-popup-content-wrapper{background:var(--bg3) !important;border:1px solid var(--border2) !important;border-radius:12px !important;box-shadow:0 8px 32px rgba(0,0,0,.6) !important;color:var(--text) !important;}
+.leaflet-popup-content-wrapper{background:var(--bg3) !important;border:1px solid var(--border2) !important;border-radius:var(--rl) !important;box-shadow:0 16px 40px rgba(0,0,0,.7) !important;color:var(--text) !important;}
 .leaflet-popup-tip{background:var(--bg3) !important}
-.leaflet-popup-content{margin:14px 16px !important;font-family:var(--font)}
+.leaflet-popup-content{margin:16px 18px !important;font-family:var(--font)}
 
-.no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; gap: 16px; text-align: center; color: var(--muted); }
-.nd-icon { font-size: 40px; opacity: .5; animation: pulse 1.5s infinite; }
+.no-data-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 450px; gap: 16px; text-align: center; color: var(--muted); }
+.nd-icon { font-size: 44px; opacity: .6; animation: pulse 1.5s infinite; }
 .nd-title { font-size: 16px; font-weight: 600; color: var(--text); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 </style>
@@ -177,13 +169,13 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('home', event)">🏠 หน้าหลักโครงการ</button>
-    <button class="tab" onclick="switchTab('map', event)">🗺 แผนที่หมุดโซน</button>
-    <button class="tab" onclick="switchTab('dash', event)">📊 Dashboard สถิติ</button>
+    <button class="tab active" onclick="switchTab('home', event)">🏠 Home</button>
+    <button class="tab" onclick="switchTab('map', event)">🗺 Map & Zones</button>
+    <button class="tab" onclick="switchTab('dash', event)">📊 Dashboard</button>
   </div>
 </header>
 
-<div id="global-status">⏳ กำลังประมวลผลข้อมูล...</div>
+<div id="global-status">⏳ Processing data...</div>
 
 <div id="panel-home" class="panel active">
   <div class="home-container">
@@ -191,42 +183,42 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
       <div class="hero-bg-glow"></div>
       <div class="hero-card">
         <div class="h-eyebrow"><div class="h-eyebrow-dot"></div><span class="h-eyebrow-text">Environmental Engineering · Final Project</span></div>
-        <div class="hero-th">การพัฒนาระบบ BKK NowCast<br>เพื่อการแจ้งเตือนคุณภาพอากาศ (PM2.5) ในกรุงเทพมหานคร</div>
-        <div class="hero-en">Development of BKK NowCast System for PM2.5 Air Quality Warning in Bangkok</div>
+        <div class="hero-title">Development of BKK NowCast System<br>for PM2.5 Air Quality Warning in Bangkok</div>
+        <div class="hero-subtitle">การพัฒนาระบบ BKK NowCast เพื่อการแจ้งเตือนคุณภาพอากาศ (PM2.5) ในกรุงเทพมหานคร</div>
 
         <div class="hero-stats">
-          <div class="h-stat"><div class="h-stat-val">100<span>+</span></div><div class="h-stat-label">สถานีตรวจวัด</div></div>
-          <div class="h-stat"><div class="h-stat-val">37.5</div><div class="h-stat-label">มาตรฐานไทยใหม่</div></div>
-          <div class="h-stat" style="border-color:var(--accent);"><div class="h-stat-val" style="color:var(--accent)">8 ชม.</div><div class="h-stat-label">Lookback Window</div></div>
-          <div class="h-stat"><div class="h-stat-val">W=0.4</div><div class="h-stat-label">Weight Factor</div></div>
+          <div class="h-stat"><div class="h-stat-val">100<span>+</span></div><div class="h-stat-label">Stations</div></div>
+          <div class="h-stat"><div class="h-stat-val">37.5</div><div class="h-stat-label">New Thai Std</div></div>
+          <div class="h-stat" style="border-color:var(--border2);"><div class="h-stat-val" style="color:var(--accent)">8 hrs</div><div class="h-stat-label">Lookback Window</div></div>
+          <div class="h-stat"><div class="h-stat-val">0.4</div><div class="h-stat-label">Min Weight (W)</div></div>
         </div>
 
         <div class="team-row">
-          <div class="team-pill"><div class="team-pill-role">ผู้วิจัย</div><div class="team-pill-name">ธนกฤต เถาว์ทิพย์</div></div>
-          <div class="team-pill"><div class="team-pill-role">ผู้วิจัย</div><div class="team-pill-name">ชัยชญ โยธาพันธ์</div></div>
-          <div class="team-pill"><div class="team-pill-role">อาจารย์ที่ปรึกษา</div><div class="team-pill-name">รศ.ดร. ศิริมา ปัญญาเมธีกุล</div></div>
+          <div class="team-pill"><div class="team-pill-role">Researcher</div><div class="team-pill-name">Thanakrit Taotip</div></div>
+          <div class="team-pill"><div class="team-pill-role">Researcher</div><div class="team-pill-name">Chaichon Yothaphan</div></div>
+          <div class="team-pill"><div class="team-pill-role">Advisor</div><div class="team-pill-name">Assoc. Prof. Dr. Sirima Panyamethikul</div></div>
         </div>
       </div>
     </div>
 
     <div class="home-section">
-      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">บทที่ 4 : ผลการดำเนินงานวิจัย (Research Results)</div><div class="sec-label-line"></div></div>
+      <div class="sec-label"><div class="sec-label-line"></div><div class="sec-label-text">Chapter 4 : Research Results</div><div class="sec-label-line"></div></div>
       <div class="h-card">
         <div class="result-item">
-          <div class="result-title">4.1 การพัฒนาระบบต้นแบบและพารามิเตอร์</div>
-          <div class="result-desc">ได้กำหนดพารามิเตอร์ <b>Lookback Window ที่ 8 ชั่วโมง</b> และ <b>Weight Factor ขั้นต่ำที่ 0.4</b> เพื่อให้ระบบตอบสนองต่อวิกฤตฝุ่นได้ไวกว่ามาตรฐาน EPA เดิม</div>
+          <div class="result-title">4.1 Prototype System and Parameter Configuration</div>
+          <div class="result-desc">Configured an <b>8-hour Lookback Window</b> and a <b>minimum Weight Factor of 0.4</b> to enable the system to respond rapidly to acute PM2.5 pollution episodes compared to standard EPA guidelines.</div>
         </div>
         <div class="result-item">
-          <div class="result-title">4.2 ผลการวิเคราะห์ความแม่นยำ (Accuracy Analysis)</div>
-          <div class="result-desc">ประเมินผ่านดัชนี <b>RMSE</b> และ <b>MAE</b> โดยเปรียบเทียบค่า NowCast กับค่าเฉลี่ย 24 ชั่วโมงจริง ซึ่งพบว่ามีความคลาดเคลื่อนอยู่ในเกณฑ์ต่ำ พิสูจน์ความแม่นยำของอัลกอริทึมที่ปรับจูนใหม่</div>
+          <div class="result-title">4.2 Accuracy Analysis</div>
+          <div class="result-desc">Evaluated via <b>RMSE</b> and <b>MAE</b> indices by comparing NowCast values against true 24-hour moving averages, demonstrating low error margins and validating the tuned algorithm's precision.</div>
         </div>
         <div class="result-item">
-          <div class="result-title">4.3 ผลการลดความผันผวนด้วยวิธี Area-based (Objective 3)</div>
-          <div class="result-desc">พบว่าการแจ้งเตือนแบบกลุ่มพื้นที่สามารถลดความผันผวน (SD) ได้ดีกว่ารายสถานี ช่วยลดการเกิดสัญญาณหลอก (False Alarm) ต่อประชาชน</div>
+          <div class="result-title">4.3 Volatility Reduction via Area-based Approach (Objective 3)</div>
+          <div class="result-desc">Demonstrated that area-based group forecasting significantly reduces standard deviation (SD) compared to individual station monitoring, effectively minimizing false alarms for the public.</div>
         </div>
         <div class="result-item">
-          <div class="result-title">4.4 การวิเคราะห์เชิงพื้นที่และสัดส่วน AQI</div>
-          <div class="result-desc">ใช้ลอจิก Convex Hull ระบุขอบเขต 6 โซน และใช้กราฟ Donut Chart วิเคราะห์สัดส่วนคุณภาพอากาศเปรียบเทียบระหว่างค่าเฉลี่ย 24 ชั่วโมงและระบบ NowCast</div>
+          <div class="result-title">4.4 Spatial and AQI Proportion Analysis</div>
+          <div class="result-desc">Utilized Convex Hull boundary mapping for 6 Bangkok zones and Donut charts to analyze air quality proportions comparing 24-hour averages against the NowCast model.</div>
         </div>
       </div>
     </div>
@@ -236,18 +228,18 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 <div id="panel-map" class="panel">
   <div class="map-layout">
     <div class="map-sidebar">
-      <div style="padding: 16px; background: var(--bg3); border-radius: var(--rl); border: 1px solid var(--border);">
-         <div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:6px;"><div style="width:8px;height:8px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite;"></div>Live Air Quality Monitor</div>
-         <div style="font-size:11px; color:var(--muted); font-family:var(--mono);" id="live-time-display">กำลังรอข้อมูล...</div>
+      <div style="padding: 16px 18px; background: var(--bg3); border-radius: var(--r); border: 1px solid var(--border);">
+         <div style="font-size:12.5px; font-weight:700; color:var(--accent); margin-bottom:4px; display:flex; align-items:center; gap:8px;"><div style="width:7px;height:7px;background:var(--accent);border-radius:50%;animation:pulse 1.5s infinite;"></div>Live Air Quality Monitor</div>
+         <div style="font-size:11px; color:var(--muted); font-family:var(--mono);" id="live-time-display">Waiting for data...</div>
       </div>
       <div class="legend-container">
-        <div class="legend-title">เกณฑ์มาตรฐานฝุ่น PM2.5 (PCD)</div>
-        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#00bcd4"></div><span class="aqi-label">ดี</span><span class="aqi-range">0.0 - 15.0</span></div>
-        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#4caf50"></div><span class="aqi-label">ปานกลาง</span><span class="aqi-range">15.1 - 25.0</span></div>
-        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ffeb3b"></div><span class="aqi-label">เริ่มมีผลต่อสุขภาพ</span><span class="aqi-range">25.1 - 37.5</span></div>
-        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ff9800"></div><span class="aqi-label">มีผลต่อสุขภาพ</span><span class="aqi-range">37.6 - 75.0</span></div>
-        <div class="aqi-legend-row" style="margin-bottom: 16px;"><div class="aqi-dot" style="background:#f44336"></div><span class="aqi-label">อันตราย</span><span class="aqi-range">75.1 ขึ้นไป</span></div>
-        <div class="legend-title" style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">📍 สีแบ่งกลุ่มพื้นที่ 6 โซน กทม.</div>
+        <div class="legend-title">PM2.5 Air Quality Standards (PCD)</div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#00bcd4"></div><span class="aqi-label">Good</span><span class="aqi-range">0.0 - 15.0</span></div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#4caf50"></div><span class="aqi-label">Moderate</span><span class="aqi-range">15.1 - 25.0</span></div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ffeb3b"></div><span class="aqi-label">Unhealthy for Sensitive Groups</span><span class="aqi-range">25.1 - 37.5</span></div>
+        <div class="aqi-legend-row"><div class="aqi-dot" style="background:#ff9800"></div><span class="aqi-label">Unhealthy</span><span class="aqi-range">37.6 - 75.0</span></div>
+        <div class="aqi-legend-row" style="margin-bottom: 16px;"><div class="aqi-dot" style="background:#f44336"></div><span class="aqi-label">Hazardous</span><span class="aqi-range">75.1+</span></div>
+        <div class="legend-title" style="margin-top:16px; border-top:1px solid var(--border); padding-top:16px;">📍 Bangkok 6 Zone Groups</div>
         <div class="zone-tags" id="zone-tags-container"></div>
       </div>
       <div class="station-cards" id="stn-cards"></div>
@@ -257,42 +249,45 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 </div>
 
 <div id="panel-dash" class="panel">
-  <div id="dash-no-data" class="no-data-placeholder"><div class="nd-icon">⏳</div><div class="nd-title">กำลังประมวลผลสถิติ...</div></div>
+  <div id="dash-no-data" class="no-data-placeholder"><div class="nd-icon">⏳</div><div class="nd-title">Processing statistics...</div></div>
   <div id="dash-content" style="display:none">
     <div class="dash">
-      <div class="dash-title">Dashboard การวิเคราะห์คุณภาพอากาศ (PM2.5)</div>
-      <select class="dselect" id="dash-station" onchange="updateDashboard()"><option value="all">ทุกสถานี (ภาพรวม กทม.)</option></select>
+      <div class="dash-title">Air Quality Analysis Dashboard (PM2.5)</div>
+      <div class="dash-sub">Real-time analytical insights and performance metrics</div>
+      <select class="dselect" id="dash-station" onchange="updateDashboard()"><option value="all">All Stations (Bangkok Overview)</option></select>
 
-      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px; margin-top: 10px;">📊 ข้อมูลสถิติพื้นฐาน</div>
-      <div class="kpi-row-5" id="kpi-row">
-        <div class="kpi-card"><div class="kpi-label">PM2.5 เฉลี่ย (Raw)</div><div class="kpi-val" id="kpi-avg">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">NowCast (เฉลี่ย)</div><div class="kpi-val" id="kpi-nc">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">Avg 24-hr (เฉลี่ย)</div><div class="kpi-val" id="kpi-avg24-kpi">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">เกินมาตรฐาน (37.5)</div><div class="kpi-val" id="kpi-bad">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">ค่ามลพิษสูงสุด</div><div class="kpi-val" id="kpi-max">—</div></div>
+      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 24px; margin-top: 16px;">📊 Basic Statistics</div>
+      <div class="kpi-row-5" id="kpi-row" style="margin-top: 14px;">
+        <div class="kpi-card"><div class="kpi-label">Avg PM2.5 (Raw)</div><div class="kpi-val" id="kpi-avg">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg NowCast</div><div class="kpi-val" id="kpi-nc">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Avg 24-hr</div><div class="kpi-val" id="kpi-avg24-kpi">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Exceeding Std (37.5)</div><div class="kpi-val" id="kpi-bad">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">Peak Pollution</div><div class="kpi-val" id="kpi-max">—</div></div>
       </div>
 
-      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 20px;">🎯 การประเมินประสิทธิภาพ (Objectives)</div>
-      <div class="kpi-row-5" style="margin-top: 16px;">
-        <div class="kpi-card" style="border-color:#4a9eff;"><div class="kpi-label" style="color:#4a9eff;">RMSE Accuracy</div><div class="kpi-val" id="kpi-rmse">—</div></div>
-        <div class="kpi-card" style="border-color:#4a9eff;"><div class="kpi-label" style="color:#4a9eff;">MAE Accuracy</div><div class="kpi-val" id="kpi-mae">—</div></div>
-        <div class="kpi-card" style="border-color:#00d4aa;"><div class="kpi-label" style="color:#00d4aa;">ลดความผันผวน</div><div class="kpi-val" id="kpi-sd-diff">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">SD : รายสถานี</div><div class="kpi-val" id="kpi-sd-stn">—</div></div>
-        <div class="kpi-card"><div class="kpi-label">SD : กลุ่มพื้นที่</div><div class="kpi-val" id="kpi-sd-area">—</div></div>
+      <div class="dash-title" style="font-size: 16px; border-top: 1px solid var(--border); padding-top: 24px;">🎯 Performance Evaluation (Objectives)</div>
+      <div class="kpi-row-5" style="margin-top: 14px;">
+        <div class="kpi-card" style="border-color:rgba(74,158,255,0.3);"><div class="kpi-label" style="color:#4a9eff;">RMSE Accuracy</div><div class="kpi-val" id="kpi-rmse">—</div></div>
+        <div class="kpi-card" style="border-color:rgba(74,158,255,0.3);"><div class="kpi-label" style="color:#4a9eff;">MAE Accuracy</div><div class="kpi-val" id="kpi-mae">—</div></div>
+        <div class="kpi-card" style="border-color:rgba(0,234,175,0.3);"><div class="kpi-label" style="color:var(--accent);">Volatility Reduction</div><div class="kpi-val" id="kpi-sd-diff">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">SD : Per Station</div><div class="kpi-val" id="kpi-sd-stn">—</div></div>
+        <div class="kpi-card"><div class="kpi-label">SD : Area-based</div><div class="kpi-val" id="kpi-sd-area">—</div></div>
       </div>
 
-      <div class="chart-card"><div class="chart-card-title">แนวโน้ม PM2.5 Time-Series</div><div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div></div>
+      <div class="chart-card"><div class="chart-card-title">PM2.5 Time-Series Trend</div><div class="chart-card-sub">Hourly comparative analysis between Raw, NowCast, and 24-hr Moving Average</div><div class="chart-wrap-lg"><canvas id="chart-timeline"></canvas></div></div>
       
-      <div class="dash-grid dash-row-2" style="margin-top:16px;">
+      <div class="dash-grid dash-row-2" style="margin-top:20px;">
         <div class="chart-card">
-          <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (Avg 24-hr)</div>
+          <div class="chart-card-title">Air Quality Proportion (Avg 24-hr)</div>
+          <div class="chart-card-sub">Percentage distribution across PCD standards</div>
           <div class="donut-wrapper">
             <div class="donut-canvas-wrap"><canvas id="chart-donut-avg24"></canvas></div>
             <div class="donut-legend" id="legend-avg24"></div>
           </div>
         </div>
         <div class="chart-card">
-          <div class="chart-card-title">สัดส่วนคุณภาพอากาศ (NowCast)</div>
+          <div class="chart-card-title">Air Quality Proportion (NowCast)</div>
+          <div class="chart-card-sub">Percentage distribution across PCD standards</div>
           <div class="donut-wrapper">
             <div class="donut-canvas-wrap"><canvas id="chart-donut-nc"></canvas></div>
             <div class="donut-legend" id="legend-nc"></div>
@@ -300,17 +295,18 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
         </div>
       </div>
 
-      <div class="chart-card" style="margin-top:16px;">
+      <div class="chart-card" style="margin-top:20px;">
         <div class="chart-card-title">Volatility (Standard Deviation)</div>
+        <div class="chart-card-sub">Comparison of fluctuation metrics</div>
         <div style="height:180px"><canvas id="chart-volatility"></canvas></div>
       </div>
 
-      <div class="chart-card" id="station-table-card" style="display:none; margin-top: 16px;">
-        <div class="chart-card-title">ประวัติข้อมูลรายชั่วโมงของสถานี (Time-Series)</div>
-        <div class="chart-card-sub" id="station-table-sub">แสดงข้อมูลย้อนหลัง</div>
+      <div class="chart-card" id="station-table-card" style="display:none; margin-top: 20px;">
+        <div class="chart-card-title">Station Hourly History (Time-Series)</div>
+        <div class="chart-card-sub" id="station-table-sub">Historical records display</div>
         <div style="overflow-x: auto;">
           <table class="comp-table" id="station-ts-table">
-            <thead><tr><th>วันที่</th><th>ช่วงเวลา</th><th>Raw</th><th>NowCast</th></tr></thead>
+            <thead><tr><th>Date</th><th>Time Range</th><th>Raw</th><th>NowCast</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -324,74 +320,87 @@ header { display:flex;align-items:center;justify-content:space-between; padding:
 // GLOBAL LOGIC & CALCULATIONS
 // ═══════════════════════════════════════════
 const ZONE_COLORS = { "กรุงเทพกลาง": "#fbc02d", "กรุงเทพใต้": "#ff9800", "กรุงเทพเหนือ": "#4db6ac", "กรุงเทพตะวันออก": "#aed581", "กรุงธนเหนือ": "#f06292", "กรุงธนใต้": "#7986cb" };
-const ZONE_LABELS = [ { id: "กรุงเทพกลาง", title: "1. กลุ่มกรุงเทพกลาง" }, { id: "กรุงเทพใต้", title: "2. กลุ่มกรุงเทพใต้" }, { id: "กรุงเทพเหนือ", title: "3. กลุ่มกรุงเทพเหนือ" }, { id: "กรุงเทพตะวันออก", title: "4. กลุ่มกรุงเทพตะวันออก" }, { id: "กรุงธนเหนือ", title: "5. กลุ่มกรุงธนเหนือ" }, { id: "กรุงธนใต้", title: "6. กลุ่มกรุงธนใต้" } ];
+const ZONE_LABELS = [ 
+  { id: "กรุงเทพกลาง", title: "1. Central Bangkok Group" }, 
+  { id: "กรุงเทพใต้", title: "2. Southern Bangkok Group" }, 
+  { id: "กรุงเทพเหนือ", title: "3. Northern Bangkok Group" }, 
+  { id: "กรุงเทพตะวันออก", title: "4. Eastern Bangkok Group" }, 
+  { id: "กรุงธนเหนือ", title: "5. Thon Buri North Group" }, 
+  { id: "กรุงธนใต้", title: "6. Thon Buri South Group" } 
+];
 
 const STATION_META = {
-  "02t": { zone: "กรุงธนเหนือ", nameTH: "ม.ราชภัฏบ้านสมเด็จเจ้าพระยา", lat: 13.732846, lng: 100.487662 },
-  "03t": { zone: "กรุงธนใต้", nameTH: "ริมถนนทางหลวงหมายเลข 3902", lat: 13.636514, lng: 100.414262 },
-  "05t": { zone: "กรุงเทพใต้", nameTH: "กรมอุตุนิยมวิทยาบางนา", lat: 13.666183, lng: 100.605742 },
-  "12t": { zone: "กรุงเทพใต้", nameTH: "โรงเรียนนนทรีวิทยา", lat: 13.70806667, lng: 100.5473333 },
-  "50t": { zone: "กรุงเทพกลาง", nameTH: "โรงพยาบาลจุฬาลงกรณ์", lat: 13.729852, lng: 100.536501 },
-  "52t": { zone: "กรุงธนใต้", nameTH: "การไฟฟ้าย่อยธนบุรี", lat: 13.727622, lng: 100.486568 },
-  "53t": { zone: "กรุงเทพเหนือ", nameTH: "สถานีตำรวจนครบาลโชคชัย", lat: 13.7954248, lng: 100.5930298 },
-  "54t": { zone: "กรุงเทพกลาง", nameTH: "การเคหะชุมชนดินแดง", lat: 13.76251667, lng: 100.5502 },
-  "59t": { zone: "กรุงเทพกลาง", nameTH: "กรมประชาสัมพันธ์", lat: 13.783185, lng: 100.540489 },
-  "61t": { zone: "กรุงเทพเหนือ", nameTH: "โรงเรียนบดินทรเดชา", lat: 13.769634, lng: 100.614567 },
-  "bkp101t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตคลองสามวา", lat: 13.859911, lng: 100.704002 },
-  "bkp102t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตจอมทอง", lat: 13.677757, lng: 100.483861 },
-  "bkp103t": { zone: "กรุงธนเหนือ", nameTH: "สำนักงานเขตบางพลัด", lat: 13.793965, lng: 100.504956 },
-  "bkp104t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตบางแค", lat: 13.696314, lng: 100.409049 },
-  "bkp105t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตบางขุนเทียน", lat: 13.659908, lng: 100.435902 },
-  "bkp56t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตดินแดง", lat: 13.7619223, lng: 100.558606 },
-  "bkp57t": { zone: "กรุงเทพใต้", nameTH: "สำนักงานเขตพระโขนง", lat: 13.691511, lng: 100.61457 },
-  "bkp58t": { zone: "กรุงธนใต้", nameTH: "สำนักงานเขตราษฎร์บูรณะ", lat: 13.6821364, lng: 100.5060513 },
-  "bkp59t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตราชเทวี", lat: 13.7590851, lng: 100.5345788 },
-  "bkp60t": { zone: "กรุงเทพกลาง", nameTH: "ตรงข้ามสำนักงานเขตดุสิต", lat: 13.776664, lng: 100.520982 },
-  "bkp61t": { zone: "กรุงเทพกลาง", nameTH: "สนง.สภาพัฒนาการเศรษฐกิจฯ", lat: 13.756281, lng: 100.514267 },
-  "bkp62t": { zone: "กรุงเทพกลาง", nameTH: "วงเวียนโอเดียน", lat: 13.737136, lng: 100.512734 },
-  "bkp63t": { zone: "กรุงเทพเหนือ", nameTH: "แฟลตทหารบก สามเสน", lat: 13.783554, lng: 100.5344645 },
-  "bkp64t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตวังทองหลาง", lat: 13.778981, lng: 100.622294 },
-  "bkp65t": { zone: "กรุงเทพกลาง", nameTH: "สามย่านมิตรทาวน์", lat: 13.733136, lng: 100.52829 },
-  "bkp66t": { zone: "กรุงเทพกลาง", nameTH: "ลานบางรักเลิฟลี่ พลาซ่า", lat: 13.726136, lng: 100.528055 },
-  "bkp67t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตสาทร", lat: 13.707763, lng: 100.526787 },
-  "bkp69t": { zone: "กรุงเทพใต้", nameTH: "ธนาคารกรุงศรีอยุธยา สำนักงานใหญ่", lat: 13.679226, lng: 100.54687 },
-  "bkp70t": { zone: "กรุงเทพใต้", nameTH: "ริมถนนซอยสุขุมวิท 63", lat: 13.722096, lng: 100.584559 },
-  "bkp71t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตสวนหลวง", lat: 13.731051, lng: 100.651705 },
-  "bkp72t": { zone: "กรุงเทพใต้", nameTH: "บิ๊กซี ซุปเปอร์เซ็นเตอร์ บางนา", lat: 13.667987, lng: 100.635313 },
-  "bkp73t": { zone: "กรุงเทพเหนือ", nameTH: "มหาวิทยาลัยเกษตรศาสตร์", lat: 13.839923, lng: 100.575632 },
-  "bkp74t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตดอนเมือง", lat: 13.910986, lng: 100.594877 },
-  "bkp75t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตสายไหม", lat: 13.896035, lng: 100.660628 },
-  "bkp76t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตบางกะปิ", lat: 13.766478, lng: 100.647785 },
-  "bkp77t": { zone: "กรุงเทพตะวันออก", nameTH: "แยกสวนสยาม-รามอินทรา", lat: 13.813844, lng: 100.686594 },
-  "bkp78t": { zone: "กรุงเทพตะวันออก", nameTH: "โรงพยาบาลลาดกระบัง", lat: 13.72205, lng: 100.784069 },
-  "bkp79t": { zone: "กรุงเทพตะวันออก", nameTH: "สวนเฉลิมพระเกียรติ ร.9", lat: 13.813578, lng: 100.73208 },
-  "bkp80t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตหนองจอก", lat: 13.855362, lng: 100.86267 },
-  "bkp81t": { zone: "กรุงเทพตะวันออก", nameTH: "ซีคอน สแควร์", lat: 13.695561, lng: 100.647615 },
-  "bkp82t": { zone: "กรุงธนใต้", nameTH: "แยกมไหศวรรย์", lat: 13.70515, lng: 100.48465 },
-  "bkp83t": { zone: "กรุงธนเหนือ", nameTH: "ใต้สะพานสมเด็จพระเจ้าตากสิน", lat: 13.719705, lng: 100.508782 },
-  "bkp84t": { zone: "กรุงธนใต้", nameTH: "สี่แยกท่าพระ", lat: 13.729431, lng: 100.474373 },
-  "bkp85t": { zone: "กรุงธนเหนือ", nameTH: "สถานีตำรวจรถไฟบางกอกน้อย", lat: 13.759619, lng: 100.481137 },
-  "bkp86t": { zone: "กรุงธนเหนือ", nameTH: "ถ.พุทธมณฑลสาย 1 ตัด ถ.บรมฯ", lat: 13.780778, lng: 100.426727 },
-  "bkp87t": { zone: "กรุงธนใต้", nameTH: "ตลาดธนบุรีสนามหลวง 2", lat: 13.746257, lng: 100.355099 },
-  "bkp88t": { zone: "กรุงธนใต้", nameTH: "มหาวิทยาลัยสยาม", lat: 13.718689, lng: 100.45391 },
-  "bkp89t": { zone: "กรุงธนใต้", nameTH: "ถนนมาเจริญ เพชรเกษม 81", lat: 13.705582, lng: 100.343164 },
-  "bkp90t": { zone: "กรุงธนใต้", nameTH: "ตลาดบางบอน 5", lat: 13.639165, lng: 100.372958 },
-  "bkp91t": { zone: "กรุงธนใต้", nameTH: "ม.เทคโนโลยีพระจอมเกล้าธนบุรี", lat: 13.651004, lng: 100.496673 },
-  "bkp92t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตพระนคร", lat: 13.76415, lng: 100.499077 },
-  "bkp93t": { zone: "กรุงเทพกลาง", nameTH: "สำนักงานเขตห้วยขวาง", lat: 13.77682, lng: 100.579543 },
-  "bkp94t": { zone: "กรุงเทพใต้", nameTH: "สำนักงานเขตคลองเตย", lat: 13.708488, lng: 100.583747 },
-  "bkp95t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตบางซื่อ", lat: 13.809596, lng: 100.537883 },
-  "bkp96t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตลาดพร้าว", lat: 13.803587, lng: 100.607535 },
-  "bkp97t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตหลักสี่", lat: 13.887395, lng: 100.579247 },
-  "bkp98t": { zone: "กรุงเทพเหนือ", nameTH: "สำนักงานเขตบางเขน", lat: 13.873603, lng: 100.595839 },
-  "bkp99t": { zone: "กรุงเทพตะวันออก", nameTH: "สำนักงานเขตสะพานสูง", lat: 13.768892, lng: 100.685743 },
-  "o10": { zone: "กรุงเทพตะวันออก", nameTH: "เคหะชุมชนคลองจั่น", lat: 13.779873, lng: 100.646009 }
+  "02t": { zone: "กรุงธนเหนือ", nameTH: "Bansomdejchaopraya Rajabhat University", lat: 13.732846, lng: 100.487662 },
+  "03t": { zone: "กรุงธนใต้", nameTH: "Highway No. 3902 Roadside", lat: 13.636514, lng: 100.414262 },
+  "05t": { zone: "กรุงเทพใต้", nameTH: "Thai Meteorological Department, Bang Na", lat: 13.666183, lng: 100.605742 },
+  "12t": { zone: "กรุงเทพใต้", nameTH: "Nontri Witthaya School", lat: 13.70806667, lng: 100.5473333 },
+  "50t": { zone: "กรุงเทพกลาง", nameTH: "Chulalongkorn Hospital", lat: 13.729852, lng: 100.536501 },
+  "52t": { zone: "กรุงธนใต้", nameTH: "Thonburi Sub-Power Station", lat: 13.727622, lng: 100.486568 },
+  "53t": { zone: "กรุงเทพเหนือ", nameTH: "Chok Chai Police Station", lat: 13.7954248, lng: 100.5930298 },
+  "54t": { zone: "กรุงเทพกลาง", nameTH: "Din Daeng Community Housing", lat: 13.76251667, lng: 100.5502 },
+  "59t": { zone: "กรุงเทพกลาง", nameTH: "The Public Relations Department", lat: 13.783185, lng: 100.540489 },
+  "61t": { zone: "กรุงเทพเหนือ", nameTH: "Bodindecha (Sing Singha Senani) School", lat: 13.769634, lng: 100.614567 },
+  "bkp101t": { zone: "กรุงเทพตะวันออก", nameTH: "Khlong Sam Wa District Office", lat: 13.859911, lng: 100.704002 },
+  "bkp102t": { zone: "กรุงธนใต้", nameTH: "Chomthong District Office", lat: 13.677757, lng: 100.483861 },
+  "bkp103t": { zone: "กรุงธนเหนือ", nameTH: "Bang Phlat District Office", lat: 13.793965, lng: 100.504956 },
+  "bkp104t": { zone: "กรุงธนใต้", nameTH: "Bang Khae District Office", lat: 13.696314, lng: 100.409049 },
+  "bkp105t": { zone: "กรุงธนใต้", nameTH: "Bang Khun Tien District Office", lat: 13.659908, lng: 100.435902 },
+  "bkp56t": { zone: "กรุงเทพกลาง", nameTH: "Din Daeng District Office", lat: 13.7619223, lng: 100.558606 },
+  "bkp57t": { zone: "กรุงเทพใต้", nameTH: "Phra Khanong District Office", lat: 13.691511, lng: 100.61457 },
+  "bkp58t": { zone: "กรุงธนใต้", nameTH: "Rat Burana District Office", lat: 13.6821364, lng: 100.5060513 },
+  "bkp59t": { zone: "กรุงเทพกลาง", nameTH: "Ratchathewi District Office", lat: 13.7590851, lng: 100.5345788 },
+  "bkp60t": { zone: "กรุงเทพกลาง", nameTH: "Opposite Dusit District Office", lat: 13.776664, lng: 100.520982 },
+  "bkp61t": { zone: "กรุงเทพกลาง", nameTH: "Office of the National Economic and Social Development Council", lat: 13.756281, lng: 100.514267 },
+  "bkp62t": { zone: "กรุงเทพกลาง", nameTH: "Odeon Circle", lat: 13.737136, lng: 100.512734 },
+  "bkp63t": { zone: "กรุงเทพเหนือ", nameTH: "Samsen Army Flat", lat: 13.783554, lng: 100.5344645 },
+  "bkp64t": { zone: "กรุงเทพเหนือ", nameTH: "Wang Thonglang District Office", lat: 13.778981, lng: 100.622294 },
+  "bkp65t": { zone: "กรุงเทพกลาง", nameTH: "Samyan Mitrtown", lat: 13.733136, lng: 100.52829 },
+  "bkp66t": { zone: "กรุงเทพกลาง", nameTH: "Bang Rak Lovely Plaza", lat: 13.726136, lng: 100.528055 },
+  "bkp67t": { zone: "กรุงเทพกลาง", nameTH: "Sathon District Office", lat: 13.707763, lng: 100.526787 },
+  "bkp69t": { zone: "กรุงเทพใต้", nameTH: "Krungsri Bank Headquarters", lat: 13.679226, lng: 100.54687 },
+  "bkp70t": { zone: "กรุงเทพใต้", nameTH: "Soi Sukhumvit 63 Roadside", lat: 13.722096, lng: 100.584559 },
+  "bkp71t": { zone: "กรุงเทพตะวันออก", nameTH: "Suan Luang District Office", lat: 13.731051, lng: 100.651705 },
+  "bkp72t": { zone: "กรุงเทพใต้", nameTH: "Big C Supercenter Bang Na", lat: 13.667987, lng: 100.635313 },
+  "bkp73t": { zone: "กรุงเทพเหนือ", nameTH: "Kasetsart University", lat: 13.839923, lng: 100.575632 },
+  "bkp74t": { zone: "กรุงเทพเหนือ", nameTH: "Don Mueang District Office", lat: 13.910986, lng: 100.594877 },
+  "bkp75t": { zone: "กรุงเทพเหนือ", nameTH: "Saimai District Office", lat: 13.896035, lng: 100.660628 },
+  "bkp76t": { zone: "กรุงเทพตะวันออก", nameTH: "Bang Kapi District Office", lat: 13.766478, lng: 100.647785 },
+  "bkp77t": { zone: "กรุงเทพตะวันออก", nameTH: "Siam Park - Ram Inthra Intersection", lat: 13.813844, lng: 100.686594 },
+  "bkp78t": { zone: "กรุงเทพตะวันออก", nameTH: "Lat Krabang Hospital", lat: 13.72205, lng: 100.784069 },
+  "bkp79t": { zone: "กรุงเทพตะวันออก", nameTH: "King Rama IX Park", lat: 13.813578, lng: 100.73208 },
+  "bkp80t": { zone: "กรุงเทพตะวันออก", nameTH: "Nong Chok District Office", lat: 13.855362, lng: 100.86267 },
+  "bkp81t": { zone: "กรุงเทพตะวันออก", nameTH: "Seacon Square", lat: 13.695561, lng: 100.647615 },
+  "bkp82t": { zone: "กรุงธนใต้", nameTH: "Mahatthai Uthit / Maha Nakhon Intersection", lat: 13.70515, lng: 100.48465 },
+  "bkp83t": { zone: "กรุงธนเหนือ", nameTH: "Under Somdet Phra Chao Tak Sin Bridge", lat: 13.719705, lng: 100.508782 },
+  "bkp84t": { zone: "กรุงธนใต้", nameTH: "Tha Phra Intersection", lat: 13.729431, lng: 100.474373 },
+  "bkp85t": { zone: "กรุงธนเหนือ", nameTH: "Bangkok Noi Railway Police Station", lat: 13.759619, lng: 100.481137 },
+  "bkp86t": { zone: "กรุงธนเหนือ", nameTH: "Phutthamonthon Sai 1 / Borommaratchachonnani Intersection", lat: 13.780778, lng: 100.426727 },
+  "bkp87t": { zone: "กรุงธนใต้", nameTH: "Thonburi Market Place (Sanam Luang 2)", lat: 13.746257, lng: 100.355099 },
+  "bkp88t": { zone: "กรุงธนใต้", nameTH: "Siam University", lat: 13.718689, lng: 100.45391 },
+  "bkp89t": { zone: "กรุงธนใต้", nameTH: "Soi Phetchakasem 81 (Ma Charoen Rd.)", lat: 13.705582, lng: 100.343164 },
+  "bkp90t": { zone: "กรุงธนใต้", nameTH: "Bang Bon 5 Market", lat: 13.639165, lng: 100.372958 },
+  "bkp91t": { zone: "กรุงธนใต้", nameTH: "King Mongkut's University of Technology Thonburi", lat: 13.651004, lng: 100.496673 },
+  "bkp92t": { zone: "กรุงเทพกลาง", nameTH: "Phra Nakhon District Office", lat: 13.76415, lng: 100.499077 },
+  "bkp93t": { zone: "กรุงเทพกลาง", nameTH: "Huai Khwang District Office", lat: 13.77682, lng: 100.579543 },
+  "bkp94t": { zone: "กรุงเทพใต้", nameTH: "Khlong Toei District Office", lat: 13.708488, lng: 100.583747 },
+  "bkp95t": { zone: "กรุงเทพเหนือ", nameTH: "Bang Sue District Office", lat: 13.809596, lng: 100.537883 },
+  "bkp96t": { zone: "กรุงเทพเหนือ", nameTH: "Lat Phrao District Office", lat: 13.803587, lng: 100.607535 },
+  "bkp97t": { zone: "กรุงเทพเหนือ", nameTH: "Lak Si District Office", lat: 13.887395, lng: 100.579247 },
+  "bkp98t": { zone: "กรุงเทพเหนือ", nameTH: "Bang Khen District Office", lat: 13.873603, lng: 100.595839 },
+  "bkp99t": { zone: "กรุงเทพตะวันออก", nameTH: "Saphan Sung District Office", lat: 13.768892, lng: 100.685743 },
+  "o10": { zone: "กรุงเทพตะวันออก", nameTH: "Khlong Chan Community Housing", lat: 13.779873, lng: 100.646009 }
 };
 
 let STATION_KEYS = [];   
 let HISTORY_RECORDS = []; 
 
-const AQI_BREAKS = [ {lo:0, hi:15.0, label:'ดี', color:'#00bcd4', textColor:'#fff'}, {lo:15.1, hi:25.0, label:'ปานกลาง', color:'#4caf50', textColor:'#fff'}, {lo:25.1, hi:37.5, label:'เริ่มมีผลต่อสุขภาพ', color:'#ffeb3b', textColor:'#333'}, {lo:37.6, hi:75.0, label:'มีผลต่อสุขภาพ', color:'#ff9800', textColor:'#fff'}, {lo:75.1, hi:999999, label:'อันตราย', color:'#f44336', textColor:'#fff'} ];
+const AQI_BREAKS = [ 
+  {lo:0, hi:15.0, label:'Good', color:'#00bcd4', textColor:'#fff'}, 
+  {lo:15.1, hi:25.0, label:'Moderate', color:'#4caf50', textColor:'#fff'}, 
+  {lo:25.1, hi:37.5, label:'Unhealthy for Sensitive Groups', color:'#ffeb3b', textColor:'#333'}, 
+  {lo:37.6, hi:75.0, label:'Unhealthy', color:'#ff9800', textColor:'#fff'}, 
+  {lo:75.1, hi:999999, label:'Hazardous', color:'#f44336', textColor:'#fff'} 
+];
 
 function getAQIBand(v) { if(v==null||isNaN(v)) return null; for(const b of AQI_BREAKS) if(v>=b.lo && v<=b.hi) return b; return AQI_BREAKS[4]; }
 function nowcast(vals) { if(vals.length<2) return null; const cmax=Math.max(...vals), cmin=Math.min(...vals); if(cmax<=0) return null; const w=Math.max(1-(cmax-cmin)/cmax, 0.4); let num=0, den=0; vals.forEach((v,i)=>{ if(v!=null){ num+=v*Math.pow(w,i); den+=Math.pow(w,i); } }); return den>0?Math.round(num/den*10)/10:null; }
@@ -428,7 +437,7 @@ async function initializeData() {
     buildDynamicUI(); 
     updateDashboard();
   } catch(e) { 
-    statusEl.innerHTML = '❌ การโหลดข้อมูลล้มเหลว กรุณาตรวจสอบไฟล์ history.json';
+    statusEl.innerHTML = '❌ Failed to load data. Please check history.json file.';
     statusEl.className = 'err';
     console.error(e); 
   }
@@ -443,9 +452,9 @@ function initMap() {
 function buildDynamicUI() {
   try {
     const ds=document.getElementById('dash-station');
-    ds.innerHTML='<option value="all">ทุกสถานี (ภาพรวม กทม.)</option>';
+    ds.innerHTML='<option value="all">All Stations (Bangkok Overview)</option>';
     ZONE_LABELS.forEach(zn=>{
-      ds.innerHTML+=`<optgroup label="${zn.title}"><option value="zone_${zn.id}">>> ค่าเฉลี่ย ${zn.title} <<</option>`;
+      ds.innerHTML+=`<optgroup label="${zn.title}"><option value="zone_${zn.id}">>> Average ${zn.title} <<</option>`;
       STATION_KEYS.filter(k=>STATION_META[k].zone===zn.id).forEach(k=>{ ds.innerHTML+=`<option value="${k}">[${k}] ${STATION_META[k].nameTH}</option>`; });
       ds.innerHTML+=`</optgroup>`;
     });
@@ -490,7 +499,7 @@ function updateMap() {
     const row=HISTORY_RECORDS[HISTORY_RECORDS.length-1];
     const cardsEl=document.getElementById('stn-cards');
     
-    document.getElementById('live-time-display').textContent=`ข้อมูลวันที่: ${row.date} | ${row.timeRange}`;
+    document.getElementById('live-time-display').textContent=`Date: ${row.date} | ${row.timeRange}`;
     let html='';
     
     ZONE_LABELS.forEach(zn=>{
@@ -501,9 +510,9 @@ function updateMap() {
         const {nc,avg24}=row._parsed[k], band=getAQIBand(nc), c=band?.color??'#666';
         const avg24Band = getAQIBand(avg24);
         return `<div class="scard" id="sc-${k}" onclick="selectStation('${k}')">
-          <div class="scard-top"><div><div class="scard-name">${STATION_META[k].nameTH}</div></div><span class="aqi-badge" style="background:${c}">${band?.label??'-'}</span></div>
+          <div class="scard-top"><div><div class="scard-name">${STATION_META[k].nameTH}</div></div><span class="aqi-badge" style="background:${c}; color:${band?.textColor||'#fff'}">${band?.label??'-'}</span></div>
           <div class="scard-vals"><div class="sval-box"><div class="sval-label">NowCast</div><div class="sval-num" style="color:${c}">${nc?.toFixed(1)??'—'}</div></div>
-          <div class="sval-box"><div class="sval-label">เฉลี่ย 24 ชม.</div><div class="sval-num" style="color:${avg24Band?.color??'#fff'}">${avg24?.toFixed(1)??'—'}</div></div></div></div>`;
+          <div class="sval-box"><div class="sval-label">24-hr Avg</div><div class="sval-num" style="color:${avg24Band?.color??'#fff'}">${avg24?.toFixed(1)??'—'}</div></div></div></div>`;
       }).join('');
     });
     
@@ -515,7 +524,6 @@ function updateMap() {
       if (markerObj && markerObj.marker) {
           const m=STATION_META[k], diff=(nc!=null&&avg24!=null)?(nc-avg24).toFixed(1):'—', ds=parseFloat(diff)>0?'+':'';
           
-          // ปรับปรุงไอคอนผ่าน setIcon แทนการยุ่งกับ DOM โดยตรง เพื่อแก้ปัญหาหน้าเว็บค้างเมื่อสลับ Tab
           const bg = nc != null ? band.color : '#333';
           const tc = nc != null ? (band.textColor || '#fff') : '#fff';
           const val = nc != null ? nc.toFixed(0) : '?';
@@ -525,7 +533,7 @@ function updateMap() {
           });
           markerObj.marker.setIcon(newIcon);
 
-          markerObj.marker.setPopupContent(`<div style="font-family:'Sarabun',sans-serif"><div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px">${m.nameTH}</div><div style="font-size:11px;color:#7a8090;margin-bottom:12px">${row.date} | ${row.timeRange}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="background:#1f2229;border-radius:8px;padding:10px"><div style="font-size:10px;color:#7a8090;margin-bottom:6px">EPA NowCast</div><div style="font-size:22px;font-weight:700;color:${band?.color??'#444'};margin-bottom:4px">${nc!=null?nc.toFixed(1):'—'}</div></div><div style="background:#1f2229;border-radius:8px;padding:10px"><div style="font-size:10px;color:#7a8090;margin-bottom:6px">เฉลี่ย 24 ชม.</div><div style="font-size:22px;font-weight:700;color:${getAQIBand(avg24)?.color??'#444'};margin-bottom:4px">${avg24!=null?avg24.toFixed(1):'—'}</div></div></div><div style="margin-top:8px;background:#1f2229;border-radius:8px;padding:8px 10px;font-size:12px">NowCast − เฉลี่ย 24 ชม: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${ds}${diff} µg/m³</b></div></div>`);
+          markerObj.marker.setPopupContent(`<div style="font-family:'Plus Jakarta Sans',sans-serif"><div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:2px">${m.nameTH}</div><div style="font-size:11px;color:#8b949e;margin-bottom:12px;font-family:'IBM Plex Mono',monospace">${row.date} | ${row.timeRange}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div style="background:#21262d;border-radius:10px;padding:10px"><div style="font-size:10px;color:#8b949e;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">EPA NowCast</div><div style="font-size:22px;font-weight:700;color:${band?.color??'#444'};margin-bottom:4px;font-family:'IBM Plex Mono',monospace">${nc!=null?nc.toFixed(1):'—'}</div></div><div style="background:#21262d;border-radius:10px;padding:10px"><div style="font-size:10px;color:#8b949e;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">24-hr Avg</div><div style="font-size:22px;font-weight:700;color:${getAQIBand(avg24)?.color??'#444'};margin-bottom:4px;font-family:'IBM Plex Mono',monospace">${avg24!=null?avg24.toFixed(1):'—'}</div></div></div><div style="margin-top:10px;background:#21262d;border-radius:8px;padding:8px 10px;font-size:12px;font-family:'IBM Plex Mono',monospace">NowCast − 24-hr Avg: <b style="color:${parseFloat(diff)>0?'#ff9800':parseFloat(diff)<0?'#4caf50':'#fff'}">${ds}${diff} µg/m³</b></div></div>`);
       }
     });
   } catch (e) { console.error("Error in updateMap: ", e); }
@@ -586,7 +594,7 @@ function updateDashboard() {
   try {
       if(!HISTORY_RECORDS.length) return;
       const sk=document.getElementById('dash-station').value;
-      let tKeys=[], aKeys=[], areaName="ภาพรวม กทม.";
+      let tKeys=[], aKeys=[], areaName="Bangkok Overview";
       if(sk==='all'){ tKeys=aKeys=STATION_KEYS; }
       else if(sk.startsWith('zone_')){ const zId=sk.replace('zone_',''); areaName=ZONE_LABELS.find(z=>z.id===zId).title; tKeys=aKeys=STATION_KEYS.filter(k=>STATION_META[k].zone===zId); }
       else { const zId=STATION_META[sk].zone; areaName=ZONE_LABELS.find(z=>z.id===zId).title; tKeys=[sk]; aKeys=STATION_KEYS.filter(k=>STATION_META[k].zone===zId); }
@@ -595,7 +603,7 @@ function updateDashboard() {
       document.getElementById('kpi-avg').innerHTML=fd.avgRaw?.toFixed(1)??'—';
       document.getElementById('kpi-nc').innerHTML=fd.avgNC?.toFixed(1)??'—';
       document.getElementById('kpi-avg24-kpi').innerHTML=fd.avgA24?.toFixed(1)??'—';
-      document.getElementById('kpi-bad').innerHTML=fd.badHrs+' ชม.';
+      document.getElementById('kpi-bad').innerHTML=fd.badHrs+' hrs';
       document.getElementById('kpi-max').innerHTML=fd.maxRaw?.toFixed(1)??'—';
       document.getElementById('kpi-rmse').innerHTML=calcRMSE(fd.tlNC, fd.tlAvg24)?.toFixed(3)??'—';
       document.getElementById('kpi-mae').innerHTML=calcMAE(fd.tlNC, fd.tlAvg24)?.toFixed(3)??'—';
@@ -605,17 +613,17 @@ function updateDashboard() {
       const sdArea=calcSD(fa.tlNC);
       document.getElementById('kpi-sd-stn').innerHTML=sdStn?.toFixed(2)??'—';
       document.getElementById('kpi-sd-area').innerHTML=sdArea?.toFixed(2)??'—';
-      if(sdStn&&sdArea){ const red=((sdStn-sdArea)/sdStn*100).toFixed(1); document.getElementById('kpi-sd-diff').innerHTML=red+'%'; document.getElementById('kpi-sd-diff').style.color=red>0?'#00d4aa':'#f44336'; }
+      if(sdStn&&sdArea){ const red=((sdStn-sdArea)/sdStn*100).toFixed(1); document.getElementById('kpi-sd-diff').innerHTML=red+'%'; document.getElementById('kpi-sd-diff').style.color=red>0?'var(--accent)':'#f85149'; }
 
       destroyChart('timeline');
-      charts['timeline']=new Chart(document.getElementById('chart-timeline'),{data:{labels:fd.tlLabels,datasets:[{type:'bar',label:'Raw',data:fd.tlRaw,backgroundColor:'rgba(74,158,255,0.4)'},{type:'line',label:'NowCast',data:fd.tlNC,borderColor:'#00d4aa',borderWidth:3,tension:0.3,fill:true,backgroundColor:'rgba(0,212,170,0.1)'},{type:'line',label:'Avg 24-hr',data:fd.tlAvg24,borderColor:'#f5a623',borderDash:[5,5],tension:0.3}]},options:{responsive:true,maintainAspectRatio:false}});
+      charts['timeline']=new Chart(document.getElementById('chart-timeline'),{data:{labels:fd.tlLabels,datasets:[{type:'bar',label:'Raw',data:fd.tlRaw,backgroundColor:'rgba(74,158,255,0.3)'},{type:'line',label:'NowCast',data:fd.tlNC,borderColor:'#00eaaf',borderWidth:3,tension:0.3,fill:true,backgroundColor:'rgba(0,234,175,0.08)'},{type:'line',label:'Avg 24-hr',data:fd.tlAvg24,borderColor:'#f5a623',borderDash:[5,5],tension:0.3}]},options:{responsive:true,maintainAspectRatio:false}});
 
       const catLabels=AQI_BREAKS.map(b=>b.label), catColors=AQI_BREAKS.map(b=>b.color);
       const drawDonut=(id, leg, data)=>{
         destroyChart(id); const total=data.reduce((a,b)=>a+b,0);
         const el = document.getElementById(id);
         if(!el) return;
-        charts[id]=new Chart(el,{type:'doughnut',data:{labels:catLabels,datasets:[{data,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false}}}});
+        charts[id]=new Chart(el,{type:'doughnut',data:{labels:catLabels,datasets:[{data,backgroundColor:catColors.map(c=>c+'cc'),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}});
         const legEl = document.getElementById(leg);
         if(legEl) legEl.innerHTML=catLabels.map((l,i)=>`<div class="dl-item"><div class="dl-dot" style="background:${catColors[i]}"></div><span>${l} (${total?(data[i]/total*100).toFixed(1):0}%)</span></div>`).join('');
       };
@@ -624,12 +632,12 @@ function updateDashboard() {
       drawDonut('chart-donut-nc', 'legend-nc', catLabels.map(l=>fd.ncCats[l]));
 
       destroyChart('volatility');
-      charts['volatility']=new Chart(document.getElementById('chart-volatility'),{type:'bar',data:{labels:['รายสถานี',`${areaName}`],datasets:[{data:[sdStn,sdArea],backgroundColor:['#4a9eff','#00d4aa']}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+      charts['volatility']=new Chart(document.getElementById('chart-volatility'),{type:'bar',data:{labels:['Per Station',`${areaName}`],datasets:[{data:[sdStn,sdArea],backgroundColor:['#4a9eff','#00eaaf']}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
 
       const tableCard=document.getElementById('station-table-card'), tableBody=document.querySelector('#station-ts-table tbody');
       if(sk==='all'||sk.startsWith('zone_')){ tableCard.style.display='none'; }
       else {
-        tableCard.style.display='block'; document.getElementById('station-table-sub').textContent=`สถานี: ${STATION_META[sk].nameTH}`;
+        tableCard.style.display='block'; document.getElementById('station-table-sub').textContent=`Station: ${STATION_META[sk].nameTH}`;
         tableBody.innerHTML=HISTORY_RECORDS.slice().reverse().map(r=>{
           const p=r._parsed[sk]; if(!p) return '';
           return `<tr><td>${r.date}</td><td style="font-family:var(--mono)">${r.timeRange}</td><td style="color:${getAQIBand(p.raw)?.color}">${p.raw?.toFixed(1)??'—'}</td><td style="color:${getAQIBand(p.nc)?.color}">${p.nc?.toFixed(1)??'—'}</td></tr>`;
