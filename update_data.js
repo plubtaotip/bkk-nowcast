@@ -9,7 +9,7 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-async function updateWithGapFilling() {
+async function updateCleanCurrentHour() {
   try {
     let history = [];
     if (fs.existsSync('history.json')) {
@@ -34,71 +34,30 @@ async function updateWithGapFilling() {
         fetchSuccess = true;
       }
     } catch (e) {
-      console.log("⚠️ ไม่สามารถเชื่อมต่อ API ได้ในรอบนี้ จะใช้ระบบข้อมูลสำรอง");
+      console.log("⚠️ ไม่สามารถเชื่อมต่อ API ได้ในรอบนี้");
     }
 
     // คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
     
+    const yyyy = bkkTime.getUTCFullYear();
+    const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`; 
+
     const currentHour = bkkTime.getUTCHours();
     const prevHour = currentHour === 0 ? 23 : currentHour - 1;
+    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
 
-    // ฟังก์ชันช่วยแปลงวันและช่วงเวลาเป็น Date object สำหรับเทียบ
-    const getHourDate = (dStr, tRange) => {
-      const startH = parseInt(tRange.split(' - ')[0].split(':')[0], 10);
-      return new Date(`${dStr}T${String(startH).padStart(2,'0')}:00:00+07:00`);
-    };
-
-    // หาก history ว่าง ให้สร้างโครงสร้างเริ่มต้น
-    if (history.length === 0) {
-      const initRow = { 
-        date: bkkTime.toISOString().split('T')[0], 
-        timeRange: `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00` 
-      };
-      BKK_STATIONS.forEach(s => initRow[s] = 25.0);
-      history.push(initRow);
+    // ค้นหาหรือสร้างแถวข้อมูลเฉพาะ "ชั่วโมงปัจจุบัน" เท่านั้น
+    let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
+    if (!targetRow) {
+      targetRow = { date: dateStr, timeRange: timeRange };
+      BKK_STATIONS.forEach(s => targetRow[s] = "-"); 
+      history.push(targetRow);
     }
 
-    // 🛡️ ระบบเติมช่วงเวลาที่ขาดหายไป (Gap Filling)
-    let lastRow = history[history.length - 1];
-    let lastTime = getHourDate(lastRow.date, lastRow.timeRange);
-    
-    let targetTime = new Date(bkkTime);
-    targetTime.setUTCMinutes(0, 0, 0);
-
-    // วนลูปตรวจเช็คทีละชั่วโมง ถ้าชั่วโมงไหนขาดหายไประหว่างทาง ระบบจะสร้างขึ้นมาต่อให้ทันที
-    while (true) {
-      let nextTime = new Date(lastTime.getTime() + (60 * 60 * 1000));
-      if (nextTime > targetTime) break;
-
-      const nYYYY = nextTime.getUTCFullYear();
-      const nMM = String(nextTime.getUTCMonth() + 1).padStart(2, '0');
-      const nDD = String(nextTime.getUTCDate()).padStart(2, '0');
-      const nDateStr = `${nYYYY}-${nMM}-${nDD}`;
-      
-      const nH = nextTime.getUTCHours();
-      const nPrevH = nH === 0 ? 23 : nH - 1;
-      const nTimeRange = `${String(nPrevH).padStart(2, '0')}:00 - ${String(nH).padStart(2, '0')}:00`;
-
-      let existing = history.find(r => r.date === nDateStr && r.timeRange === nTimeRange);
-      if (!existing) {
-        let newRow = { date: nDateStr, timeRange: nTimeRange };
-        // ก๊อปปี้ค่าจากแถวล่าสุดมาเติมแก้ขัดเพื่อให้เวลาเดินต่อเนื่องไม่ขาดตอน
-        BKK_STATIONS.forEach(s => {
-          newRow[s] = lastRow[s] !== undefined ? lastRow[s] : 25.0;
-        });
-        history.push(newRow);
-        lastRow = newRow;
-        console.log(`➕ เติมช่วงเวลาที่ขาดหาย: ${nDateStr} [${nTimeRange}]`);
-      } else {
-        lastRow = existing;
-      }
-      lastTime = nextTime;
-    }
-
-    // อัปเดตข้อมูลสดของชั่วโมงปัจจุบันลงในแถวล่าสุด
-    let targetRow = history[history.length - 1];
     let successCount = 0;
     if (fetchSuccess && stationsList.length > 0) {
       stationsList.forEach(stn => {
@@ -113,11 +72,13 @@ async function updateWithGapFilling() {
       });
     }
 
-    console.log(`📊 อัปเดตข้อมูลล่าสุดสำเร็จ ${successCount} สถานี`);
+    console.log(`📊 อัปเดตชั่วโมงล่าสุด (${dateStr} [${timeRange}]) สำเร็จ ${successCount} สถานี`);
 
-    // จัดเรียงลำดับเวลาใหม่ทั้งหมด
+    // จัดเรียงลำดับเวลา
     history.sort((a, b) => {
-      return getHourDate(a.date, a.timeRange) - getHourDate(b.date, b.timeRange);
+      const timeA = new Date(`${a.date}T${a.timeRange.split(' - ')[0]}:00+07:00`).getTime();
+      const timeB = new Date(`${b.date}T${b.timeRange.split(' - ')[0]}:00+07:00`).getTime();
+      return timeA - timeB;
     });
 
     // จำกัดขนาดประวัติไม่ให้เกิน 200 ชั่วโมง
@@ -126,7 +87,7 @@ async function updateWithGapFilling() {
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ บันทึกไฟล์ history.json พร้อมเติมช่วงเวลาที่ขาดหายสำเร็จเรียบร้อย!");
+    console.log("✅ บันทึกไฟล์ history.json เรียบร้อย!");
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาด:', error.message);
@@ -134,4 +95,4 @@ async function updateWithGapFilling() {
   }
 }
 
-updateWithGapFilling();
+updateCleanCurrentHour();
