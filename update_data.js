@@ -9,7 +9,6 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-// ฟังก์ชันจำกัดเวลา (Timeout) ป้องกันเว็บราชการค้าง
 async function fetchWithTimeout(url, options = {}, timeout = 4000) {
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), timeout);
@@ -37,7 +36,7 @@ async function fetchStationHistory(stationID, startDateStr, endDateStr) {
   return null;
 }
 
-async function update8HoursRolling() {
+async function update8HoursClean() {
   try {
     let history = [];
     if (fs.existsSync('history.json')) {
@@ -47,14 +46,12 @@ async function update8HoursRolling() {
       }
     }
 
-    // แปลง history เดิมเป็น Map เพื่อให้ค้นหาและอัปเดตข้อมูลง่ายขึ้น
     let historyMap = {};
     history.forEach(row => {
       const key = `${row.date}|${row.timeRange}`;
       historyMap[key] = row;
     });
 
-    // คำนวณช่วงเวลาย้อนหลัง 1 วัน (ครอบคลุมหน้าต่าง 8 ชั่วโมงล่าสุดแน่นอน)
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
     const endDateStr = bkkTime.toISOString().split('T')[0];
@@ -62,9 +59,8 @@ async function update8HoursRolling() {
     const pastTime = new Date(bkkTime.getTime() - (1 * 24 * 60 * 60 * 1000));
     const startDateStr = pastTime.toISOString().split('T')[0];
 
-    console.log(`🚀 กำลังดึงข้อมูลรายชั่วโมงย้อนหลัง 8 ชั่วโมงล่าสุด (${startDateStr} ถึง ${endDateStr})...`);
+    console.log(`🚀 กำลังดึงข้อมูล 8 ชั่วโมงล่าสุดแบบสะอาด (${startDateStr} ถึง ${endDateStr})...`);
 
-    // ดึงข้อมูลทุกสถานีพร้อมกันเพื่อความรวดเร็ว
     const promises = BKK_STATIONS.map(async (stn) => {
       const stnData = await fetchStationHistory(stn, startDateStr, endDateStr);
       return { stn, stnData };
@@ -75,12 +71,9 @@ async function update8HoursRolling() {
     let updatedCount = 0;
     results.forEach(({ stn, stnData }) => {
       if (stnData && Array.isArray(stnData)) {
-        // กรองเอาเฉพาะ 8 ชั่วโมงล่าสุดจากข้อมูลที่ดึงมา
-        const recentData = stnData.slice(-8);
-
-        recentData.forEach(item => {
+        stnData.forEach(item => {
           const pm25 = item.PM25;
-          const dtStr = item.DATETIMEDATA; // เช่น "2026-11-24 04:00:00"
+          const dtStr = item.DATETIMEDATA;
 
           if (dtStr && pm25 && pm25 !== "-") {
             const [datePart, timePart] = dtStr.split(' ');
@@ -94,18 +87,19 @@ async function update8HoursRolling() {
               targetDate = tempDate.toISOString().split('T')[0];
             }
 
+            // 🛡️ ป้องกันข้อมูลอนาคต: ถ้าเวลาของแถวมากกว่าเวลาปัจจุบันของไทย ให้ข้ามทันที
+            const rowTimeCheck = new Date(`${targetDate}T${String(prevHour).padStart(2,'0')}:00:00+07:00`);
+            if (rowTimeCheck > bkkTime) return; 
+
             const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:00`;
             const key = `${targetDate}|${timeRange}`;
 
-            // ถ้ายังไม่มีแถวเวลานี้ ให้สร้างใหม่
             if (!historyMap[key]) {
               let row = { date: targetDate, timeRange: timeRange };
               BKK_STATIONS.forEach(s => row[s] = "-");
               historyMap[key] = row;
             }
 
-            // เงื่อนไข: ถ้าช่องนั้นเป็น "-" หรือไม่มีค่า ให้เอาค่าใหม่ไปเติม
-            // ถ้ามีค่าอยู่แล้วและถูกต้อง จะไม่เขียนทับ (รักษาค่าเดิมไว้)
             const currentVal = historyMap[key][stn];
             const newVal = parseFloat(pm25);
 
@@ -118,21 +112,27 @@ async function update8HoursRolling() {
       }
     });
 
-    // แปลงกลับเป็น List และเรียงลำดับเวลา
     let historyList = Object.values(historyMap);
+    
+    // เรียงลำดับเวลาจากอดีต -> ปัจจุบันอย่างถูกต้องแม่นยำ
     historyList.sort((a, b) => {
       const timeA = new Date(`${a.date}T${a.timeRange.split(' - ')[0]}:00+07:00`).getTime();
       const timeB = new Date(`${b.date}T${b.timeRange.split(' - ')[0]}:00+07:00`).getTime();
       return timeA - timeB;
     });
 
-    // จำกัดขนาดไฟล์ให้เก็บไว้ 200 ชั่วโมงล่าสุดพอดีสำหรับการคำนวณ NowCast (N=8)
+    // ตัดข้อมูลอนาคตออกเด็ดขาด และจำกัดประวัติไว้ 200 ชั่วโมง
+    historyList = historyList.filter(row => {
+      const rowTime = new Date(`${row.date}T${row.timeRange.split(' - ')[0]}:00+07:00`);
+      return rowTime <= bkkTime;
+    });
+
     if (historyList.length > 200) {
       historyList = historyList.slice(historyList.length - 200);
     }
 
     fs.writeFileSync('history.json', JSON.stringify(historyList, null, 2));
-    console.log(`✅ อัปเดตไฟล์ history.json สำเร็จ! เติมข้อมูลในช่วง 8 ชั่วโมงล่าสุดไป ${updatedCount} จุด`);
+    console.log(`✅ อัปเดตไฟล์ history.json เรียบร้อย (ตัดเวลาอนาคตออกสะอาดเรียบร้อย)`);
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาด:', error.message);
@@ -140,4 +140,4 @@ async function update8HoursRolling() {
   }
 }
 
-update8HoursRolling();
+update8HoursClean();
