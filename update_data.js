@@ -19,65 +19,47 @@ async function fetchAndSave() {
       }
     }
 
-    // 🔍 เช็คว่าถ้าประวัติยังมีน้อยกว่า 8 ชั่วโมง (รันครั้งแรก) ให้ดึงข้อมูลย้อนหลัง OpenAQ มาเป็น Seed
-    if (history.length < 8) {
-      console.log("🌱 ตรวจพบข้อมูลตั้งต้นไม่พอสำหรับคำนวณ NowCast กำลังดึงข้อมูลย้อนหลัง 24 ชม. จาก OpenAQ...");
-      
-      const openaqUrl = "https://api.openaq.org/v2/measurements?country=TH&city=Bangkok&parameter=pm25&limit=1000&sort=desc";
-      const openaqRes = await fetch(openaqUrl, {
-        headers: { 'Accept': 'application/json' }
+    console.log("🚀 กำลังดึงข้อมูลภาพรวมจาก Air4Thai API...");
+    const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
+    
+    let apiData = null;
+
+    // ลองดึงข้อมูลตรงก่อน
+    try {
+      const response = await fetch(targetUrl, {
+        headers: { 
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 
+          'Accept': 'application/json' 
+        }
       });
+      if (response.ok) {
+        apiData = await response.json();
+      }
+    } catch (err) {
+      console.log("⚠️ ดึงตรงไม่สำเร็จ กำลังลองผ่าน Proxy สำรอง...");
+    }
 
-      if (openaqRes.ok) {
-        const openaqData = await openaqRes.json();
-        const results = openaqData.results || [];
-        
-        results.forEach(item => {
-          if (!item.date || !item.value) return;
-          const utcDate = new Date(item.date.utc);
-          const bkkTime = new Date(utcDate.getTime() + (7 * 60 * 60 * 1000));
-          
-          const yyyy = bkkTime.getUTCFullYear();
-          const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
-          const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
-          const dateStr = `${yyyy}-${mm}-${dd}`;
-          
-          const hour = bkkTime.getUTCHours();
-          const prevHour = hour === 0 ? 23 : hour - 1;
-          const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:00`;
-
-          // แมตช์พิกัดอย่างง่ายหรือใช้ค่ากลางเข้าประวัติ
-          let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
-          if (!targetRow) {
-            targetRow = { date: dateStr, timeRange: timeRange };
-            BKK_STATIONS.forEach(s => targetRow[s] = "-");
-            history.push(targetRow);
-          }
-          // เติมค่าตัวอย่างให้สถานีหลักๆ เพื่อให้ระบบพร้อมคำนวณ
-          targetRow["02t"] = parseFloat(item.value.toFixed(1)); 
-        });
-        console.log("✅ เติมข้อมูลตั้งต้น (Seed Data) สำเร็จ!");
+    // ถ้าดึงตรงถูกบล็อก ให้วิ่งผ่าน Proxy สาธารณะ
+    if (!apiData) {
+      const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+      const proxyRes = await fetch(proxyUrl);
+      if (proxyRes.ok) {
+        const wrapper = await proxyRes.json();
+        apiData = JSON.parse(wrapper.contents);
+      } else {
+        throw new Error("ไม่สามารถเชื่อมต่อ Air4Thai ได้ทั้งทางตรงและผ่าน Proxy");
       }
     }
 
-    // ⏱️ การดึงข้อมูลรายชั่วโมงปกติ (Hourly Polling)
-    console.log("🚀 กำลังดึงข้อมูลภาพรวมล่าสุดจาก Air4Thai API...");
-    const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
-    
-    const response = await fetch(targetUrl, {
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)', 
-        'Accept': 'application/json' 
-      }
-    });
-
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-    const apiData = await response.json();
     const stationsList = apiData.result || apiData.stations || [];
+    if (!stationsList || stationsList.length === 0) {
+      throw new Error("ไม่พบข้อมูลสถานีจาก API ต้นทาง");
+    }
 
+    // คำนวณเวลาประเทศไทย (UTC+7)
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
+    
     const yyyy = bkkTime.getUTCFullYear();
     const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
     const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
@@ -94,17 +76,20 @@ async function fetchAndSave() {
       history.push(targetRow);
     }
 
+    let successCount = 0;
     stationsList.forEach(stn => {
       const stnID = stn.stationID;
       if (BKK_STATIONS.includes(stnID)) {
         const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
         if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
           targetRow[stnID] = parseFloat(pm25Val);
+          successCount++;
         }
       }
     });
 
-    // จัดเรียงและจำกัดขนาดประวัติ
+    console.log(`📊 บันทึกข้อมูลสำเร็จ ${successCount} สถานี สำหรับช่วงเวลา ${dateStr} [${timeRange}]`);
+
     history.sort((a, b) => {
       const hourA = a.timeRange.split(' - ')[0]; 
       const hourB = b.timeRange.split(' - ')[0];
@@ -116,7 +101,7 @@ async function fetchAndSave() {
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ อัปเดตไฟล์ history.json เรียบร้อยแล้ว");
+    console.log("✅ อัปเดตไฟล์ history.json สำเร็จเรียบร้อย!");
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาด:', error.message);
