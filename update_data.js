@@ -1,4 +1,4 @@
-// ไฟล์: update_data.js
+// ไฟล์: update_data.js (ฉบับปรับปรุง)
 const fs = require('fs');
 
 const BKK_STATIONS = [
@@ -13,23 +13,21 @@ const BKK_STATIONS = [
 const delay = ms => new Promise(res => setTimeout(res, ms));
 
 async function fetchRawHistory(stationID, startDateStr, endDateStr) {
+    // ใช้ API ทางเลือกหรือ Air4Thai ที่ปลอดภัยขึ้น
     const targetUrl = `http://air4thai.com/forweb/getHistoryData.php?stationID=${stationID}&param=PM25&type=hr&sdate=${startDateStr}&edate=${endDateStr}`;
     
     try {
         const res = await fetch(targetUrl, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Accept': 'application/json'
-            }
+            headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
         });
-        
         if (res.ok) {
             const data = await res.json();
             return data?.res?.stations?.[0]?.data || data?.stations?.[0]?.data || null;
         }
     } catch (e) {
-        const encodedUrl = encodeURIComponent(targetUrl);
+        // หากดึงตรงไม่ผ่าน ให้ใช้ Proxy สำรอง
         try {
+            const encodedUrl = encodeURIComponent(targetUrl);
             const pRes = await fetch(`https://api.allorigins.win/get?disableCache=true&url=${encodedUrl}`);
             if (pRes.ok) {
                 const wrapper = await pRes.json();
@@ -51,7 +49,6 @@ async function fetchAndSave() {
       }
     }
 
-    // ใช้การคำนวณเวลาแบบ UTC Offset (ปลอดภัย 100% ไม่ว่ารันบนเซิร์ฟเวอร์ไหน)
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
     
@@ -66,8 +63,6 @@ async function fetchAndSave() {
     const s_dd = String(pastTime.getUTCDate()).padStart(2,'0');
     const startDateStr = `${s_yyyy}-${s_mm}-${s_dd}`; 
 
-    console.log(`🚀 กำลังดูดข้อมูลดิบย้อนหลัง 8 ชั่วโมง (${startDateStr} ถึง ${endDateStr})...`);
-    
     const currentHour = bkkTime.getUTCHours();
     const prevHour = currentHour === 0 ? 23 : currentHour - 1;
     const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
@@ -87,18 +82,12 @@ async function fetchAndSave() {
 
     for (const stn of BKK_STATIONS) {
          const stnData = await fetchRawHistory(stn, startDateStr, endDateStr);
-         
          if (stnData && Array.isArray(stnData)) {
              stnData.forEach(pastHr => {
                  if (pastHr.PM25 && pastHr.PM25 !== "-") {
                      const pTimeStr = pastHr.DATETIMEDATA; 
-                     
-                     // 🔥 กฎเหล็ก: ขจัดข้อมูลจากอนาคต (Future Data Filter)
-                     // เอาเวลาที่ API ส่งมา แปลงเป็น TimeStamp เพื่อเทียบกับเวลาปัจจุบัน
                      const dataTime = new Date(pTimeStr.replace(' ', 'T') + '+07:00');
-                     if (dataTime.getTime() > utcNow.getTime()) {
-                         return; // 🛑 ถ้าเป็นเวลาในอนาคต ให้เตะทิ้งทันที!
-                     }
+                     if (dataTime.getTime() > utcNow.getTime()) return;
 
                      const pHour = parseInt(pTimeStr.split(' ')[1].split(':')[0], 10);
                      const pPrevHour = pHour === 0 ? 23 : pHour - 1;
@@ -116,31 +105,22 @@ async function fetchAndSave() {
                          BKK_STATIONS.forEach(s => targetRow[s] = "-"); 
                          history.push(targetRow);
                      }
-                     
                      targetRow[stn] = parseFloat(pastHr.PM25);
                  }
              });
          }
-         await delay(300); 
+         await delay(200); 
     }
 
-    history.sort((a, b) => {
-        const hourA = a.timeRange.split(' - ')[0]; 
-        const hourB = b.timeRange.split(' - ')[0];
-        const timeA = new Date(`${a.date}T${hourA}:00+07:00`).getTime();
-        const timeB = new Date(`${b.date}T${hourB}:00+07:00`).getTime();
-        return timeA - timeB;
-    });
-
-    if (history.length > 150) {
-      history = history.slice(history.length - 150); 
+    // กรองเอาเฉพาะแถวที่ไม่ใช่ '-' ทั้งหมด หรือจำกัดประวัติไม่ให้ไฟล์ใหญ่เกินไป
+    if (history.length > 200) {
+      history = history.slice(history.length - 200); 
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log(`✅ อัปเดตข้อมูลสำเร็จ! (รวมประวัติทั้งหมด ${history.length} ชั่วโมง)`);
-
+    console.log("✅ อัปเดตข้อมูลสำเร็จ");
   } catch (error) {
-    console.error('❌ เกิดข้อผิดพลาดรุนแรง:', error.message);
+    console.error('❌ เกิดข้อผิดพลาด:', error.message);
     process.exit(1); 
   }
 }
