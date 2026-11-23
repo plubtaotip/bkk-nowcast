@@ -9,40 +9,8 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-const delay = ms => new Promise(res => setTimeout(res, ms));
-
-async function fetchStationHistory(stationID, startDateStr, endDateStr) {
-  const targetUrl = `http://air4thai.com/forweb/getHistoryData.php?stationID=${stationID}&param=PM25&type=hr&sdate=${startDateStr}&edate=${endDateStr}`;
-  
+async function updateFastCurrentHour() {
   try {
-    const res = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (res.ok) {
-      const data = await res.json();
-      return data?.res?.stations?.[0]?.data || data?.stations?.[0]?.data || null;
-    }
-  } catch (e) {
-    try {
-      const proxyUrl = `https://api.allorigins.win/get?disableCache=true&url=${encodeURIComponent(targetUrl)}`;
-      const pRes = await fetch(proxyUrl);
-      if (pRes.ok) {
-        const wrapper = await pRes.json();
-        const data = JSON.parse(wrapper.contents);
-        return data?.res?.stations?.[0]?.data || data?.stations?.[0]?.data || null;
-      }
-    } catch (err2) {}
-  }
-  return null;
-}
-
-async function updateWith8HourWindow() {
-  try {
-    // 1. โหลด history.json เดิม (ถ้ามี) เพื่อรักษาข้อมูลเก่าไว้
     let history = [];
     if (fs.existsSync('history.json')) {
       const rawData = fs.readFileSync('history.json', 'utf8');
@@ -51,100 +19,92 @@ async function updateWith8HourWindow() {
       }
     }
 
-    // 2. คำนวณช่วงเวลาย้อนหลัง 2 วัน เพื่อดึงครอบคลุมหน้าต่าง 8 ชั่วโมงล่าสุด
+    console.log("🚀 กำลังดึงค่า PM2.5 ล่าสุด (ชั่วโมงนี้) จาก Air4Thai API...");
+    const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
+    
+    let stationsList = [];
+    try {
+      const response = await fetch(targetUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+      });
+      if (response.ok) {
+        const apiData = await response.json();
+        stationsList = apiData.result || apiData.stations || [];
+      }
+    } catch (e) {
+      console.log("⚠️ ไม่สามารถเชื่อมต่อ API หลักได้ในรอบนี้");
+    }
+
+    // คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
     
-    const endDateStr = bkkTime.toISOString().split('T')[0];
-    const pastTime = new Date(bkkTime.getTime() - (2 * 24 * 60 * 60 * 1000));
-    const startDateStr = pastTime.toISOString().split('T')[0];
+    const yyyy = bkkTime.getUTCFullYear();
+    const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`; 
 
-    console.log(`🚀 กำลังดึงประวัติรายชั่วโมง 8 ชม. ย้อนหลัง (${startDateStr} ถึง ${endDateStr})...`);
+    const currentHour = bkkTime.getUTCHours();
+    const prevHour = currentHour === 0 ? 23 : currentHour - 1;
+    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
 
-    // แปลง history เดิมเป็น Map เพื่อให้อัปเดตข้อมูลง่ายขึ้น
-    let historyMap = {};
-    history.forEach(row => {
-      const key = `${row.date}|${row.timeRange}`;
-      historyMap[key] = row;
-    });
-
-    for (const stn of BKK_STATIONS) {
-      const stnData = await fetchStationHistory(stn, startDateStr, endDateStr);
-      
-      if (stnData && Array.isArray(stnData)) {
-        stnData.forEach(item => {
-          const pm25 = item.PM25;
-          const dtStr = item.DATETIMEDATA; // เช่น "2026-11-23 14:00:00"
-
-          if (dtStr) {
-            const [datePart, timePart] = dtStr.split(' ');
-            const hour = int = parseInt(timePart.split(':')[0], 10);
-            const prevHour = hour === 0 ? 23 : hour - 1;
-            
-            let targetDate = datePart;
-            if (hour === 0) {
-              const dtObj = new Date(dtStr.replace(' ', 'T') + '+07:00');
-              const tempDate = new Date(dtObj.getTime() - (24 * 60 * 60 * 1000));
-              targetDate = tempDate.toISOString().split('T')[0];
-            }
-
-            const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:00`;
-            const key = `${targetDate}|${timeRange}`;
-
-            if (!historyMap[key]) {
-              let row = { date: targetDate, timeRange: timeRange };
-              BKK_STATIONS.forEach(s => row[s] = "-");
-              historyMap[key] = row;
-            }
-
-            // บันทึกค่าถ้ามีข้อมูลจริง ถ้าเป็น "-" ให้ปล่อยไว้ก่อน เดี๋ยวไปจัดการเติมเต็มทีหลัง
-            if (pm25 && pm25 !== "-") {
-              historyMap[key][stn] = parseFloat(pm25);
-            }
-          }
-        });
-      }
-      await delay(1000);
+    // ค้นหาหรือสร้างแถวข้อมูลสำหรับชั่วโมงปัจจุบันใน history
+    let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
+    if (!targetRow) {
+      targetRow = { date: dateStr, timeRange: timeRange };
+      BKK_STATIONS.forEach(s => targetRow[s] = "-"); 
+      history.push(targetRow);
     }
 
-    let historyList = Object.values(historyMap);
-
-    // 3. จัดเรียงลำดับเวลาตาม Chronological order
-    historyList.sort((a, b) => {
-      const timeA = new Date(`${a.date}T${a.timeRange.split(' - ')[0]}:00+07:00`).getTime();
-      const timeB = new Date(`${b.date}T${b.timeRange.split(' - ')[0]}:00+07:00`).getTime();
-      return timeA - timeB;
-    });
-
-    // 4. 🛡️ [ระบบแก้ไขกรณีค่ารายชั่วโมงขาดหายหรือแสดงเป็น "-"]
-    // วนลูปตรวจสอบ ถ้าสถานีไหนได้ค่า "-" ให้ดึงค่าจากชั่วโมงก่อนหน้ามาเติมแทน เพื่อให้หน้าต่าง 8 ชม. ไม่ขาดตอน
-    for (let i = 0; i < historyList.length; i++) {
-      const currentRow = historyList[i];
-      const prevRow = i > 0 ? historyList[i - 1] : null;
-
-      BKK_STATIONS.forEach(stn => {
-        if (currentRow[stn] === "-" || currentRow[stn] === undefined) {
-          if (prevRow && prevRow[stn] !== "-" && prevRow[stn] !== undefined) {
-            currentRow[stn] = prevRow[stn]; // ใช้ค่าจากชั่วโมงก่อนหน้ามาแปะแก้ขัด
-          } else {
-            currentRow[stn] = 25.0; // ค่ากลางสำรองถ้าไม่มีประวัติก่อนหน้าเลย
+    let successCount = 0;
+    if (stationsList.length > 0) {
+      stationsList.forEach(stn => {
+        const stnID = stn.stationID;
+        if (BKK_STATIONS.includes(stnID)) {
+          const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
+          if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
+            targetRow[stnID] = parseFloat(pm25Val);
+            successCount++;
           }
         }
       });
     }
 
-    // จำกัดขนาดประวัติเก็บไว้ 200 ชั่วโมงล่าสุด
-    if (historyList.length > 200) {
-      historyList = historyList.slice(historyList.length - 200);
+    console.log(`📊 อัปเดตค่าชั่วโมงล่าสุด (${dateStr} [${timeRange}]) สำเร็จ ${successCount} สถานี`);
+
+    // 🛡️ ป้องกันค่าหาย: ถ้าสถานีไหนได้ "-" ให้ดึงค่าจากชั่วโมงก่อนหน้ามาเติมแทนอัตโนมัติ
+    const currentIndex = history.indexOf(targetRow);
+    const prevRow = currentIndex > 0 ? history[currentIndex - 1] : null;
+
+    BKK_STATIONS.forEach(stn => {
+      if (targetRow[stn] === "-" || targetRow[stn] === undefined) {
+        if (prevRow && prevRow[stn] !== "-" && prevRow[stn] !== undefined) {
+          targetRow[stn] = prevRow[stn];
+        } else {
+          targetRow[stn] = 25.0; // ค่ากลางสำรอง
+        }
+      }
+    });
+
+    // จัดเรียงลำดับเวลา
+    history.sort((a, b) => {
+      const hourA = a.timeRange.split(' - ')[0]; 
+      const hourB = b.timeRange.split(' - ')[0];
+      return new Date(`${a.date}T${hourA}:00+07:00`) - new Date(`${b.date}T${hourB}:00+07:00`);
+    });
+
+    // จำกัดขนาดประวัติไม่ให้เกิน 200 ชั่วโมง
+    if (history.length > 200) {
+      history = history.slice(history.length - 200); 
     }
 
-    fs.writeFileSync('history.json', JSON.stringify(historyList, null, 2));
-    console.log(`✅ อัปเดตไฟล์ history.json สำเร็จ! มีข้อมูลทั้งหมด ${historyList.length} ช่วงเวลา พร้อมจัดการค่าขาดหายเรียบร้อย`);
+    fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
+    console.log("✅ บันทึกไฟล์ history.json เรียบร้อย (ใช้เวลาไม่กี่วินาที)!");
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาด:', error.message);
-    process.exit(1);
+    process.exit(1); 
   }
 }
 
-updateWith8HourWindow();
+updateFastCurrentHour();
