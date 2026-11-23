@@ -9,9 +9,8 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-async function updateContinuousHistory() {
+async function updateDataSafely() {
   try {
-    // 1. โหลดประวัติเดิมที่มีอยู่ออกมา
     let history = [];
     if (fs.existsSync('history.json')) {
       const rawData = fs.readFileSync('history.json', 'utf8');
@@ -24,16 +23,23 @@ async function updateContinuousHistory() {
     const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
     
     let stationsList = [];
-    const response = await fetch(targetUrl, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
-    });
-    
-    if (response.ok) {
-      const apiData = await response.json();
-      stationsList = apiData.result || apiData.stations || [];
+    let fetchSuccess = false;
+
+    // ใช้ Try-Catch แยกต่างหากเพื่อกันไม่ให้ fetch failed ทำให้โปรแกรมล่ม
+    try {
+      const response = await fetch(targetUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+      });
+      if (response.ok) {
+        const apiData = await response.json();
+        stationsList = apiData.result || apiData.stations || [];
+        fetchSuccess = true;
+      }
+    } catch (err) {
+      console.log("⚠️ แจ้งเตือน: Air4Thai บล็อกการเชื่อมต่อ (fetch failed) สลับมาใช้ระบบข้อมูลสำรองอัตโนมัติ");
     }
 
-    // 2. คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
+    // คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
     
@@ -46,62 +52,63 @@ async function updateContinuousHistory() {
     const prevHour = currentHour === 0 ? 23 : currentHour - 1;
     const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
 
-    // 3. ค้นหาว่ามีแถวของเวลานี้อยู่แล้วหรือยัง ถ้ายังให้สร้างใหม่ต่อท้าย
+    // ค้นหาหรือสร้างแถวข้อมูลสำหรับชั่วโมงปัจจุบันใน history
     let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
     if (!targetRow) {
       targetRow = { date: dateStr, timeRange: timeRange };
       BKK_STATIONS.forEach(s => targetRow[s] = "-"); 
-      history.push(targetRow); // เพิ่มแถวใหม่ต่อท้ายเวลาเดิมอย่างลงตัว
+      history.push(targetRow);
     }
 
-    // 4. นำค่าสดที่ดึงมาใส่ลงในแถว
     let successCount = 0;
-    stationsList.forEach(stn => {
-      const stnID = stn.stationID;
-      if (BKK_STATIONS.includes(stnID)) {
-        const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
-        if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
-          targetRow[stnID] = parseFloat(pm25Val);
-          successCount++;
+    if (fetchSuccess && stationsList.length > 0) {
+      stationsList.forEach(stn => {
+        const stnID = stn.stationID;
+        if (BKK_STATIONS.includes(stnID)) {
+          const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
+          if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
+            targetRow[stnID] = parseFloat(pm25Val);
+            successCount++;
+          }
         }
-      }
-    });
+      });
+    }
 
-    console.log(`📊 อัปเดตชั่วโมง ${dateStr} [${timeRange}] สำเร็จ ${successCount} สถานี`);
+    console.log(`📊 อัปเดตข้อมูลช่วงเวลา (${dateStr} [${timeRange}]) สำเร็จ ${successCount} สถานี`);
 
-    // 5. 🛡️ ระบบป้องกันค่าขาดหาย: ถ้าสถานีไหนได้ "-" ให้ดึงค่าจากชั่วโมงก่อนหน้ามาเติมแก้ขัด
+    // 🛡️ ระบบป้องกันค่าขาดหาย: ถ้าดึงเว็บไม่ได้ หรือสถานีไหนได้ "-" ให้ดึงค่าจากชั่วโมงก่อนหน้ามาเติม
     const currentIndex = history.indexOf(targetRow);
     const prevRow = currentIndex > 0 ? history[currentIndex - 1] : null;
 
     BKK_STATIONS.forEach(stn => {
       if (targetRow[stn] === "-" || targetRow[stn] === undefined) {
         if (prevRow && prevRow[stn] !== "-" && prevRow[stn] !== undefined) {
-          targetRow[stn] = prevRow[stn];
+          targetRow[stn] = prevRow[stn]; // ดึงค่าชั่วโมงก่อนหน้ามาเติมแก้ขัด
         } else {
-          targetRow[stn] = 25.0; 
+          targetRow[stn] = 25.0; // ค่ากลางสำรอง
         }
       }
     });
 
-    // 6. จัดเรียงลำดับเวลาใหม่ทั้งหมด ป้องกันกรณีสลับลำดับ
+    // จัดเรียงลำดับเวลา
     history.sort((a, b) => {
       const timeA = new Date(`${a.date}T${a.timeRange.split(' - ')[0]}:00+07:00`).getTime();
       const timeB = new Date(`${b.date}T${b.timeRange.split(' - ')[0]}:00+07:00`).getTime();
       return timeA - timeB;
     });
 
-    // 7. ตัดประวัติส่วนที่เก่าเกินไปออก ให้เหลือ 200 ชั่วโมงล่าสุดพอ (เพื่อรักษาหน้าต่างข้อมูลให้สดใหม่เสมอ)
+    // จำกัดขนาดประวัติไม่ให้เกิน 200 ชั่วโมง
     if (history.length > 200) {
       history = history.slice(history.length - 200); 
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ บันทึกและต่อเวลาใน history.json สำเร็จเรียบร้อย!");
+    console.log("✅ บันทึกไฟล์ history.json สำเร็จเรียบร้อย!");
 
   } catch (error) {
-    console.error('❌ เกิดข้อผิดพลาด:', error.message);
+    console.error('❌ เกิดข้อผิดพลาดร้ายแรง:', error.message);
     process.exit(1); 
   }
 }
 
-updateContinuousHistory();
+updateDataSafely();
