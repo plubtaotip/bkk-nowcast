@@ -1,3 +1,4 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const fs = require('fs');
 
 const BKK_STATIONS = [
@@ -9,7 +10,37 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-async function updateRealtimeHistory() {
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+async function fetchWithTimeout(url, timeout = 8000) {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+}
+
+async function fetchStationHistory(stationID, startDateStr, endDateStr) {
+  const url = `http://air4thai.com/forweb/getHistoryData.php?stationID=${stationID}&param=PM25&type=hr&sdate=${startDateStr}&edate=${endDateStr}`;
+  try {
+    const res = await fetchWithTimeout(url, 8000);
+    if (res.ok) {
+      const data = await res.json();
+      return data?.res?.stations?.[0]?.data || data?.stations?.[0]?.data || null;
+    }
+  } catch (e) {}
+  return null;
+}
+
+async function update8HoursBatch() {
   try {
     let history = [];
     if (fs.existsSync('history.json')) {
@@ -19,85 +50,107 @@ async function updateRealtimeHistory() {
       }
     }
 
-    console.log("🚀 กำลังดึงข้อมูล PM2.5 ล่าสุดจาก Air4Thai API...");
-    const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
-    
-    let stationsList = [];
-    try {
-      const response = await fetch(targetUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
-      });
+    let historyMap = {};
+    history.forEach(row => {
+      historyMap[`${row.date}|${row.timeRange}`] = row;
+    });
 
-      if (response.ok) {
-        const apiData = await response.json();
-        stationsList = apiData.result || apiData.stations || [];
-      }
-    } catch (fetchErr) {
-      console.log("⚠️ แจ้งเตือน: ไม่สามารถเชื่อมต่อ Air4Thai ได้ (ถูกบล็อก IP ต่างประเทศ):", fetchErr.message);
-      console.log("✅ ข้ามการอัปเดตในรอบนี้โดยไม่ทำให้ Workflow พัง (Exit Code 0)");
-      return; // จบการทำงานอย่างปลอดภัย
-    }
-
-    if (stationsList.length === 0) {
-      console.log("⚠️ ไม่พบข้อมูลสถานีจาก API ข้ามการอัปเดตในรอบนี้");
-      return;
-    }
-
-    // คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
+    // เวลาปัจจุบันของไทย (UTC+7)
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
-    
-    const yyyy = bkkTime.getUTCFullYear();
-    const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`; 
+    const endDateStr = bkkTime.toISOString().split('T')[0];
+    const startDateStr = new Date(bkkTime.getTime() - (24 * 60 * 60 * 1000)).toISOString().split('T')[0];
 
-    const currentHour = bkkTime.getUTCHours();
-    const prevHour = currentHour === 0 ? 23 : currentHour - 1;
-    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
+    console.log(`🚀 กำลังดึงข้อมูลย้อนหลัง 8 ชม. (${startDateStr} ถึง ${endDateStr})...`);
 
-    // ค้นหาหรือสร้างแถวข้อมูลสำหรับชั่วโมงปัจจุบันใน history
-    let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
-    if (!targetRow) {
-      targetRow = { date: dateStr, timeRange: timeRange };
-      BKK_STATIONS.forEach(s => targetRow[s] = "-"); 
-      history.push(targetRow);
+    // แบ่งดึงทีละ 10 สถานี ป้องกันเซิร์ฟเวอร์ Air4Thai ตัดการเชื่อมต่อ
+    const results = [];
+    const batchSize = 10;
+    for (let i = 0; i < BKK_STATIONS.length; i += batchSize) {
+      const batch = BKK_STATIONS.slice(i, i + batchSize);
+      const batchRes = await Promise.all(
+        batch.map(async (stn) => ({
+          stn,
+          stnData: await fetchStationHistory(stn, startDateStr, endDateStr)
+        }))
+      );
+      results.push(...batchRes);
+      await delay(300);
     }
 
-    let successCount = 0;
-    stationsList.forEach(stn => {
-      const stnID = stn.stationID;
-      if (BKK_STATIONS.includes(stnID)) {
-        const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
-        if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
-          if (targetRow[stnID] === "-" || targetRow[stnID] === undefined || targetRow[stnID] === null) {
-            targetRow[stnID] = parseFloat(pm25Val);
-            successCount++;
+    let updatedCount = 0;
+    let activeStations = 0;
+
+    results.forEach(({ stn, stnData }) => {
+      if (stnData && Array.isArray(stnData) && stnData.length > 0) {
+        activeStations++;
+        // ดึงเฉพาะ 8 ชั่วโมงล่าสุด
+        const recentData = stnData.slice(-8);
+
+        recentData.forEach(item => {
+          const pm25 = item.PM25;
+          const dtStr = item.DATETIMEDATA;
+
+          if (dtStr && pm25 && pm25 !== "-" && !isNaN(parseFloat(pm25))) {
+            const [datePart, timePart] = dtStr.split(' ');
+            const hour = parseInt(timePart.split(':')[0], 10);
+            const prevHour = hour === 0 ? 23 : hour - 1;
+
+            let targetDate = datePart;
+            if (hour === 0) {
+              const dtObj = new Date(dtStr.replace(' ', 'T') + '+07:00');
+              targetDate = new Date(dtObj.getTime() - 86400000).toISOString().split('T')[0];
+            }
+
+            // กันข้อมูลอนาคตเกินเวลาปัจจุบัน
+            const rowTimeCheck = new Date(`${targetDate}T${String(prevHour).padStart(2, '0')}:00:00+07:00`);
+            if (rowTimeCheck > bkkTime) return;
+
+            const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:00`;
+            const key = `${targetDate}|${timeRange}`;
+
+            if (!historyMap[key]) {
+              let row = { date: targetDate, timeRange: timeRange };
+              BKK_STATIONS.forEach(s => row[s] = "-");
+              historyMap[key] = row;
+            }
+
+            // เติมค่าใหม่เฉพาะช่องที่เป็น "-" หรือยังไม่มีข้อมูล
+            const currentVal = historyMap[key][stn];
+            if (currentVal === "-" || currentVal === undefined || currentVal === null) {
+              historyMap[key][stn] = parseFloat(pm25);
+              updatedCount++;
+            }
           }
-        }
+        });
       }
     });
 
-    console.log(`📊 อัปเดตข้อมูลชั่วโมงปัจจุบัน (${dateStr} [${timeRange}]) สำเร็จ ${successCount} สถานี`);
+    console.log(`📡 เชื่อมต่อสำเร็จ ${activeStations}/${BKK_STATIONS.length} สถานี | อัปเดตเพิ่ม ${updatedCount} จุด`);
 
-    // จัดเรียงลำดับเวลา
-    history.sort((a, b) => {
+    let historyList = Object.values(historyMap);
+    historyList.sort((a, b) => {
       const timeA = new Date(`${a.date}T${a.timeRange.split(' - ')[0]}:00+07:00`).getTime();
       const timeB = new Date(`${b.date}T${b.timeRange.split(' - ')[0]}:00+07:00`).getTime();
       return timeA - timeB;
     });
 
-    if (history.length > 200) {
-      history = history.slice(history.length - 200); 
+    historyList = historyList.filter(row => {
+      const rowTime = new Date(`${row.date}T${row.timeRange.split(' - ')[0]}:00+07:00`);
+      return rowTime <= bkkTime;
+    });
+
+    if (historyList.length > 200) {
+      historyList = historyList.slice(historyList.length - 200);
     }
 
-    fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ บันทึกไฟล์ history.json สำเร็จเรียบร้อย!");
+    fs.writeFileSync('history.json', JSON.stringify(historyList, null, 2));
+    console.log("✅ บันทึกไฟล์ history.json เรียบร้อย!");
 
   } catch (error) {
-    console.error('❌ เกิดข้อผิดพลาดร้ายแรง:', error.message);
-    process.exit(1); 
+    console.error('❌ เกิดข้อผิดพลาด:', error.message);
+    process.exit(1);
   }
 }
 
-updateRealtimeHistory();
+update8HoursBatch();
