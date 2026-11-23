@@ -9,7 +9,7 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-async function updateCleanCurrentHour() {
+async function updateContinuousGrid() {
   try {
     let history = [];
     if (fs.existsSync('history.json')) {
@@ -41,23 +41,58 @@ async function updateCleanCurrentHour() {
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
     
-    const yyyy = bkkTime.getUTCFullYear();
-    const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`; 
-
     const currentHour = bkkTime.getUTCHours();
     const prevHour = currentHour === 0 ? 23 : currentHour - 1;
-    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
 
-    // ค้นหาหรือสร้างแถวข้อมูลเฉพาะ "ชั่วโมงปัจจุบัน" เท่านั้น
-    let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
-    if (!targetRow) {
-      targetRow = { date: dateStr, timeRange: timeRange };
-      BKK_STATIONS.forEach(s => targetRow[s] = "-"); 
-      history.push(targetRow);
+    const parseTimeKey = (dStr, tRange) => {
+      const startH = parseInt(tRange.split(' - ')[0].split(':')[0], 10);
+      return new Date(`${dStr}T${String(startH).padStart(2,'0')}:00:00+07:00`);
+    };
+
+    // หาก history ว่าง ให้สร้างจุดเริ่มต้น
+    if (history.length === 0) {
+      const initRow = { 
+        date: bkkTime.toISOString().split('T')[0], 
+        timeRange: `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00` 
+      };
+      BKK_STATIONS.forEach(s => initRow[s] = "-");
+      history.push(initRow);
     }
 
+    // 🛡️ ระบบสร้างช่วงเวลาต่อเนื่อง (เติมชั่วโมงที่ขาดหายไประหว่างทางให้ครบถ้วน)
+    let lastRow = history[history.length - 1];
+    let lastTime = parseTimeKey(lastRow.date, lastRow.timeRange);
+    let targetTime = new Date(bkkTime);
+    targetTime.setUTCMinutes(0, 0, 0);
+
+    while (true) {
+      let nextTime = new Date(lastTime.getTime() + (60 * 60 * 1000));
+      if (nextTime > targetTime) break;
+
+      const nYYYY = nextTime.getUTCFullYear();
+      const nMM = String(nextTime.getUTCMonth() + 1).padStart(2, '0');
+      const nDD = String(nextTime.getUTCDate()).padStart(2, '0');
+      const nDateStr = `${nYYYY}-${nMM}-${nDD}`;
+      
+      const nH = nextTime.getUTCHours();
+      const nPrevH = nH === 0 ? 23 : nH - 1;
+      const nTimeRange = `${String(nPrevH).padStart(2, '0')}:00 - ${String(nH).padStart(2, '0')}:00`;
+
+      let existing = history.find(r => r.date === nDateStr && r.timeRange === nTimeRange);
+      if (!existing) {
+        let newRow = { date: nDateStr, timeRange: nTimeRange };
+        // กำหนดค่าเริ่มต้นเป็น "-" ทั้งหมดเพื่อไม่ให้เกิดการลากตัวเลขเก่าทับซ้อนมั่วซั่ว
+        BKK_STATIONS.forEach(s => newRow[s] = "-");
+        history.push(newRow);
+        lastRow = newRow;
+      } else {
+        lastRow = existing;
+      }
+      lastTime = nextTime;
+    }
+
+    // อัปเดตข้อมูลสดของชั่วโมงปัจจุบันลงในแถวล่าสุด
+    let targetRow = history[history.length - 1];
     let successCount = 0;
     if (fetchSuccess && stationsList.length > 0) {
       stationsList.forEach(stn => {
@@ -72,13 +107,11 @@ async function updateCleanCurrentHour() {
       });
     }
 
-    console.log(`📊 อัปเดตชั่วโมงล่าสุด (${dateStr} [${timeRange}]) สำเร็จ ${successCount} สถานี`);
+    console.log(`📊 อัปเดตข้อมูลล่าสุดสำเร็จ ${successCount} สถานี`);
 
-    // จัดเรียงลำดับเวลา
+    // จัดเรียงลำดับเวลาให้เรียงยาวต่อเนื่องสวยงาม
     history.sort((a, b) => {
-      const timeA = new Date(`${a.date}T${a.timeRange.split(' - ')[0]}:00+07:00`).getTime();
-      const timeB = new Date(`${b.date}T${b.timeRange.split(' - ')[0]}:00+07:00`).getTime();
-      return timeA - timeB;
+      return parseTimeKey(a.date, a.timeRange) - parseTimeKey(b.date, b.timeRange);
     });
 
     // จำกัดขนาดประวัติไม่ให้เกิน 200 ชั่วโมง
@@ -87,7 +120,7 @@ async function updateCleanCurrentHour() {
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ บันทึกไฟล์ history.json เรียบร้อย!");
+    console.log("✅ บันทึกไฟล์ history.json แบบเวลาต่อเนื่องเรียบร้อย!");
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาด:', error.message);
@@ -95,4 +128,4 @@ async function updateCleanCurrentHour() {
   }
 }
 
-updateCleanCurrentHour();
+updateContinuousGrid();
