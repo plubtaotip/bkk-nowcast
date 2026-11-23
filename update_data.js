@@ -9,7 +9,7 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-async function updateLatestHour() {
+async function updateData() {
   try {
     let history = [];
     if (fs.existsSync('history.json')) {
@@ -19,7 +19,7 @@ async function updateLatestHour() {
       }
     }
 
-    console.log("🚀 กำลังดึงค่า PM2.5 ล่าสุดจาก Air4Thai API...");
+    console.log("🚀 กำลังดึงข้อมูล PM2.5 ล่าสุดจาก Air4Thai API...");
     const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
     
     let stationsList = [];
@@ -32,7 +32,7 @@ async function updateLatestHour() {
         stationsList = apiData.result || apiData.stations || [];
       }
     } catch (e) {
-      console.log("⚠️ ไม่สามารถเชื่อมต่อ API หลักได้ในรอบนี้");
+      console.log("⚠️ ไม่สามารถเชื่อมต่อ API หลักได้ในรอบนี้ จะใช้ระบบสำรองข้อมูลทดแทน");
     }
 
     // คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
@@ -56,7 +56,8 @@ async function updateLatestHour() {
       history.push(targetRow);
     }
 
-    let successCount = 0;
+    // ดึงข้อมูลสถานีล่าสุดมาใส่
+    let fetchedCount = 0;
     if (stationsList.length > 0) {
       stationsList.forEach(stn => {
         const stnID = stn.stationID;
@@ -64,13 +65,30 @@ async function updateLatestHour() {
           const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
           if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
             targetRow[stnID] = parseFloat(pm25Val);
-            successCount++;
+            fetchedCount++;
           }
         }
       });
     }
 
-    console.log(`📊 อัปเดตค่าชั่วโมงล่าสุด (${dateStr} [${timeRange}]) สำเร็จ ${successCount} สถานี`);
+    console.log(`📊 ดึงข้อมูลสดสำเร็จ ${fetchedCount} สถานี สำหรับช่วงเวลา ${dateStr} [${timeRange}]`);
+
+    // 🛡️ [ระบบจัดการกรณีข้อมูลขาดหาย / ค่าเป็น "-"]
+    // หากมีสถานีไหนในชั่วโมงนี้ได้ค่าเป็น "-" ให้ดึงค่าจากชั่วโมงก่อนหน้า (Previous Row) มาเติมแทนอัตโนมัติ เพื่อป้องกันกราฟพัง
+    const currentIndex = history.indexOf(targetRow);
+    const prevRow = currentIndex > 0 ? history[currentIndex - 1] : null;
+
+    BKK_STATIONS.forEach(stn => {
+      if (targetRow[stn] === "-" || targetRow[stn] === undefined) {
+        if (prevRow && prevRow[stn] !== "-" && prevRow[stn] !== undefined) {
+          // ใช้ค่าจากชั่วโมงก่อนหน้ามาทดแทนชั่วคราว
+          targetRow[stn] = prevRow[stn];
+        } else {
+          // หากไม่มีข้อมูลย้อนหลังเลย ให้ใช้ค่ากลางมาตรฐานของ กทม. (เช่น 25.0) ป้องกัน Error
+          targetRow[stn] = 25.0;
+        }
+      }
+    });
 
     // จัดเรียงลำดับเวลาใหม่ให้ถูกต้องตาม Chronological order
     history.sort((a, b) => {
@@ -85,7 +103,7 @@ async function updateLatestHour() {
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ บันทึกไฟล์ history.json สำเร็จเรียบร้อย!");
+    console.log("✅ อัปเดตไฟล์ history.json พร้อมจัดการข้อมูลขาดหายเรียบร้อยแล้ว!");
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาด:', error.message);
@@ -93,4 +111,4 @@ async function updateLatestHour() {
   }
 }
 
-updateLatestHour();
+updateData();
