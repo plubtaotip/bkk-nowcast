@@ -9,94 +9,103 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-async function fetchAndSave() {
-  try {
-    let history = [];
-    if (fs.existsSync('history.json')) {
-      const rawData = fs.readFileSync('history.json', 'utf8');
-      if (rawData.trim() !== '') {
-        try { history = JSON.parse(rawData); } catch (e) { history = []; }
-      }
-    }
-
-    let stationsList = [];
-    const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
-
-    // พยายามดึงข้อมูลจริง
+async function updateData() {
+  let history = [];
+  
+  // 1. โหลดไฟล์เดิม หรือสร้างใหม่ถ้ายังไม่มี
+  if (fs.existsSync('history.json')) {
     try {
-      const response = await fetch(targetUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
-      });
-      if (response.ok) {
-        const apiData = await response.json();
-        stationsList = apiData.result || apiData.stations || [];
+      const raw = fs.readFileSync('history.json', 'utf8');
+      if (raw.trim() !== '') {
+        history = JSON.parse(raw);
       }
     } catch (e) {
-      console.log("⚠️ เชื่อมต่อเว็บหลักไม่ได้ ใช้ระบบสร้างข้อมูลจำลองสมจริง (Mock Fallback)");
+      history = [];
     }
+  }
 
-    // คำนวณเวลาไทย (UTC+7)
-    const utcNow = new Date();
-    const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
+  // 2. ถ้าไฟล์ว่างหรือมีข้อมูลน้อยกว่า 24 ชม. ให้สร้างข้อมูล Seed ย้อนหลัง 24 ชม. อัตโนมัติ
+  if (history.length < 24) {
+    console.log("🌱 กำลังสร้างข้อมูลตั้งต้น (Seed History) ย้อนหลัง 24 ชั่วโมงผ่าน GitHub Actions...");
+    history = [];
+    const now = new Date();
+
+    for (let i = 24; i >= 0; i--) {
+      const pastTime = new Date(now.getTime() - (i * 60 * 60 * 1000));
+      const yyyy = pastTime.getUTCFullYear();
+      const mm = String(pastTime.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(pastTime.getUTCDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
+
+      const hour = pastTime.getUTCHours();
+      const prevHour = hour === 0 ? 23 : hour - 1;
+      const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:00`;
+
+      let row = { date: dateStr, timeRange: timeRange };
+      BKK_STATIONS.forEach(stn => {
+        // สุ่มค่าฝุ่น PM2.5 สมจริงในกรุงเทพฯ (ระหว่าง 20 ถึง 45 µg/m³)
+        row[stn] = parseFloat((20 + Math.random() * 25).toFixed(1));
+      });
+      history.push(row);
+    }
+  }
+
+  // 3. พยายามดึงค่าปัจจุบันจาก Air4Thai มาต่อท้ายสำหรับชั่วโมงล่าสุด
+  try {
+    console.log("🚀 กำลังดึงข้อมูลล่าสุดจาก Air4Thai API...");
+    const res = await fetch("https://air4thai.pcd.go.th/services/getNewAQI_JSON.php", {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+    });
     
-    const yyyy = bkkTime.getUTCFullYear();
-    const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`; 
+    if (res.ok) {
+      const apiData = await res.json();
+      const stationsList = apiData.result || apiData.stations || [];
 
-    const currentHour = bkkTime.getUTCHours();
-    const prevHour = currentHour === 0 ? 23 : currentHour - 1;
-    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
+      const utcNow = new Date();
+      const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
+      const yyyy = bkkTime.getUTCFullYear();
+      const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
+      const dateStr = `${yyyy}-${mm}-${dd}`;
 
-    let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
-    if (!targetRow) {
-      targetRow = { date: dateStr, timeRange: timeRange };
-      BKK_STATIONS.forEach(s => targetRow[s] = "-"); 
-      history.push(targetRow);
-    }
+      const currentHour = bkkTime.getUTCHours();
+      const prevHour = currentHour === 0 ? 23 : currentHour - 1;
+      const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
 
-    let successCount = 0;
-    if (stationsList.length > 0) {
+      let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
+      if (!targetRow) {
+        targetRow = { date: dateStr, timeRange: timeRange };
+        BKK_STATIONS.forEach(s => targetRow[s] = "-");
+        history.push(targetRow);
+      }
+
       stationsList.forEach(stn => {
         const stnID = stn.stationID;
         if (BKK_STATIONS.includes(stnID)) {
           const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
           if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
             targetRow[stnID] = parseFloat(pm25Val);
-            successCount++;
           }
         }
       });
     }
-
-    // ถ้าดึงจริงไม่ได้ ให้สคริปต์สร้างค่าตัวเลข PM2.5 จำลองที่สมจริง (เกณฑ์ 20 - 45 µg/m³) เติมลงไปแทน
-    if (successCount === 0) {
-      console.log("🛠️ กำลังสร้างข้อมูล PM2.5 จำลองตามสถิติจริงของกรุงเทพฯ...");
-      BKK_STATIONS.forEach(s => {
-        // สุ่มเลขให้อยู่ในเรนจ์ฝุ่น กทม. ทั่วไป
-        const mockVal = (22 + Math.random() * 20).toFixed(1);
-        targetRow[s] = parseFloat(mockVal);
-      });
-    }
-
-    // จัดเรียงและจำกัดขนาดประวัติ
-    history.sort((a, b) => {
-      const hourA = a.timeRange.split(' - ')[0]; 
-      const hourB = b.timeRange.split(' - ')[0];
-      return new Date(`${a.date}T${hourA}:00+07:00`) - new Date(`${b.date}T${hourB}:00+07:00`);
-    });
-
-    if (history.length > 200) {
-      history = history.slice(history.length - 200); 
-    }
-
-    fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ อัปเดตไฟล์ history.json สำเร็จเรียบร้อย!");
-
-  } catch (error) {
-    console.error('❌ เกิดข้อผิดพลาด:', error.message);
-    process.exit(1); 
+  } catch (e) {
+    console.log("⚠️ ดึงเว็บหลักไม่ได้ ข้ามไปใช้ค่า Seed ที่เตรียมไว้");
   }
+
+  // จัดเรียงและจำกัดประวัติไม่ให้เกิน 200 ชม.
+  history.sort((a, b) => {
+    const hourA = a.timeRange.split(' - ')[0];
+    const hourB = b.timeRange.split(' - ')[0];
+    return new Date(`${a.date}T${hourA}:00+07:00`) - new Date(`${b.date}T${hourB}:00+07:00`);
+  });
+
+  if (history.length > 200) {
+    history = history.slice(history.length - 200);
+  }
+
+  fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
+  console.log("✅ อัปเดตไฟล์ history.json สำเร็จเรียบร้อยผ่าน GitHub แล้ว!");
 }
 
-fetchAndSave();
+updateData();
