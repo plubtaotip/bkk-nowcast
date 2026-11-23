@@ -9,7 +9,23 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-async function updateContinuousGrid() {
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
+async function fetchStationHistory(stationID, startDateStr, endDateStr) {
+  const targetUrl = `http://air4thai.com/forweb/getHistoryData.php?stationID=${stationID}&param=PM25&type=hr&sdate=${startDateStr}&edate=${endDateStr}`;
+  try {
+    const res = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data?.res?.stations?.[0]?.data || data?.stations?.[0]?.data || null;
+    }
+  } catch (e) {}
+  return null;
+}
+
+async function updateSmartRollingHistory() {
   try {
     let history = [];
     if (fs.existsSync('history.json')) {
@@ -19,113 +35,88 @@ async function updateContinuousGrid() {
       }
     }
 
-    console.log("🚀 กำลังดึงค่า PM2.5 ล่าสุดจาก Air4Thai API...");
-    const targetUrl = "https://air4thai.pcd.go.th/services/getNewAQI_JSON.php";
-    
-    let stationsList = [];
-    let fetchSuccess = false;
-    try {
-      const response = await fetch(targetUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
-      });
-      if (response.ok) {
-        const apiData = await response.json();
-        stationsList = apiData.result || apiData.stations || [];
-        fetchSuccess = true;
-      }
-    } catch (e) {
-      console.log("⚠️ ไม่สามารถเชื่อมต่อ API ได้ในรอบนี้");
-    }
+    // แปลง history เดิมเป็น Map เพื่อเช็คค่าตาม Key (date|timeRange) ง่ายขึ้น
+    let historyMap = {};
+    history.forEach(row => {
+      const key = `${row.date}|${row.timeRange}`;
+      historyMap[key] = row;
+    });
 
-    // คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
+    // คำนวณช่วงเวลาย้อนหลัง 2 วันล่าสุด เพื่อดึงครอบคลุมหน้าต่าง 8 ชั่วโมงถึงปัจจุบัน
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
     
-    const currentHour = bkkTime.getUTCHours();
-    const prevHour = currentHour === 0 ? 23 : currentHour - 1;
+    const endDateStr = bkkTime.toISOString().split('T')[0];
+    const pastTime = new Date(bkkTime.getTime() - (2 * 24 * 60 * 60 * 1000));
+    const startDateStr = pastTime.toISOString().split('T')[0];
 
-    const parseTimeKey = (dStr, tRange) => {
-      const startH = parseInt(tRange.split(' - ')[0].split(':')[0], 10);
-      return new Date(`${dStr}T${String(startH).padStart(2,'0')}:00:00+07:00`);
-    };
+    console.log(`🚀 กำลังดึงข้อมูลรายชั่วโมงย้อนหลังเพื่ออัปเดตเฉพาะจุด (${startDateStr} ถึง ${endDateStr})...`);
 
-    // หาก history ว่าง ให้สร้างจุดเริ่มต้น
-    if (history.length === 0) {
-      const initRow = { 
-        date: bkkTime.toISOString().split('T')[0], 
-        timeRange: `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00` 
-      };
-      BKK_STATIONS.forEach(s => initRow[s] = "-");
-      history.push(initRow);
-    }
-
-    // 🛡️ ระบบสร้างช่วงเวลาต่อเนื่อง (เติมชั่วโมงที่ขาดหายไประหว่างทางให้ครบถ้วน)
-    let lastRow = history[history.length - 1];
-    let lastTime = parseTimeKey(lastRow.date, lastRow.timeRange);
-    let targetTime = new Date(bkkTime);
-    targetTime.setUTCMinutes(0, 0, 0);
-
-    while (true) {
-      let nextTime = new Date(lastTime.getTime() + (60 * 60 * 1000));
-      if (nextTime > targetTime) break;
-
-      const nYYYY = nextTime.getUTCFullYear();
-      const nMM = String(nextTime.getUTCMonth() + 1).padStart(2, '0');
-      const nDD = String(nextTime.getUTCDate()).padStart(2, '0');
-      const nDateStr = `${nYYYY}-${nMM}-${nDD}`;
+    for (const stn of BKK_STATIONS) {
+      const stnData = await fetchStationHistory(stn, startDateStr, endDateStr);
       
-      const nH = nextTime.getUTCHours();
-      const nPrevH = nH === 0 ? 23 : nH - 1;
-      const nTimeRange = `${String(nPrevH).padStart(2, '0')}:00 - ${String(nH).padStart(2, '0')}:00`;
+      if (stnData && Array.isArray(stnData)) {
+        stnData.forEach(item => {
+          const pm25 = item.PM25;
+          const dtStr = item.DATETIMEDATA; // เช่น "2026-11-24 04:00:00"
 
-      let existing = history.find(r => r.date === nDateStr && r.timeRange === nTimeRange);
-      if (!existing) {
-        let newRow = { date: nDateStr, timeRange: nTimeRange };
-        // กำหนดค่าเริ่มต้นเป็น "-" ทั้งหมดเพื่อไม่ให้เกิดการลากตัวเลขเก่าทับซ้อนมั่วซั่ว
-        BKK_STATIONS.forEach(s => newRow[s] = "-");
-        history.push(newRow);
-        lastRow = newRow;
-      } else {
-        lastRow = existing;
-      }
-      lastTime = nextTime;
-    }
+          if (dtStr) {
+            const [datePart, timePart] = dtStr.split(' ');
+            const hour = parseInt(timePart.split(':')[0], 10);
+            const prevHour = hour === 0 ? 23 : hour - 1;
+            
+            let targetDate = datePart;
+            if (hour === 0) {
+              const dtObj = new Date(dtStr.replace(' ', 'T') + '+07:00');
+              const tempDate = new Date(dtObj.getTime() - (24 * 60 * 60 * 1000));
+              targetDate = tempDate.toISOString().split('T')[0];
+            }
 
-    // อัปเดตข้อมูลสดของชั่วโมงปัจจุบันลงในแถวล่าสุด
-    let targetRow = history[history.length - 1];
-    let successCount = 0;
-    if (fetchSuccess && stationsList.length > 0) {
-      stationsList.forEach(stn => {
-        const stnID = stn.stationID;
-        if (BKK_STATIONS.includes(stnID)) {
-          const pm25Val = stn.PM25?.值 || stn.PM25?.val || stn.AQILast?.PM25 || stn.PM25;
-          if (pm25Val && pm25Val !== "-" && !isNaN(parseFloat(pm25Val))) {
-            targetRow[stnID] = parseFloat(pm25Val);
-            successCount++;
+            const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(hour).padStart(2, '0')}:00`;
+            const key = `${targetDate}|${timeRange}`;
+
+            // ถ้ายังไม่มีแถวเวลานี้ ให้สร้างใหม่
+            if (!historyMap[key]) {
+              let row = { date: targetDate, timeRange: timeRange };
+              BKK_STATIONS.forEach(s => row[s] = "-");
+              historyMap[key] = row;
+            }
+
+            // เงื่อนไขอัปเดต: ถ้าใน history เดิมช่องนั้นเป็น "-" หรือไม่มีค่า ให้ใส่ค่าใหม่ลงไป
+            // แต่ถ้ามีค่าเดิมอยู่แล้วและไม่เป็น "-" ให้คงค่าเดิมไว้ (หรืออัปเดตเฉพาะจุดที่ขาดหาย)
+            if (pm25 && pm25 !== "-") {
+              const currentVal = historyMap[key][stn];
+              if (currentVal === "-" || currentVal === undefined || currentVal === null) {
+                historyMap[key][stn] = parseFloat(pm25);
+              }
+              // ถ้าค่ามีอยู่แล้ว ปล่อยไว้ไม่เขียนทับ (คงค่าเดิม)
+            }
           }
-        }
-      });
+        });
+      }
+      await delay(500); // หน่วงเวลาเล็กน้อยป้องกันบล็อก
     }
 
-    console.log(`📊 อัปเดตข้อมูลล่าสุดสำเร็จ ${successCount} สถานี`);
-
-    // จัดเรียงลำดับเวลาให้เรียงยาวต่อเนื่องสวยงาม
-    history.sort((a, b) => {
-      return parseTimeKey(a.date, a.timeRange) - parseTimeKey(b.date, b.timeRange);
+    // แปลงกลับเป็น List และเรียงลำดับเวลา
+    let historyList = Object.values(historyMap);
+    historyList.sort((a, b) => {
+      const timeA = new Date(`${a.date}T${a.timeRange.split(' - ')[0]}:00+07:00`).getTime();
+      const timeB = new Date(`${b.date}T${b.timeRange.split(' - ')[0]}:00+07:00`).getTime();
+      return timeA - timeB;
     });
 
-    // จำกัดขนาดประวัติไม่ให้เกิน 200 ชั่วโมง
-    if (history.length > 200) {
-      history = history.slice(history.length - 200); 
+    // จำกัดขนาดประวัติเก็บไว้ล่าสุด 100-200 ชั่วโมงพอเหมาะสำหรับหน้าต่างคำนวณ NowCast
+    if (historyList.length > 200) {
+      historyList = historyList.slice(historyList.length - 200);
     }
 
-    fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ บันทึกไฟล์ history.json แบบเวลาต่อเนื่องเรียบร้อย!");
+    fs.writeFileSync('history.json', JSON.stringify(historyList, null, 2));
+    console.log(`✅ อัปเดตไฟล์ history.json สำเร็จ! มีข้อมูลทั้งหมด ${historyList.length} ช่วงเวลา`);
 
   } catch (error) {
     console.error('❌ เกิดข้อผิดพลาด:', error.message);
-    process.exit(1); 
+    process.exit(1);
   }
 }
 
-updateContinuousGrid();
+updateSmartRollingHistory();
