@@ -9,7 +9,7 @@ const BKK_STATIONS = [
   "bkp92t","bkp93t","bkp94t","bkp95t","bkp96t","bkp97t","bkp98t","bkp99t","o10"
 ];
 
-async function updateDataSafely() {
+async function updateWithGapFilling() {
   try {
     let history = [];
     if (fs.existsSync('history.json')) {
@@ -24,8 +24,6 @@ async function updateDataSafely() {
     
     let stationsList = [];
     let fetchSuccess = false;
-
-    // ใช้ Try-Catch แยกต่างหากเพื่อกันไม่ให้ fetch failed ทำให้โปรแกรมล่ม
     try {
       const response = await fetch(targetUrl, {
         headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' }
@@ -35,31 +33,72 @@ async function updateDataSafely() {
         stationsList = apiData.result || apiData.stations || [];
         fetchSuccess = true;
       }
-    } catch (err) {
-      console.log("⚠️ แจ้งเตือน: Air4Thai บล็อกการเชื่อมต่อ (fetch failed) สลับมาใช้ระบบข้อมูลสำรองอัตโนมัติ");
+    } catch (e) {
+      console.log("⚠️ ไม่สามารถเชื่อมต่อ API ได้ในรอบนี้ จะใช้ระบบข้อมูลสำรอง");
     }
 
     // คำนวณเวลาปัจจุบันของประเทศไทย (UTC+7)
     const utcNow = new Date();
     const bkkTime = new Date(utcNow.getTime() + (7 * 60 * 60 * 1000));
     
-    const yyyy = bkkTime.getUTCFullYear();
-    const mm = String(bkkTime.getUTCMonth() + 1).padStart(2, '0');
-    const dd = String(bkkTime.getUTCDate()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`; 
-
     const currentHour = bkkTime.getUTCHours();
     const prevHour = currentHour === 0 ? 23 : currentHour - 1;
-    const timeRange = `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00`;
 
-    // ค้นหาหรือสร้างแถวข้อมูลสำหรับชั่วโมงปัจจุบันใน history
-    let targetRow = history.find(r => r.date === dateStr && r.timeRange === timeRange);
-    if (!targetRow) {
-      targetRow = { date: dateStr, timeRange: timeRange };
-      BKK_STATIONS.forEach(s => targetRow[s] = "-"); 
-      history.push(targetRow);
+    // ฟังก์ชันช่วยแปลงวันและช่วงเวลาเป็น Date object สำหรับเทียบ
+    const getHourDate = (dStr, tRange) => {
+      const startH = parseInt(tRange.split(' - ')[0].split(':')[0], 10);
+      return new Date(`${dStr}T${String(startH).padStart(2,'0')}:00:00+07:00`);
+    };
+
+    // หาก history ว่าง ให้สร้างโครงสร้างเริ่มต้น
+    if (history.length === 0) {
+      const initRow = { 
+        date: bkkTime.toISOString().split('T')[0], 
+        timeRange: `${String(prevHour).padStart(2, '0')}:00 - ${String(currentHour).padStart(2, '0')}:00` 
+      };
+      BKK_STATIONS.forEach(s => initRow[s] = 25.0);
+      history.push(initRow);
     }
 
+    // 🛡️ ระบบเติมช่วงเวลาที่ขาดหายไป (Gap Filling)
+    let lastRow = history[history.length - 1];
+    let lastTime = getHourDate(lastRow.date, lastRow.timeRange);
+    
+    let targetTime = new Date(bkkTime);
+    targetTime.setUTCMinutes(0, 0, 0);
+
+    // วนลูปตรวจเช็คทีละชั่วโมง ถ้าชั่วโมงไหนขาดหายไประหว่างทาง ระบบจะสร้างขึ้นมาต่อให้ทันที
+    while (true) {
+      let nextTime = new Date(lastTime.getTime() + (60 * 60 * 1000));
+      if (nextTime > targetTime) break;
+
+      const nYYYY = nextTime.getUTCFullYear();
+      const nMM = String(nextTime.getUTCMonth() + 1).padStart(2, '0');
+      const nDD = String(nextTime.getUTCDate()).padStart(2, '0');
+      const nDateStr = `${nYYYY}-${nMM}-${nDD}`;
+      
+      const nH = nextTime.getUTCHours();
+      const nPrevH = nH === 0 ? 23 : nH - 1;
+      const nTimeRange = `${String(nPrevH).padStart(2, '0')}:00 - ${String(nH).padStart(2, '0')}:00`;
+
+      let existing = history.find(r => r.date === nDateStr && r.timeRange === nTimeRange);
+      if (!existing) {
+        let newRow = { date: nDateStr, timeRange: nTimeRange };
+        // ก๊อปปี้ค่าจากแถวล่าสุดมาเติมแก้ขัดเพื่อให้เวลาเดินต่อเนื่องไม่ขาดตอน
+        BKK_STATIONS.forEach(s => {
+          newRow[s] = lastRow[s] !== undefined ? lastRow[s] : 25.0;
+        });
+        history.push(newRow);
+        lastRow = newRow;
+        console.log(`➕ เติมช่วงเวลาที่ขาดหาย: ${nDateStr} [${nTimeRange}]`);
+      } else {
+        lastRow = existing;
+      }
+      lastTime = nextTime;
+    }
+
+    // อัปเดตข้อมูลสดของชั่วโมงปัจจุบันลงในแถวล่าสุด
+    let targetRow = history[history.length - 1];
     let successCount = 0;
     if (fetchSuccess && stationsList.length > 0) {
       stationsList.forEach(stn => {
@@ -74,27 +113,11 @@ async function updateDataSafely() {
       });
     }
 
-    console.log(`📊 อัปเดตข้อมูลช่วงเวลา (${dateStr} [${timeRange}]) สำเร็จ ${successCount} สถานี`);
+    console.log(`📊 อัปเดตข้อมูลล่าสุดสำเร็จ ${successCount} สถานี`);
 
-    // 🛡️ ระบบป้องกันค่าขาดหาย: ถ้าดึงเว็บไม่ได้ หรือสถานีไหนได้ "-" ให้ดึงค่าจากชั่วโมงก่อนหน้ามาเติม
-    const currentIndex = history.indexOf(targetRow);
-    const prevRow = currentIndex > 0 ? history[currentIndex - 1] : null;
-
-    BKK_STATIONS.forEach(stn => {
-      if (targetRow[stn] === "-" || targetRow[stn] === undefined) {
-        if (prevRow && prevRow[stn] !== "-" && prevRow[stn] !== undefined) {
-          targetRow[stn] = prevRow[stn]; // ดึงค่าชั่วโมงก่อนหน้ามาเติมแก้ขัด
-        } else {
-          targetRow[stn] = 25.0; // ค่ากลางสำรอง
-        }
-      }
-    });
-
-    // จัดเรียงลำดับเวลา
+    // จัดเรียงลำดับเวลาใหม่ทั้งหมด
     history.sort((a, b) => {
-      const timeA = new Date(`${a.date}T${a.timeRange.split(' - ')[0]}:00+07:00`).getTime();
-      const timeB = new Date(`${b.date}T${b.timeRange.split(' - ')[0]}:00+07:00`).getTime();
-      return timeA - timeB;
+      return getHourDate(a.date, a.timeRange) - getHourDate(b.date, b.timeRange);
     });
 
     // จำกัดขนาดประวัติไม่ให้เกิน 200 ชั่วโมง
@@ -103,12 +126,12 @@ async function updateDataSafely() {
     }
 
     fs.writeFileSync('history.json', JSON.stringify(history, null, 2));
-    console.log("✅ บันทึกไฟล์ history.json สำเร็จเรียบร้อย!");
+    console.log("✅ บันทึกไฟล์ history.json พร้อมเติมช่วงเวลาที่ขาดหายสำเร็จเรียบร้อย!");
 
   } catch (error) {
-    console.error('❌ เกิดข้อผิดพลาดร้ายแรง:', error.message);
+    console.error('❌ เกิดข้อผิดพลาด:', error.message);
     process.exit(1); 
   }
 }
 
-updateDataSafely();
+updateWithGapFilling();
