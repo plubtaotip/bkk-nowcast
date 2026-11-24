@@ -18,9 +18,9 @@ To address this, this project adapts the US-EPA NowCast algorithm with customize
 
 ##  Key Features
 
-* **⚡Tuned NowCast Algorithm ($N=8, w_{\min}=0.4$):**  
+* **Tuned NowCast Algorithm ($N=8, w_{\min}=0.4$):**  
   Utilizes an **8-hour lookback window** and a **minimum weight factor of $0.4$** to respond rapidly to acute $\text{PM}_{2.5}$ episodes while maintaining strong correlation with true 24-hour moving averages.
-* ** Interactive Spatial Zone Mapping (6 Bangkok Zones):**  
+* **Interactive Spatial Zone Mapping (6 Bangkok Zones):**  
   Visualizes real-time $\text{PM}_{2.5}$ levels across **59 monitoring stations** grouped into 6 administrative zones (Central, South, North, East, Thon Buri North, and Thon Buri South) using Convex Hull boundary polygons.
 * **Statistical & Performance Analytics Dashboard:**  
   * **Accuracy Metrics:** Live calculation of **RMSE** (Root Mean Square Error) and **MAE** (Mean Absolute Error) comparing NowCast against 24-hour averages.
