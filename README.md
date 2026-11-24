@@ -1,4 +1,4 @@
-# 🌫️ BKK NowCast Monitor
+#BKK NowCast Monitor
 
 **Development of BKK NowCast System for PM2.5 Air Quality Warning in Bangkok**  
 *Environmental Engineering Senior Project — Chulalongkorn University*
